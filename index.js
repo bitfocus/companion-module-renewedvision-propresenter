@@ -117,7 +117,6 @@ instance.prototype.action = function(action, config, ws) {
 		ws.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 		ws.send('{"action":"presentationSlideIndex"}')
 	});
-
 	if (action.action == 'next') {
 		ws.on('open', function open() {
 			ws.send('{"action":"presentationSlideIndex"}')
