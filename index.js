@@ -1,5 +1,5 @@
-var instance_skel = require('../../instance_skel');
-const WebSocket = require('ws');
+var instance_skel  = require('../../instance_skel');
+const WebSocket    = require('ws');
 var debug;
 var log;
 
@@ -44,13 +44,13 @@ instance.prototype.config_fields = function () {
 			label: 'ProPresenter Port',
 			width: 6,
 			default: '53118'
-    },
-    {
-      type: 'textinput',
-      id: 'pass',
-      label: 'ProPresenter Password',
-      width: 8,
-    }
+		},
+		{
+			type: 'textinput',
+			id: 'pass',
+			label: 'ProPresenter Password',
+			width: 8,
+		}
 	]
 };
 
@@ -63,7 +63,6 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
-	var ws = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 };
 
 // When module gets deleted
@@ -84,7 +83,7 @@ instance.prototype.actions = function(system) {
 	self.system.emit('instance_actions', self.id, {
 		'next': { label: 'Next Slide' },
 		'last': { label: 'Last Slide' },
-    'slideNumber': {
+		'slideNumber': {
 			label: 'Specific Slide',
 			options: [
 				{
@@ -97,7 +96,7 @@ instance.prototype.actions = function(system) {
 			]
 		},
 		'clearall': { label: 'Clear All' },
-    'clearslide': { label: 'Clear Slide' },
+		'clearslide': { label: 'Clear Slide' },
 	});
 };
 
@@ -107,6 +106,13 @@ instance.prototype.action = function(action, config, ws) {
 	var ws = ws
 	var opt = action.options;
 	var ws = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
+	self.status(self.STATE_OK)
+	ws.on("error", error => {
+		console.log(error)
+		self.status(self.STATE_ERROR)
+		self.log('error',"Network error: " + error);
+	})
+
 	ws.on('open', function open() {
 		ws.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 		ws.send('{"action":"presentationSlideIndex"}')
@@ -131,37 +137,36 @@ instance.prototype.action = function(action, config, ws) {
 
 		ws.on('message', function incoming(data) {
 			var slideData = JSON.parse(data)
-      var nextIndex = parseInt(slideData.slideIndex)-1
-			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}');
+			var nextIndex = parseInt(slideData.slideIndex)-1
+			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}')
 		});
 	}
 
-  else if (action.action == 'clearall') {
-    ws.on('open', function open() {
-      ws.send('{"action":"clearAll"}')
-    });
-  }
+	else if (action.action == 'clearall') {
+		ws.on('open', function open() {
+			ws.send('{"action":"clearAll"}')
+		});
+	}
 
-  else if (action.action == 'clearslide') {
-    ws.on('open', function open() {
-      ws.send('{"action":"clearText"}')
-    });
-  }
+	else if (action.action == 'clearslide') {
+		ws.on('open', function open() {
+			ws.send('{"action":"clearText"}')
+		});
+	}
 
-  else if (action.action == 'slideNumber') {
-    ws.on('open', function open() {
-      var nextIndex = parseInt(action.options.slide)-1
+	else if (action.action == 'slideNumber') {
+		ws.on('open', function open() {
+			var nextIndex = parseInt(action.options.slide)-1
 			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}');
 		});
-  }
-
+	}
 	debug('action():', action.action);
 };
 
 instance.module_info = {
 	label: 'ProPresenter 6',
 	id: 'propresenter6',
-	version: '1.0.0'
+	version: '1.0.1'
 };
 
 instance_skel.extendedBy(instance);
