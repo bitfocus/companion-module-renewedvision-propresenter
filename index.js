@@ -97,6 +97,8 @@ instance.prototype.actions = function(system) {
 		},
 		'clearall': { label: 'Clear All' },
 		'clearslide': { label: 'Clear Slide' },
+		'clearprops': { label: 'Clear Props' },
+		'clearbg': { label: 'Clear BG' }
 	});
 };
 
@@ -152,6 +154,14 @@ instance.prototype.action = function(action, config, ws) {
 			ws.send('{"action":"clearText"}')
 		});
 	}
+
+	else if (action.action == 'clearprops') {
+		ws.on('open', function open() {
+			ws.send('{"action":"clearProps"}')
+		});
+	}
+
+
 
 	else if (action.action == 'slideNumber') {
 		ws.on('open', function open() {
