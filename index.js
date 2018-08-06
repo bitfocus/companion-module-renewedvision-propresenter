@@ -97,8 +97,7 @@ instance.prototype.actions = function(system) {
 		},
 		'clearall': { label: 'Clear All' },
 		'clearslide': { label: 'Clear Slide' },
-		'clearprops': { label: 'Clear Props' },
-		'clearbg': { label: 'Clear BG' }
+		'clearprops': { label: 'Clear Props' }
 	});
 };
 
