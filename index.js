@@ -90,7 +90,7 @@ instance.prototype.init_ws = function() {
 			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 			self.status(self.STATE_OK);
 			debug(" WS STATE: " +self.socket.readyState)
-			self.timer = setInterval(self.index.bind(self), 500)
+			self.timer = setInterval(self.index.bind(self), 250)
 			self.timer = setInterval(self.recon.bind(self), 5000)
 		});
 
