@@ -22,7 +22,7 @@ instance.prototype.config_fields = function () {
 			id: 'info',
 			width: 12,
 			label: 'Information',
-			value: "This module communicates with Renewed Vision's ProPresenter 6 (This polls propres every 500ms so have it open before adding the instance or opening companion to avoid a flood of errors, will be dealt with soon)"
+			value: "This module communicates with Renewed Vision's ProPresenter 6"
 		},
 		{
 			type: 'textinput',
@@ -78,8 +78,10 @@ instance.prototype.init_ws = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
-		self.socket.destroy();
-		delete self.socket;
+		if (self.socket.readyState !== 3) {
+			self.socket.terminate();
+			delete self.socket;
+		}
 	}
 
 	if (self.config.host) {
@@ -88,7 +90,8 @@ instance.prototype.init_ws = function() {
 			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 			self.status(self.STATE_OK);
 			debug(" WS STATE: " +self.socket.readyState)
-			self.timer = setInterval(self.tick.bind(self), 500)
+			self.timer = setInterval(self.index.bind(self), 500)
+			self.timer = setInterval(self.recon.bind(self), 5000)
 		});
 
 		self.socket.on('error', function (err) {
@@ -102,30 +105,32 @@ instance.prototype.init_ws = function() {
 			debug("Connected");
 		})
 
+		self.socket.on('message', function incoming(data) {
+			var slideData = JSON.parse(data)
+			self.slideIndex = slideData.slideIndex
+		})
+
 	}
 };
 
-instance.prototype.tick = function(){
+instance.prototype.index = function(){
 	var self = this;
+	if (self.currentStatus !== self.STATE_ERROR) {
+		try {
+			self.socket.send('{"action":"presentationSlideIndex"}');
+		}
+		catch (e) {
+			debug("NETWORK " + e)
+			self.status(self.STATE_ERROR, e);
+		}
+	}
+}
 
-	var indexws = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
-		self.status(self.STATE_OK)
-		indexws.on("error", error => {
-			debug(error)
-			self.status(self.STATE_ERROR)
-			self.log('error',"Network error: " + error);
-		})
-
-		indexws.on('open', function open() {
-			indexws.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
-			indexws.send('{"action":"presentationSlideIndex"}')
-		});
-
-		indexws.on('message', function incoming(data) {
-			var slideData = JSON.parse(data)
-			self.slideIndex = slideData.slideIndex
-			indexws.close()
-		})
+instance.prototype.recon = function(){
+	var self = this;
+	if (self.currentStatus == self.STATE_ERROR) {
+		self.init_ws()
+	}
 }
 
 instance.prototype.actions = function(system) {
@@ -195,27 +200,33 @@ instance.prototype.action = function(action) {
 
 		if (cmd !== undefined) {
 
-			 debug('sending ',cmd,"to",self.config.host);
-
-			if (self.socket !== undefined ) {
-
-				self.socket.send(cmd + "\n");
-				self.socket.send('notify: transport: true'+ '\n')
-			}
+			if (self.currentStatus !== self.STATE_ERROR) {
+					try {
+						self.socket.send(cmd);
+					}
+					catch (e) {
+						debug("NETWORK " + e)
+						self.status(self.STATE_ERROR, e);
+					}
+				}
 
 			else {
 				debug('Socket not connected :(');
 				self.status(self.STATE_ERROR);
-			}
-
+				self.init_ws()
 		}
+
+}
+
+// debug('action():', action);
+
 };
 
 
 instance.module_info = {
 	label: 'ProPresenter 6',
 	id: 'propresenter6',
-	version: '2.0.9'
+	version: '2.1.0'
 };
 
 instance_skel.extendedBy(instance);
