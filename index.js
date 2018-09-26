@@ -167,13 +167,11 @@ instance.prototype.action = function(action) {
 		case 'next':
 			var nextSlide = parseInt(self.slideIndex) + 1
 		  cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
-			console.log(cmd)
 			break;
 
 		case 'last':
 			var nextSlide = parseInt(self.slideIndex) + -1
 			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
-			console.log(cmd)
 			break;
 
 		case 'slideNumber':
