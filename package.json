@@ -1,14 +1,14 @@
 {
   "name": "propresenter6",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "A Companion Module for ProPresenter 6",
-  "repository": "https://github.com/monoxane/companion-module-propresenter6.git",
+  "repository": "https://github.com/bitfocus/companion-module-renewedvision-propresenter",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Oliver Herrmann",
+  "license": "MIT",
   "dependencies": {
     "websocket": "^1.0.26"
   }
