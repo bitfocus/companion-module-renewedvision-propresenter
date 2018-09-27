@@ -68,9 +68,14 @@ instance.prototype.destroy = function() {
 		self.socket.close();
 	}
 
-	if (self.timer !== undefined) {
-		clearInterval(self.timer);
+	if (self.indexTimer !== undefined) {
+		clearInterval(self.indexTimer);
 	}
+
+	if (self.reconTimer !== undefined) {
+		clearInterval(self.reconTimer);
+	}
+
 	debug("destroy", self.id);
 };
 
@@ -90,8 +95,8 @@ instance.prototype.init_ws = function() {
 			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 			self.status(self.STATE_OK);
 			debug(" WS STATE: " +self.socket.readyState)
-			self.timer = setInterval(self.index.bind(self), 250)
-			self.timer = setInterval(self.recon.bind(self), 5000)
+			self.indexTimer = setInterval(self.index.bind(self), 250)
+			self.reconTimer = setInterval(self.recon.bind(self), 5000)
 		});
 
 		self.socket.on('error', function (err) {
