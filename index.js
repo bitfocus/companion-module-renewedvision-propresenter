@@ -171,11 +171,5 @@ instance.prototype.action = function(action, config, ws) {
 	debug('action():', action.action);
 };
 
-instance.module_info = {
-	label: 'ProPresenter 6',
-	id: 'propresenter6',
-	version: '1.0.1'
-};
-
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;

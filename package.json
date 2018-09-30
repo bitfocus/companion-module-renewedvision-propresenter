@@ -1,13 +1,18 @@
 {
-  "name": "propresenter6",
+  "name": "renewedvision-propresenter",
+	"legacy": [ "propresenter6", "propresenter" ],
   "version": "1.0.0",
-  "description": "A Companion Module for ProPresenter 6",
-  "repository": "https://github.com/monoxane/companion-module-propresenter6.git",
+	"api_version": "1.0.0",
+	"keywords": [ "Software", "Presentation" ],
+	"manufacturer": "Renewed Vision",
+	"product": "ProPresenter",
+	"shortname": "propresenter",
+  "description": "A Companion Module for ProPresenter",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Oliver Herrmann <oliver@monoxane.com>",
   "license": "ISC",
   "dependencies": {
     "websocket": "^1.0.26"
