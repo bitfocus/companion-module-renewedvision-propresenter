@@ -13,13 +13,6 @@ function instance(system, id, config) {
 	return self;
 }
 
-instance.prototype.init = function() {
-	var self = this;
-	debug = self.debug;
-	log = self.log;
-	self.status(self.STATE_UNKNOWN);
-}
-
 // Return config fields for web config
 instance.prototype.config_fields = function () {
 	var self = this;
@@ -43,7 +36,7 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'ProPresenter Port',
 			width: 6,
-			default: '53118'
+			default: ''
 		},
 		{
 			type: 'textinput',
@@ -63,6 +56,8 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
+	self.init_ws()
+
 };
 
 // When module gets deleted
@@ -70,12 +65,78 @@ instance.prototype.destroy = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
-		self.socket.destroy();
+		self.socket.close();
+	}
+
+	if (self.indexTimer !== undefined) {
+		clearInterval(self.indexTimer);
+	}
+
+	if (self.reconTimer !== undefined) {
+		clearInterval(self.reconTimer);
 	}
 
 	debug("destroy", self.id);
 };
 
+instance.prototype.init_ws = function() {
+	var self = this;
+
+	if (self.socket !== undefined) {
+		if (self.socket.readyState !== 3) {
+			self.socket.terminate();
+			delete self.socket;
+		}
+	}
+
+	if (self.config.host) {
+		self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
+		self.socket.on('open', function open() {
+			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
+			self.status(self.STATE_OK);
+			debug(" WS STATE: " +self.socket.readyState)
+			self.indexTimer = setInterval(self.index.bind(self), 250)
+			self.reconTimer = setInterval(self.recon.bind(self), 5000)
+		});
+
+		self.socket.on('error', function (err) {
+			debug("Network error", err);
+			self.status(self.STATE_ERROR, err.message);
+			self.log('error',"Network error: " + err.message);
+		});
+
+		self.socket.on('connect', function () {
+			self.status(self.STATE_OK);
+			debug("Connected");
+		})
+
+		self.socket.on('message', function incoming(data) {
+			var slideData = JSON.parse(data)
+			self.slideIndex = slideData.slideIndex
+		})
+
+	}
+};
+
+instance.prototype.index = function(){
+	var self = this;
+	if (self.currentStatus !== self.STATE_ERROR) {
+		try {
+			self.socket.send('{"action":"presentationSlideIndex"}');
+		}
+		catch (e) {
+			debug("NETWORK " + e)
+			self.status(self.STATE_ERROR, e);
+		}
+	}
+}
+
+instance.prototype.recon = function(){
+	var self = this;
+	if (self.currentStatus == self.STATE_ERROR) {
+		self.init_ws()
+	}
+}
 
 instance.prototype.actions = function(system) {
 	var self = this;
@@ -97,79 +158,82 @@ instance.prototype.actions = function(system) {
 		},
 		'clearall': { label: 'Clear All' },
 		'clearslide': { label: 'Clear Slide' },
-		'clearprops': { label: 'Clear Props' }
+		'clearprops': { label: 'Clear Props' },
+		'clearaudio': { label: 'Clear Audio' }
 	});
 };
 
-instance.prototype.action = function(action, config, ws) {
+instance.prototype.action = function(action) {
 	var self = this;
-	var cmd;
-	var ws = ws
-	var opt = action.options;
-	var ws = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
-	self.status(self.STATE_OK)
-	ws.on("error", error => {
-		console.log(error)
-		self.status(self.STATE_ERROR)
-		self.log('error',"Network error: " + error);
-	})
+	var opt = action.options
 
-	ws.on('open', function open() {
-		ws.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
-		ws.send('{"action":"presentationSlideIndex"}')
-	});
-	if (action.action == 'next') {
-		ws.on('open', function open() {
-			ws.send('{"action":"presentationSlideIndex"}')
-		});
+	switch (action.action) {
 
-		ws.on('message', function incoming(data) {
-			var slideData = JSON.parse(data)
-			var nextSlide = parseInt(slideData.slideIndex) + 1
-			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}')
-		});
-	}
+		case 'next':
+			var nextSlide = parseInt(self.slideIndex) + 1
+		  cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
+			break;
 
-	else if (action.action == 'last') {
-		ws.on('open', function open() {
-			ws.send('{"action":"presentationSlideIndex"}')
-		});
+		case 'last':
+			var nextSlide = parseInt(self.slideIndex) + -1
+			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
+			break;
 
-		ws.on('message', function incoming(data) {
-			var slideData = JSON.parse(data)
-			var nextIndex = parseInt(slideData.slideIndex)-1
-			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}')
-		});
-	}
+		case 'slideNumber':
+			var nextIndex = parseInt(opt.slide)-1
+			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}';
+			break;
 
-	else if (action.action == 'clearall') {
-		ws.on('open', function open() {
-			ws.send('{"action":"clearAll"}')
-		});
-	}
+		case 'clearall':
+			cmd = '{"action":"clearAll"}';
+			break;
 
-	else if (action.action == 'clearslide') {
-		ws.on('open', function open() {
-			ws.send('{"action":"clearText"}')
-		});
-	}
+		case 'clearslide':
+			cmd = '{"action":"clearText"}';
+			break;
 
-	else if (action.action == 'clearprops') {
-		ws.on('open', function open() {
-			ws.send('{"action":"clearProps"}')
-		});
-	}
+		case 'clearprops':
+			cmd = '{"action":"clearProps"}';
+			break;
 
+		case 'clearaudio':
+			cmd = '{"action":"clearAudio"}';
+			break;
+		};
 
+		if (cmd !== undefined) {
 
-	else if (action.action == 'slideNumber') {
-		ws.on('open', function open() {
-			var nextIndex = parseInt(action.options.slide)-1
-			ws.send('{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}');
-		});
-	}
-	debug('action():', action.action);
+			if (self.currentStatus !== self.STATE_ERROR) {
+					try {
+						self.socket.send(cmd);
+					}
+					catch (e) {
+						debug("NETWORK " + e)
+						self.status(self.STATE_ERROR, e);
+					}
+				}
+
+			else {
+				debug('Socket not connected :(');
+				self.status(self.STATE_ERROR);
+				self.init_ws()
+		}
+
+}
+
+// debug('action():', action);
+
 };
 
+<<<<<<< HEAD
+=======
+
+instance.module_info = {
+	label: 'ProPresenter 6',
+	id: 'propresenter6',
+	version: '2.1.0'
+};
+
+>>>>>>> d64da6f9b92d10d01340873606d3dbe1f0268da6
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
