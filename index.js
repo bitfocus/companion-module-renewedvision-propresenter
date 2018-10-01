@@ -171,7 +171,7 @@ instance.prototype.action = function(action) {
 
 		case 'next':
 			var nextSlide = parseInt(self.slideIndex) + 1
-		  cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
+			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
 			break;
 
 		case 'last':
@@ -219,7 +219,9 @@ instance.prototype.action = function(action) {
 				self.init_ws()
 		}
 
-}
+	}
+
+};
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
