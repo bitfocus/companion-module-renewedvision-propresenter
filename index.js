@@ -1,5 +1,5 @@
 var instance_skel  = require('../../instance_skel');
-const WebSocket    = require('ws');
+var WebSocket      = require('ws');
 var debug;
 var log;
 
@@ -7,6 +7,7 @@ function instance(system, id, config) {
 	var self = this;
 	self.awaiting_reply = false;
 	self.command_queue = [];
+
 	// super-constructor
 	instance_skel.apply(this, arguments);
 	self.actions(); // export actions
@@ -56,8 +57,8 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
-	self.init_ws()
 
+	self.init_ws();
 };
 
 // When module gets deleted
@@ -65,15 +66,22 @@ instance.prototype.destroy = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
+		if (self.socket.readyState !== 3) {
+			self.socket.terminate();
+		}
+
 		self.socket.close();
+		delete self.socket;
 	}
 
 	if (self.indexTimer !== undefined) {
 		clearInterval(self.indexTimer);
+		delete self.indexTimer;
 	}
 
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer);
+		delete self.reconTimer;
 	}
 
 	debug("destroy", self.id);
@@ -91,12 +99,25 @@ instance.prototype.init_ws = function() {
 
 	if (self.config.host) {
 		self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
+
+		if (self.reconTimer !== undefined) {
+			clearInterval(self.reconTimer);
+			delete self.reconTimer;
+		}
+		self.reconTimer = setInterval(self.recon.bind(self), 5000)
+
 		self.socket.on('open', function open() {
 			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
 			self.status(self.STATE_OK);
+
 			debug(" WS STATE: " +self.socket.readyState)
+
+			if (self.indexTimer !== undefined) {
+				clearInterval(self.indexTimer);
+				delete self.indexTimer;
+			}
+
 			self.indexTimer = setInterval(self.index.bind(self), 250)
-			self.reconTimer = setInterval(self.recon.bind(self), 5000)
 		});
 
 		self.socket.on('error', function (err) {
@@ -133,6 +154,7 @@ instance.prototype.index = function(){
 
 instance.prototype.recon = function(){
 	var self = this;
+
 	if (self.currentStatus == self.STATE_ERROR) {
 		self.init_ws()
 	}
@@ -216,7 +238,7 @@ instance.prototype.action = function(action) {
 			else {
 				debug('Socket not connected :(');
 				self.status(self.STATE_ERROR);
-				self.init_ws()
+//				self.init_ws(); should not be needed
 		}
 
 	}
