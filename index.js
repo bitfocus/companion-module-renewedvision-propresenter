@@ -181,7 +181,35 @@ instance.prototype.actions = function(system) {
 		'clearall': { label: 'Clear All' },
 		'clearslide': { label: 'Clear Slide' },
 		'clearprops': { label: 'Clear Props' },
-		'clearaudio': { label: 'Clear Audio' }
+		'clearaudio': { label: 'Clear Audio' },
+		'clearbackground': { label: 'Clear Background' },
+		'cleartelestrator': { label: 'Clear Telestrator' },
+		'cleartologo': { label: 'Clear to Logo' },
+   		'stageDisplayLayout': {
+			label: 'Stage Display Layout',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Stage Display Index',
+					id: 'index',
+					default: 0,
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'stageDisplayMessage': {
+			label: 'Stage Display Message',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Message',
+					id: 'message',
+					default: ''
+				}
+			]
+		},
+		'stageDisplayHideMessage': { label: 'Stage Display Hide Message' }
+
 	});
 };
 
@@ -220,6 +248,31 @@ instance.prototype.action = function(action) {
 
 		case 'clearaudio':
 			cmd = '{"action":"clearAudio"}';
+			break;
+
+		case 'clearbackground':
+			cmd = '{"action":"clearVideo"}';
+			break;
+
+		case 'cleartelestrator':
+			cmd = '{"action":"clearTelestrator"}';
+			break;
+
+		case 'cleartologo':
+			cmd = '{"action":"clearToLogo"}';
+			break;
+
+		case 'stageDisplayLayout':
+			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+opt.index+'}';
+			break;
+
+		case 'stageDisplayMessage':
+			var message = JSON.stringify(opt.message);
+			cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
+			break;
+
+		case 'stageDisplayHideMessage':
+			cmd = '{"action":"stageDisplayHideMessage"}';
 			break;
 		};
 
