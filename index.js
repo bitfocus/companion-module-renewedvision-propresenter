@@ -215,12 +215,10 @@ instance.prototype.action = function(action) {
 	switch (action.action) {
 
 		case 'next':
-			var nextSlide = parseInt(self.slideIndex) + 1
 			cmd = '{"action":"presentationTriggerNext"}';
 			break;
 
 		case 'last':
-			var nextSlide = parseInt(self.slideIndex) + -1
 			cmd = '{"action":"presentationTriggerPrevious"}';
 			break;
 
