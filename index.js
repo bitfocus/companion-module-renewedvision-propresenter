@@ -131,11 +131,6 @@ instance.prototype.init_ws = function() {
 			debug("Connected");
 		})
 
-		self.socket.on('message', function incoming(data) {
-			var slideData = JSON.parse(data)
-			self.slideIndex = slideData.slideIndex
-		})
-
 	}
 };
 
@@ -165,7 +160,7 @@ instance.prototype.actions = function(system) {
 
 	self.system.emit('instance_actions', self.id, {
 		'next': { label: 'Next Slide' },
-		'last': { label: 'Last Slide' },
+		'last': { label: 'Previous Slide' },
 		'slideNumber': {
 			label: 'Specific Slide',
 			options: [
@@ -220,13 +215,11 @@ instance.prototype.action = function(action) {
 	switch (action.action) {
 
 		case 'next':
-			var nextSlide = parseInt(self.slideIndex) + 1
-			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
+			cmd = '{"action":"presentationTriggerNext"}';
 			break;
 
 		case 'last':
-			var nextSlide = parseInt(self.slideIndex) + -1
-			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextSlide+',"presentationPath":" "}'
+			cmd = '{"action":"presentationTriggerPrevious"}';
 			break;
 
 		case 'slideNumber':

@@ -6,8 +6,8 @@ Module for using ProPresenter with the Elgato Stream Deck and Companion
 ## Slides
 Command | Description
 ------- | -----------
-Next Slide | Advances to the next slide in the current document
-Last Slide | Moves to the previous slide in the current document
+Next Slide | Advances to the next slide in the current document. If at the end of a document, will advance to the start of the next document in the playlist.
+Previous Slide | Moves to the previous slide in the current document. If at the start of a document, will move to the start of the previous document in the playlist.
 Jump to Slide | Moves to the slide number
 
 ## Clear/Logo
@@ -29,5 +29,5 @@ Stage Display Layout | Sets the stage display layout. Index is a 0-based number 
 
 ----
 
-ALL COMMANDS ONLY WORK IN THE SAME DOCUMENT, NOT ON CONTIGUOUS PLAYLISTS  
+
 FOR BEST PERFORMANCE ADD DOCUMENT TO PLAYLIST (propresenter like to dump loads of info down the connection if you use it directly from the library)
