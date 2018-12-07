@@ -74,11 +74,6 @@ instance.prototype.destroy = function() {
 		delete self.socket;
 	}
 
-	if (self.indexTimer !== undefined) {
-		clearInterval(self.indexTimer);
-		delete self.indexTimer;
-	}
-
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer);
 		delete self.reconTimer;
@@ -107,17 +102,15 @@ instance.prototype.init_ws = function() {
 		self.reconTimer = setInterval(self.recon.bind(self), 5000)
 
 		self.socket.on('open', function open() {
-			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
+			self.socket.send(JSON.stringify({
+				password: self.config.pass,
+				protocol: "610",
+				action: "authenticate"
+			}));
 			self.status(self.STATE_OK);
 
 			debug(" WS STATE: " +self.socket.readyState)
 
-			if (self.indexTimer !== undefined) {
-				clearInterval(self.indexTimer);
-				delete self.indexTimer;
-			}
-
-			self.indexTimer = setInterval(self.index.bind(self), 250)
 		});
 
 		self.socket.on('error', function (err) {
@@ -129,23 +122,14 @@ instance.prototype.init_ws = function() {
 		self.socket.on('connect', function () {
 			self.status(self.STATE_OK);
 			debug("Connected");
+		});
+
+		self.socket.on('message', function (message) {
+			console.log(message);
 		})
 
 	}
 };
-
-instance.prototype.index = function(){
-	var self = this;
-	if (self.currentStatus !== self.STATE_ERROR) {
-		try {
-			self.socket.send('{"action":"presentationSlideIndex"}');
-		}
-		catch (e) {
-			debug("NETWORK " + e)
-			self.status(self.STATE_ERROR, e);
-		}
-	}
-}
 
 instance.prototype.recon = function(){
 	var self = this;
