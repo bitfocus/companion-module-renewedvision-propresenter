@@ -14,6 +14,14 @@ function instance(system, id, config) {
 	return self;
 }
 
+
+/**
+ * The current state of ProPresentation.
+ * Initially populated by emptyCurrentState().
+ */
+instance.prototype.currentState = { };
+
+
 // Return config fields for web config
 instance.prototype.config_fields = function () {
 	var self = this;
@@ -48,20 +56,26 @@ instance.prototype.config_fields = function () {
 	]
 };
 
+
 instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
 };
+
 
 instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
 
-	self.init_ws();
+	self.makeConnection();
+	self.initVariables();
 };
 
-// When module gets deleted
+
+/**
+ * When the module gets deleted.
+ */
 instance.prototype.destroy = function() {
 	var self = this;
 
@@ -82,63 +96,161 @@ instance.prototype.destroy = function() {
 	debug("destroy", self.id);
 };
 
-instance.prototype.init_ws = function() {
+
+/**
+ * Initialize an empty current state.
+ */
+instance.prototype.emptyCurrentState = function() {
+	var self = this;
+
+	self.currentState = {
+		currentSlide : 'N/A',
+		presentationPath : '-',
+		presentationName : 'N/A',
+		totalSlides : 'N/A',
+		connectionStatus : 'Not connected'
+	};
+
+};
+
+
+/**
+ * Initialze the available variables.
+ */
+instance.prototype.initVariables = function() {
+	var self = this;
+
+	var variables = [
+		{
+			label: 'Current slide number',
+			name:  'currentSlide'
+		},
+		{
+			label: 'Total slides in presentation',
+			name:  'totalSlides'
+		},
+		{
+			label: 'Presentation name',
+			name:  'presentationName'
+		},
+		{
+			label: 'Connection status',
+			name:  'connectionStatus'
+		}
+	];
+
+	self.setVariableDefinitions(variables);
+
+	// Initialize the current state and update Companion with the variables.
+	self.emptyCurrentState();
+	self.updateVariables();
+
+};
+
+
+/**
+ * Update Companion with the current state.
+ */
+instance.prototype.updateVariables = function() {
+	var self = this;
+	self.setVariable('currentSlide', self.currentState.currentSlide);
+	self.setVariable('presentationName', self.currentState.presentationName);
+	self.setVariable('totalSlides', self.currentState.totalSlides);
+	self.setVariable('connectionStatus', self.currentState.connectionStatus);
+};
+
+
+/**
+ * Create a timer to connect to ProPresenter,
+ */
+instance.prototype.makeConnection = function() {
+	var self = this;
+
+	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.reconTimer = setInterval(function() {
+
+		if(self.config.host === '' || self.config.port === '') {
+			// Not configured properly.
+			return;
+		}
+
+		if (self.socket === undefined || self.currentStatus == self.STATE_ERROR || self.socket.readyState === 3 /*CLOSED*/) {
+			// Not connected. Try to connect again.
+			self.connectToProPresenter()
+		}
+
+	}, 5000);
+
+};
+
+
+/**
+ * Updates the cinnection status variable.
+ */
+instance.prototype.setConnectionStatus = function(status) {
+	var self = this;
+	self.currentState.connectionStatus = status;
+	self.updateVariables();
+};
+
+
+/**
+ * Makes the connection to ProPresenter.
+ */
+instance.prototype.connectToProPresenter = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
-		if (self.socket.readyState !== 3) {
+		if (self.socket.readyState !== 3 /*CLOSED*/) {
 			self.socket.terminate();
-			delete self.socket;
 		}
+		delete self.socket;
 	}
 
-	if (self.config.host) {
-		self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
+	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
-		if (self.reconTimer !== undefined) {
-			clearInterval(self.reconTimer);
-			delete self.reconTimer;
-		}
-		self.reconTimer = setInterval(self.recon.bind(self), 5000)
+	self.setConnectionStatus('Connecting');
 
-		self.socket.on('open', function open() {
-			self.socket.send(JSON.stringify({
-				password: self.config.pass,
-				protocol: "610",
-				action: "authenticate"
-			}));
-			self.status(self.STATE_OK);
+	self.socket.on('open', function open() {
+		self.socket.send(JSON.stringify({
+			password: self.config.pass,
+			protocol: "610",
+			action: "authenticate"
+		}));
+		self.status(self.STATE_OK);
 
-			debug(" WS STATE: " +self.socket.readyState)
+		debug(" WS STATE: " +self.socket.readyState)
+	});
 
-		});
+	self.socket.on('error', function (err) {
+		debug("Network error", err);
+		self.status(self.STATE_ERROR, err.message);
+		self.log('error',"Network error: " + err.message);
+	});
 
-		self.socket.on('error', function (err) {
-			debug("Network error", err);
-			self.status(self.STATE_ERROR, err.message);
-			self.log('error',"Network error: " + err.message);
-		});
+	self.socket.on('connect', function () {
+		self.status(self.STATE_OK);
+		debug("Connected");
+	});
 
-		self.socket.on('connect', function () {
-			self.status(self.STATE_OK);
-			debug("Connected");
-		});
+	self.socket.on('close', function(code, reason) {
+		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
+		// Reset the variables to reflect we lost connection.
+		self.emptyCurrentState();
+		self.updateVariables();
+	});
 
-		self.socket.on('message', function (message) {
-			console.log(message);
-		})
+	self.socket.on('message', function(message) {
+		// Handle the message received from ProPresenter
+		self.onWebSocketMessage(message);
+	});
 
-	}
 };
 
-instance.prototype.recon = function(){
-	var self = this;
 
-	if (self.currentStatus == self.STATE_ERROR) {
-		self.init_ws()
-	}
-}
-
+/**
+ * Register the available actions with Companion.
+ */
 instance.prototype.actions = function(system) {
 	var self = this;
 
@@ -192,6 +304,10 @@ instance.prototype.actions = function(system) {
 	});
 };
 
+
+/**
+ * Action triggered by Companion.
+ */
 instance.prototype.action = function(action) {
 	var self = this;
 	var opt = action.options
@@ -251,26 +367,94 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayHideMessage':
 			cmd = '{"action":"stageDisplayHideMessage"}';
 			break;
-		};
+	};
 
-		if (cmd !== undefined) {
+	if (cmd !== undefined) {
 
-			if (self.currentStatus !== self.STATE_ERROR) {
-					try {
-						self.socket.send(cmd);
-					}
-					catch (e) {
-						debug("NETWORK " + e)
-						self.status(self.STATE_ERROR, e);
-					}
-				}
-
-			else {
-				debug('Socket not connected :(');
-				self.status(self.STATE_ERROR);
-//				self.init_ws(); should not be needed
+		if (self.currentStatus !== self.STATE_ERROR) {
+			try {
+				self.socket.send(cmd);
+			}
+			catch (e) {
+				debug("NETWORK " + e)
+				self.status(self.STATE_ERROR, e);
+			}
+		} else {
+			debug('Socket not connected :(');
+			self.status(self.STATE_ERROR);
 		}
+	}
 
+};
+
+
+/**
+ * Received a message from ProPresenter
+ */
+instance.prototype.onWebSocketMessage = function(message) {
+	var self = this;
+
+	var objData = JSON.parse(message);
+
+	switch(objData.action) {
+		case 'authenticate':
+			if(objData.error === '') {
+				// Successfully authentation. Request current state.
+				self.setConnectionStatus('Connected');
+				self.getProPresenterState();
+			}
+			break;
+
+
+		case 'presentationTriggerIndex':
+		case 'presentationSlideIndex':
+			// Update the current slide index
+			self.currentState.currentSlide = parseInt(objData.slideIndex, 10) + 1;
+			break;
+
+
+		case 'presentationCurrent':
+			var objPresentation = objData.presentation;
+			self.currentState.presentationName = objPresentation.presentationName;
+			self.currentState.presentationPath = objPresentation.presentationCurrentLocation;
+
+			// Get the total number of slides in this presentation
+			var totalSlides = 0;
+			for(var i=0; i<objPresentation.presentationSlideGroups.length; i++) {
+				totalSlides += objPresentation.presentationSlideGroups[i].groupSlides.length;
+			}
+
+			self.currentState.totalSlides = totalSlides;
+			break;
+
+	}
+
+	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.presentationPath) {
+		// The presenationPath has changed. Update the path and request the information.
+		self.currentState.presentationPath = objData.presentationPath;
+		self.getProPresenterState();
+	}
+
+	self.updateVariables();
+
+};
+
+
+/**
+ * Requests the current state from ProPresenter.
+ */
+instance.prototype.getProPresenterState = function() {
+	var self = this;
+
+	self.socket.send(JSON.stringify({
+		action: 'presentationCurrent'
+	}));
+
+	if(self.currentState.currentSlide === '') {
+		// The currentSlide will be empty when the module first loads. Request it.
+		self.socket.send(JSON.stringify({
+			action: 'presentationSlideIndex'
+		}));
 	}
 
 };
