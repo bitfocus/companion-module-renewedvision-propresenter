@@ -486,7 +486,6 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.presentationPath) {
 		// The presenationPath has changed. Update the path and request the information.
-		self.currentState.presentationPath = objData.presentationPath;
 		self.getProPresenterState();
 	}
 
