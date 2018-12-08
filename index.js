@@ -188,7 +188,7 @@ instance.prototype.startConnectionTimer = function() {
 
 
 /**
- * Stops the recinnection timer.
+ * Stops the reconnection timer.
  */
 instance.prototype.stopConnectionTimer = function() {
 	var self = this;
@@ -202,7 +202,7 @@ instance.prototype.stopConnectionTimer = function() {
 
 
 /**
- * Updates the cinnection status variable.
+ * Updates the connection status variable.
  */
 instance.prototype.setConnectionVariable = function(status, updateLog) {
 	var self = this;
@@ -485,7 +485,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 	}
 
 	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.presentationPath) {
-		// The presenationPath has changed. Update the path and request the information.
+		// The presentationPath has changed. Update the path and request the information.
 		self.getProPresenterState();
 	}
 
