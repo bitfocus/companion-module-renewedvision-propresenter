@@ -128,19 +128,19 @@ instance.prototype.initVariables = function() {
 	var variables = [
 		{
 			label: 'Current slide number',
-			name:  'currentSlide'
+			name:  'current_slide'
 		},
 		{
 			label: 'Total slides in presentation',
-			name:  'totalSlides'
+			name:  'total_slides'
 		},
 		{
 			label: 'Presentation name',
-			name:  'presentationName'
+			name:  'presentation_name'
 		},
 		{
 			label: 'Connection status',
-			name:  'connectionStatus'
+			name:  'connection_status'
 		}
 	];
 
@@ -158,10 +158,10 @@ instance.prototype.initVariables = function() {
  */
 instance.prototype.updateVariables = function() {
 	var self = this;
-	self.setVariable('currentSlide', self.currentState.currentSlide);
-	self.setVariable('presentationName', self.currentState.presentationName);
-	self.setVariable('totalSlides', self.currentState.totalSlides);
-	self.setVariable('connectionStatus', self.currentState.connectionStatus);
+	self.setVariable('current_slide', self.currentState.currentSlide);
+	self.setVariable('presentation_name', self.currentState.presentationName);
+	self.setVariable('total_slides', self.currentState.totalSlides);
+	self.setVariable('connection_status', self.currentState.connectionStatus);
 };
 
 
