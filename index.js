@@ -22,7 +22,9 @@ function instance(system, id, config) {
 instance.prototype.currentState = { };
 
 
-// Return config fields for web config
+/**
+ * Return config fields for web config
+ */
 instance.prototype.config_fields = function () {
 	var self = this;
 	return [
@@ -57,18 +59,31 @@ instance.prototype.config_fields = function () {
 };
 
 
+/**
+ * The user changed the config options for this modules.
+ */
 instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
+	self.disconnectFromProPresenter();
+	self.connectToProPresenter();
+	self.startConnectionTimer();
 };
 
 
+/**
+ * Module is starting up.
+ */
 instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
 
-	self.makeConnection();
+	if(self.config.host !== '' && self.config.port !== '') {
+		self.connectToProPresenter();
+		self.startConnectionTimer();
+	}
+	
 	self.initVariables();
 };
 
@@ -79,19 +94,8 @@ instance.prototype.init = function() {
 instance.prototype.destroy = function() {
 	var self = this;
 
-	if (self.socket !== undefined) {
-		if (self.socket.readyState !== 3) {
-			self.socket.terminate();
-		}
-
-		self.socket.close();
-		delete self.socket;
-	}
-
-	if (self.reconTimer !== undefined) {
-		clearInterval(self.reconTimer);
-		delete self.reconTimer;
-	}
+	self.disconnectFromProPresenter();
+	self.stopConnectionTimer();
 
 	debug("destroy", self.id);
 };
@@ -104,6 +108,7 @@ instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
 	self.currentState = {
+		_wsConnected : false,
 		currentSlide : 'N/A',
 		presentationPath : '-',
 		presentationName : 'N/A',
@@ -163,20 +168,18 @@ instance.prototype.updateVariables = function() {
 /**
  * Create a timer to connect to ProPresenter,
  */
-instance.prototype.makeConnection = function() {
+instance.prototype.startConnectionTimer = function() {
 	var self = this;
+
+	// Stop the timer if it was already running
+	self.stopConnectionTimer();
 
 	// Create a reconnect timer to watch the socket. If disconnected try to connect.
 	self.reconTimer = setInterval(function() {
 
-		if(self.config.host === '' || self.config.port === '') {
-			// Not configured properly.
-			return;
-		}
-
-		if (self.socket === undefined || self.currentStatus == self.STATE_ERROR || self.socket.readyState === 3 /*CLOSED*/) {
+		if (self.socket === undefined || self.socket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
-			self.connectToProPresenter()
+			self.connectToProPresenter();
 		}
 
 	}, 5000);
@@ -185,31 +188,66 @@ instance.prototype.makeConnection = function() {
 
 
 /**
+ * Stops the recinnection timer.
+ */
+instance.prototype.stopConnectionTimer = function() {
+	var self = this;
+
+	if (self.reconTimer !== undefined) {
+		clearInterval(self.reconTimer);
+		delete self.reconTimer;
+	}
+
+};
+
+
+/**
  * Updates the cinnection status variable.
  */
-instance.prototype.setConnectionStatus = function(status) {
+instance.prototype.setConnectionVariable = function(status, updateLog) {
 	var self = this;
 	self.currentState.connectionStatus = status;
+
+	if(updateLog) {
+		self.log('info', "ProPresenter " + status);
+	}
 	self.updateVariables();
 };
 
 
 /**
- * Makes the connection to ProPresenter.
+ * Disconnect the websocket from ProPresenter, if connected.
  */
-instance.prototype.connectToProPresenter = function() {
+instance.prototype.disconnectFromProPresenter = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
+		// Disconnect if already connected
 		if (self.socket.readyState !== 3 /*CLOSED*/) {
 			self.socket.terminate();
 		}
 		delete self.socket;
 	}
 
+};
+
+
+/**
+ * Attempts to open a websocket connection with ProPresenter.
+ */
+instance.prototype.connectToProPresenter = function() {
+	var self = this;
+
+	// Disconnect if already connected
+	self.disconnectFromProPresenter();
+
+	if(self.config.host === '' || self.config.port === '') {
+		return;
+	}
+
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
-	self.setConnectionStatus('Connecting');
+	self.setConnectionVariable('Trying to connect', false);
 
 	self.socket.on('open', function open() {
 		self.socket.send(JSON.stringify({
@@ -217,26 +255,33 @@ instance.prototype.connectToProPresenter = function() {
 			protocol: "610",
 			action: "authenticate"
 		}));
-		self.status(self.STATE_OK);
 
-		debug(" WS STATE: " +self.socket.readyState)
 	});
 
 	self.socket.on('error', function (err) {
-		debug("Network error", err);
 		self.status(self.STATE_ERROR, err.message);
-		self.log('error',"Network error: " + err.message);
 	});
 
 	self.socket.on('connect', function () {
-		self.status(self.STATE_OK);
 		debug("Connected");
+		self.log('info', "Connected to " + self.config.host +":"+ self.config.port);
 	});
 
 	self.socket.on('close', function(code, reason) {
-		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
-		// Reset the variables to reflect we lost connection.
+		// Event is also triggered when a reconnect attempt fails.
+		// Reset the current state then abort; don't flood logs with disconnected notices.
+
+		var wasConnected = self.currentState._wsConnected;
 		self.emptyCurrentState();
+	
+		if(wasConnected === false) {
+			return;
+		}
+
+		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
+		self.setConnectionVariable('Disconnected', true);
+
+		// Reset the variables to reflect we lost connection.
 		self.updateVariables();
 	});
 
@@ -389,19 +434,29 @@ instance.prototype.action = function(action) {
 
 
 /**
- * Received a message from ProPresenter
+ * Received a message from ProPresenter.
  */
 instance.prototype.onWebSocketMessage = function(message) {
 	var self = this;
-
 	var objData = JSON.parse(message);
 
 	switch(objData.action) {
 		case 'authenticate':
-			if(objData.error === '') {
-				// Successfully authentation. Request current state.
-				self.setConnectionStatus('Connected');
+			if(objData.authenticated === 1) {
+				self.status(self.STATE_OK);
+				self.currentState._wsConnected = true;
+				// Successfully authenticated. Request current state.
+				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
+			} else {
+				self.status(self.STATE_ERROR);
+				// Bad password
+				self.log('warn', objData.error);
+				self.disconnectFromProPresenter();
+
+				// No point in trying to connect again. The user must either re-enable this
+				//	module or re-save the config changes to make another attempt.
+				self.stopConnectionTimer();
 			}
 			break;
 
@@ -446,11 +501,15 @@ instance.prototype.onWebSocketMessage = function(message) {
 instance.prototype.getProPresenterState = function() {
 	var self = this;
 
+	if(self.currentState._wsConnected === false) {
+		return;
+	}
+
 	self.socket.send(JSON.stringify({
 		action: 'presentationCurrent'
 	}));
 
-	if(self.currentState.currentSlide === '') {
+	if(self.currentState.currentSlide === 'N/A') {
 		// The currentSlide will be empty when the module first loads. Request it.
 		self.socket.send(JSON.stringify({
 			action: 'presentationSlideIndex'
