@@ -27,6 +27,16 @@ Stage Display Message | Shows the message on the stage display output
 Stage Display Hide Message | Removes the stage display message
 Stage Display Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
 
+
+# Dynamic Variables
+Variable | Description
+-------- | -----------
+$(propresenter:current_slide) | The number of the active slide (>= 1), or "N/A" if unknown.
+$(propresenter:total_slides)  | The total number of slides in the current document, or "N/A" if unknown.
+$(propresenter:presentation_name) | The name of the current presentation, or "N/A" if unknown.
+$(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected", "Connected", etc.).
+
+
 ----
 
 
