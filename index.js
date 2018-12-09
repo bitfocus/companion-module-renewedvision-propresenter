@@ -368,8 +368,13 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'slideNumber':
-			var nextIndex = parseInt(opt.slide)-1
-			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}';
+			var nextIndex = parseInt(opt.slide)-1;
+			cmd = JSON.stringify({
+				action: "presentationTriggerIndex",
+				slideIndex: nextIndex,
+				// Pro 6 for Windows requires 'presentationPath' to be set.
+				presentationPath: self.currentState.presentationPath
+			});
 			break;
 
 		case 'clearall':
@@ -471,7 +476,11 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
 			self.currentState.presentationName = objPresentation.presentationName;
-			self.currentState.presentationPath = objPresentation.presentationCurrentLocation;
+
+			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
+			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
+			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead. 
+			self.currentState.presentationPath = objData.presentationPath;
 
 			// Get the total number of slides in this presentation
 			var totalSlides = 0;
