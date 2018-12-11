@@ -34,7 +34,7 @@ Variable | Description
 $(propresenter:current_slide) | The number of the active slide (>= 1), or "N/A" if unknown.
 $(propresenter:total_slides)  | The total number of slides in the current document, or "N/A" if unknown.
 $(propresenter:presentation_name) | The name of the current presentation, or "N/A" if unknown.
-$(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected", "Connected", etc.).
+$(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected" or "Connected").
 
 
 ----
