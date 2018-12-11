@@ -14,7 +14,23 @@ function instance(system, id, config) {
 	return self;
 }
 
-// Return config fields for web config
+
+/**
+ * The current state of ProPresentation.
+ * Initially populated by emptyCurrentState().
+ * 
+ * .internal contains the internal state of the module
+ * .dynamicVariable contains the values of the dynamic variables
+ */
+instance.prototype.currentState = {
+	internal : {},
+	dynamicVariables : {},
+};
+
+
+/**
+ * Return config fields for web config
+ */
 instance.prototype.config_fields = function () {
 	var self = this;
 	return [
@@ -48,113 +64,262 @@ instance.prototype.config_fields = function () {
 	]
 };
 
+
+/**
+ * The user changed the config options for this modules.
+ */
 instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
+	self.disconnectFromProPresenter();
+	self.connectToProPresenter();
+	self.startConnectionTimer();
 };
 
+
+/**
+ * Module is starting up.
+ */
 instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
 
-	self.init_ws();
+	self.initVariables();
+
+	if(self.config.host !== '' && self.config.port !== '') {
+		self.connectToProPresenter();
+		self.startConnectionTimer();
+	}
+
 };
 
-// When module gets deleted
+
+/**
+ * When the module gets deleted.
+ */
 instance.prototype.destroy = function() {
 	var self = this;
 
-	if (self.socket !== undefined) {
-		if (self.socket.readyState !== 3) {
-			self.socket.terminate();
+	self.disconnectFromProPresenter();
+	self.stopConnectionTimer();
+
+	debug("destroy", self.id);
+};
+
+
+/**
+ * Initialize an empty current state.
+ */
+instance.prototype.emptyCurrentState = function() {
+	var self = this;
+
+	// Reinitialize the currentState variable, otherwise this variable (and the module's
+	//	state) will be shared between multiple instances of this module.
+	self.currentState = {};
+
+	// The internal state of the connection to ProPresenter
+	self.currentState.internal = {
+		wsConnected: false,
+		presentationPath: '-',
+	};
+
+	// The dynamic variable exposed to Companion
+	self.currentState.dynamicVariables = {
+		current_slide: 'N/A',
+		total_slides: 'N/A',
+		presentation_name: 'N/A',
+		connection_status: 'Disconnected',
+	};
+
+	// Update Companion with the default state if each dynamic variable.
+	Object.keys(self.currentState.dynamicVariables).forEach(function(key) {
+		self.updateVariable(key, self.currentState.dynamicVariables[key]);
+	});
+
+};
+
+
+/**
+ * Initialize the available variables.
+ */
+instance.prototype.initVariables = function() {
+	var self = this;
+
+	var variables = [
+		{
+			label: 'Current slide number',
+			name:  'current_slide'
+		},
+		{
+			label: 'Total slides in presentation',
+			name:  'total_slides'
+		},
+		{
+			label: 'Presentation name',
+			name:  'presentation_name'
+		},
+		{
+			label: 'Connection status',
+			name:  'connection_status'
+		}
+	];
+
+	self.setVariableDefinitions(variables);
+
+	// Initialize the current state and update Companion with the variables.
+	self.emptyCurrentState();
+
+};
+
+
+/**
+ * Updates the dynamic variable and records the internal state of that variable.
+ * 
+ * Will log a warning if the variable doesn't exist.
+ */
+instance.prototype.updateVariable = function(name, value) {
+	var self = this;
+
+	if(self.currentState.dynamicVariables[name] === undefined) {
+		self.log('warn', "Variable " + name + " does not exist");
+		return;
+	}
+
+	self.currentState.dynamicVariables[name] = value;
+	self.setVariable(name, value);
+
+};
+
+
+/**
+ * Create a timer to connect to ProPresenter.
+ */
+instance.prototype.startConnectionTimer = function() {
+	var self = this;
+
+	// Stop the timer if it was already running
+	self.stopConnectionTimer();
+
+	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.reconTimer = setInterval(function() {
+
+		if (self.socket === undefined || self.socket.readyState === 3 /*CLOSED*/) {
+			// Not connected. Try to connect again.
+			self.connectToProPresenter();
 		}
 
-		self.socket.close();
-		delete self.socket;
-	}
+	}, 5000);
 
-	if (self.indexTimer !== undefined) {
-		clearInterval(self.indexTimer);
-		delete self.indexTimer;
-	}
+};
+
+
+/**
+ * Stops the reconnection timer.
+ */
+instance.prototype.stopConnectionTimer = function() {
+	var self = this;
 
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer);
 		delete self.reconTimer;
 	}
 
-	debug("destroy", self.id);
 };
 
-instance.prototype.init_ws = function() {
+
+/**
+ * Updates the connection status variable.
+ */
+instance.prototype.setConnectionVariable = function(status, updateLog) {
+	var self = this;
+
+	self.updateVariable('connection_status', status);
+
+	if(updateLog) {
+		self.log('info', "ProPresenter " + status);
+	}
+
+};
+
+
+/**
+ * Disconnect the websocket from ProPresenter, if connected.
+ */
+instance.prototype.disconnectFromProPresenter = function() {
 	var self = this;
 
 	if (self.socket !== undefined) {
-		if (self.socket.readyState !== 3) {
+		// Disconnect if already connected
+		if (self.socket.readyState !== 3 /*CLOSED*/) {
 			self.socket.terminate();
-			delete self.socket;
 		}
+		delete self.socket;
 	}
 
-	if (self.config.host) {
-		self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
-
-		if (self.reconTimer !== undefined) {
-			clearInterval(self.reconTimer);
-			delete self.reconTimer;
-		}
-		self.reconTimer = setInterval(self.recon.bind(self), 5000)
-
-		self.socket.on('open', function open() {
-			self.socket.send('{"pwd":'+self.config.pass+',"ptl":610,"acn":"ath"}')
-			self.status(self.STATE_OK);
-
-			debug(" WS STATE: " +self.socket.readyState)
-
-			if (self.indexTimer !== undefined) {
-				clearInterval(self.indexTimer);
-				delete self.indexTimer;
-			}
-
-			self.indexTimer = setInterval(self.index.bind(self), 250)
-		});
-
-		self.socket.on('error', function (err) {
-			debug("Network error", err);
-			self.status(self.STATE_ERROR, err.message);
-			self.log('error',"Network error: " + err.message);
-		});
-
-		self.socket.on('connect', function () {
-			self.status(self.STATE_OK);
-			debug("Connected");
-		})
-
-	}
 };
 
-instance.prototype.index = function(){
-	var self = this;
-	if (self.currentStatus !== self.STATE_ERROR) {
-		try {
-			self.socket.send('{"action":"presentationSlideIndex"}');
-		}
-		catch (e) {
-			debug("NETWORK " + e)
-			self.status(self.STATE_ERROR, e);
-		}
-	}
-}
 
-instance.prototype.recon = function(){
+/**
+ * Attempts to open a websocket connection with ProPresenter.
+ */
+instance.prototype.connectToProPresenter = function() {
 	var self = this;
 
-	if (self.currentStatus == self.STATE_ERROR) {
-		self.init_ws()
-	}
-}
+	// Disconnect if already connected
+	self.disconnectFromProPresenter();
 
+	if(self.config.host === '' || self.config.port === '') {
+		return;
+	}
+
+	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
+
+	self.socket.on('open', function open() {
+		self.socket.send(JSON.stringify({
+			password: self.config.pass,
+			protocol: "610",
+			action: "authenticate"
+		}));
+
+	});
+
+	self.socket.on('error', function (err) {
+		self.status(self.STATE_ERROR, err.message);
+	});
+
+	self.socket.on('connect', function () {
+		debug("Connected");
+		self.log('info', "Connected to " + self.config.host +":"+ self.config.port);
+	});
+
+	self.socket.on('close', function(code, reason) {
+		// Event is also triggered when a reconnect attempt fails.
+		// Reset the current state then abort; don't flood logs with disconnected notices.
+
+		var wasConnected = self.currentState.internal.wsConnected;
+		self.emptyCurrentState();
+	
+		if(wasConnected === false) {
+			return;
+		}
+
+		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
+		self.setConnectionVariable('Disconnected', true);
+
+	});
+
+	self.socket.on('message', function(message) {
+		// Handle the message received from ProPresenter
+		self.onWebSocketMessage(message);
+	});
+
+};
+
+
+/**
+ * Register the available actions with Companion.
+ */
 instance.prototype.actions = function(system) {
 	var self = this;
 
@@ -208,6 +373,10 @@ instance.prototype.actions = function(system) {
 	});
 };
 
+
+/**
+ * Action triggered by Companion.
+ */
 instance.prototype.action = function(action) {
 	var self = this;
 	var opt = action.options
@@ -223,8 +392,13 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'slideNumber':
-			var nextIndex = parseInt(opt.slide)-1
-			cmd = '{"action":"presentationTriggerIndex","slideIndex":'+nextIndex+',"presentationPath":" "}';
+			var nextIndex = parseInt(opt.slide)-1;
+			cmd = JSON.stringify({
+				action: "presentationTriggerIndex",
+				slideIndex: nextIndex,
+				// Pro 6 for Windows requires 'presentationPath' to be set.
+				presentationPath: self.currentState.internal.presentationPath
+			});
 			break;
 
 		case 'clearall':
@@ -267,26 +441,112 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayHideMessage':
 			cmd = '{"action":"stageDisplayHideMessage"}';
 			break;
-		};
+	};
 
-		if (cmd !== undefined) {
+	if (cmd !== undefined) {
 
-			if (self.currentStatus !== self.STATE_ERROR) {
-					try {
-						self.socket.send(cmd);
-					}
-					catch (e) {
-						debug("NETWORK " + e)
-						self.status(self.STATE_ERROR, e);
-					}
-				}
-
-			else {
-				debug('Socket not connected :(');
-				self.status(self.STATE_ERROR);
-//				self.init_ws(); should not be needed
+		if (self.currentStatus !== self.STATE_ERROR) {
+			try {
+				self.socket.send(cmd);
+			}
+			catch (e) {
+				debug("NETWORK " + e)
+				self.status(self.STATE_ERROR, e);
+			}
+		} else {
+			debug('Socket not connected :(');
+			self.status(self.STATE_ERROR);
 		}
+	}
 
+};
+
+
+/**
+ * Received a message from ProPresenter.
+ */
+instance.prototype.onWebSocketMessage = function(message) {
+	var self = this;
+	var objData = JSON.parse(message);
+
+	switch(objData.action) {
+		case 'authenticate':
+			if(objData.authenticated === 1) {
+				self.status(self.STATE_OK);
+				self.currentState.internal.wsConnected = true;
+				// Successfully authenticated. Request current state.
+				self.setConnectionVariable('Connected', true);
+				self.getProPresenterState();
+			} else {
+				self.status(self.STATE_ERROR);
+				// Bad password
+				self.log('warn', objData.error);
+				self.disconnectFromProPresenter();
+
+				// No point in trying to connect again. The user must either re-enable this
+				//	module or re-save the config changes to make another attempt.
+				self.stopConnectionTimer();
+			}
+			break;
+
+
+		case 'presentationTriggerIndex':
+		case 'presentationSlideIndex':
+			// Update the current slide index
+			this.updateVariable('current_slide', parseInt(objData.slideIndex, 10) + 1);
+			break;
+
+
+		case 'presentationCurrent':
+			var objPresentation = objData.presentation;
+
+			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
+			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
+			this.updateVariable('presentation_name', presentationName);
+
+			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
+			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
+			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead. 
+			self.currentState.internal.presentationPath = objData.presentationPath;
+
+			// Get the total number of slides in this presentation
+			var totalSlides = 0;
+			for(var i=0; i<objPresentation.presentationSlideGroups.length; i++) {
+				totalSlides += objPresentation.presentationSlideGroups[i].groupSlides.length;
+			}
+
+			self.updateVariable('total_slides', totalSlides);
+			break;
+
+	}
+
+	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
+		// The presentationPath has changed. Update the path and request the information.
+		self.getProPresenterState();
+	}
+
+};
+
+
+/**
+ * Requests the current state from ProPresenter.
+ */
+instance.prototype.getProPresenterState = function() {
+	var self = this;
+
+	if(self.currentState.internal.wsConnected === false) {
+		return;
+	}
+
+	self.socket.send(JSON.stringify({
+		action: 'presentationCurrent'
+	}));
+
+	if(self.currentState.dynamicVariables.current_slide === 'N/A') {
+		// The currentSlide will be empty when the module first loads. Request it.
+		self.socket.send(JSON.stringify({
+			action: 'presentationSlideIndex'
+		}));
 	}
 
 };
