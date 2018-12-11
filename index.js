@@ -18,8 +18,14 @@ function instance(system, id, config) {
 /**
  * The current state of ProPresentation.
  * Initially populated by emptyCurrentState().
+ * 
+ * .internal contains the internal state of the module
+ * .dynamicVariable contains the values of the dynamic variables
  */
-instance.prototype.currentState = { };
+instance.prototype.currentState = {
+	internal : {},
+	dynamicVariables : {},
+};
 
 
 /**
@@ -79,12 +85,13 @@ instance.prototype.init = function() {
 	debug = self.debug;
 	log = self.log;
 
+	self.initVariables();
+
 	if(self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
 		self.startConnectionTimer();
 	}
-	
-	self.initVariables();
+
 };
 
 
@@ -107,20 +114,30 @@ instance.prototype.destroy = function() {
 instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
-	self.currentState = {
-		_wsConnected : false,
-		currentSlide : 'N/A',
-		presentationPath : '-',
-		presentationName : 'N/A',
-		totalSlides : 'N/A',
-		connectionStatus : 'Not connected'
+	// The internal state of the connection to ProPresenter
+	self.currentState.internal = {
+		wsConnected: false,
+		presentationPath: '-',
 	};
+
+	// The dynamic variable exposed to Companion
+	self.currentState.dynamicVariables = {
+		current_slide: 'N/A',
+		total_slides: 'N/A',
+		presentation_name: 'N/A',
+		connection_status: 'Disconnected',
+	};
+
+	// Update Companion with the default state if each dynamic variable.
+	Object.keys(self.currentState.dynamicVariables).forEach(function(key) {
+		self.updateVariable(key, self.currentState.dynamicVariables[key]);
+	});
 
 };
 
 
 /**
- * Initialze the available variables.
+ * Initialize the available variables.
  */
 instance.prototype.initVariables = function() {
 	var self = this;
@@ -148,25 +165,31 @@ instance.prototype.initVariables = function() {
 
 	// Initialize the current state and update Companion with the variables.
 	self.emptyCurrentState();
-	self.updateVariables();
 
 };
 
 
 /**
- * Update Companion with the current state.
+ * Updates the dynamic variable and records the internal state of that variable.
+ * 
+ * Will log a warning if the variable doesn't exist.
  */
-instance.prototype.updateVariables = function() {
+instance.prototype.updateVariable = function(name, value) {
 	var self = this;
-	self.setVariable('current_slide', self.currentState.currentSlide);
-	self.setVariable('presentation_name', self.currentState.presentationName);
-	self.setVariable('total_slides', self.currentState.totalSlides);
-	self.setVariable('connection_status', self.currentState.connectionStatus);
+
+	if(self.currentState.dynamicVariables[name] === undefined) {
+		self.log('warn', "Variable " + name + " does not exist");
+		return;
+	}
+
+	self.currentState.dynamicVariables[name] = value;
+	self.setVariable(name, value);
+
 };
 
 
 /**
- * Create a timer to connect to ProPresenter,
+ * Create a timer to connect to ProPresenter.
  */
 instance.prototype.startConnectionTimer = function() {
 	var self = this;
@@ -206,12 +229,13 @@ instance.prototype.stopConnectionTimer = function() {
  */
 instance.prototype.setConnectionVariable = function(status, updateLog) {
 	var self = this;
-	self.currentState.connectionStatus = status;
+
+	self.updateVariable('connection_status', status);
 
 	if(updateLog) {
 		self.log('info', "ProPresenter " + status);
 	}
-	self.updateVariables();
+
 };
 
 
@@ -247,8 +271,6 @@ instance.prototype.connectToProPresenter = function() {
 
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
-	self.setConnectionVariable('Trying to connect', false);
-
 	self.socket.on('open', function open() {
 		self.socket.send(JSON.stringify({
 			password: self.config.pass,
@@ -271,7 +293,7 @@ instance.prototype.connectToProPresenter = function() {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 
-		var wasConnected = self.currentState._wsConnected;
+		var wasConnected = self.currentState.internal.wsConnected;
 		self.emptyCurrentState();
 	
 		if(wasConnected === false) {
@@ -281,8 +303,6 @@ instance.prototype.connectToProPresenter = function() {
 		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
 		self.setConnectionVariable('Disconnected', true);
 
-		// Reset the variables to reflect we lost connection.
-		self.updateVariables();
 	});
 
 	self.socket.on('message', function(message) {
@@ -373,7 +393,7 @@ instance.prototype.action = function(action) {
 				action: "presentationTriggerIndex",
 				slideIndex: nextIndex,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
-				presentationPath: self.currentState.presentationPath
+				presentationPath: self.currentState.internal.presentationPath
 			});
 			break;
 
@@ -449,7 +469,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'authenticate':
 			if(objData.authenticated === 1) {
 				self.status(self.STATE_OK);
-				self.currentState._wsConnected = true;
+				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
@@ -469,18 +489,18 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'presentationTriggerIndex':
 		case 'presentationSlideIndex':
 			// Update the current slide index
-			self.currentState.currentSlide = parseInt(objData.slideIndex, 10) + 1;
+			this.updateVariable('current_slide', parseInt(objData.slideIndex, 10) + 1);
 			break;
 
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
-			self.currentState.presentationName = objPresentation.presentationName;
+			this.updateVariable('presentation_name', objPresentation.presentationName);
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
 			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead. 
-			self.currentState.presentationPath = objData.presentationPath;
+			self.currentState.internal.presentationPath = objData.presentationPath;
 
 			// Get the total number of slides in this presentation
 			var totalSlides = 0;
@@ -488,17 +508,15 @@ instance.prototype.onWebSocketMessage = function(message) {
 				totalSlides += objPresentation.presentationSlideGroups[i].groupSlides.length;
 			}
 
-			self.currentState.totalSlides = totalSlides;
+			self.updateVariable('total_slides', totalSlides);
 			break;
 
 	}
 
-	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.presentationPath) {
+	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
 		// The presentationPath has changed. Update the path and request the information.
 		self.getProPresenterState();
 	}
-
-	self.updateVariables();
 
 };
 
@@ -509,7 +527,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 instance.prototype.getProPresenterState = function() {
 	var self = this;
 
-	if(self.currentState._wsConnected === false) {
+	if(self.currentState.internal.wsConnected === false) {
 		return;
 	}
 
@@ -517,7 +535,7 @@ instance.prototype.getProPresenterState = function() {
 		action: 'presentationCurrent'
 	}));
 
-	if(self.currentState.currentSlide === 'N/A') {
+	if(self.currentState.dynamicVariables.current_slide === 'N/A') {
 		// The currentSlide will be empty when the module first loads. Request it.
 		self.socket.send(JSON.stringify({
 			action: 'presentationSlideIndex'
