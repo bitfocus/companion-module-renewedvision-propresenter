@@ -495,7 +495,10 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
-			this.updateVariable('presentation_name', objPresentation.presentationName);
+
+			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
+			var presentationName = objPresentation.presentationName.replace('.pro6', '');
+			this.updateVariable('presentation_name', presentationName);
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
