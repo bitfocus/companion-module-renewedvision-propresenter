@@ -114,6 +114,10 @@ instance.prototype.destroy = function() {
 instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
+	// Reinitialize the currentState variable, otherwise this variable (and the module's
+	//	state) will be shared between multiple instances of this module.
+	self.currentState = {};
+
 	// The internal state of the connection to ProPresenter
 	self.currentState.internal = {
 		wsConnected: false,
