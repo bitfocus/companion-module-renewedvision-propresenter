@@ -8,7 +8,7 @@ Command | Description
 ------- | -----------
 Next Slide | Advances to the next slide in the current document. If at the end of a document, will advance to the start of the next document in the playlist.
 Previous Slide | Moves to the previous slide in the current document. If at the start of a document, will move to the start of the previous document in the playlist.
-Jump to Slide | Moves to the slide number
+Specific Slide | Moves to that slide number. A slide number of `0` will trigger the current slide, which can be used to bring back a slide that was cleared using `Clear All` or `Clear Slide`.
 
 ## Clear/Logo
 Command | Description

@@ -122,6 +122,7 @@ instance.prototype.emptyCurrentState = function() {
 	self.currentState.internal = {
 		wsConnected: false,
 		presentationPath: '-',
+		slideIndex: 0,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -392,10 +393,19 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'slideNumber':
-			var nextIndex = parseInt(opt.slide)-1;
+			var index = parseInt(opt.slide) - 1;
+
+			if(index < 0) {
+				// Negative slide indexes are invalid. In such a case use the current slideIndex.
+				// This allows the "Specific Slide", when set to 0 (index is -1), to trigger the
+				//  current slide again. Can be used to bring back a slide after using an action
+				//  like 'clearAll' or 'clearText'. 
+				index = self.currentState.internal.slideIndex;
+			}
+
 			cmd = JSON.stringify({
 				action: "presentationTriggerIndex",
-				slideIndex: nextIndex,
+				slideIndex: index,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: self.currentState.internal.presentationPath
 			});
@@ -492,8 +502,11 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 		case 'presentationTriggerIndex':
 		case 'presentationSlideIndex':
-			// Update the current slide index
-			this.updateVariable('current_slide', parseInt(objData.slideIndex, 10) + 1);
+			// Update the current slide index.
+			var slideIndex = parseInt(objData.slideIndex, 10);
+			
+			self.currentState.internal.slideIndex = slideIndex;
+			self.updateVariable('current_slide', slideIndex + 1);
 			break;
 
 
@@ -502,7 +515,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
 			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
-			this.updateVariable('presentation_name', presentationName);
+			self.updateVariable('presentation_name', presentationName);
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
