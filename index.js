@@ -540,6 +540,15 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
 
+			// If playing from the library on Mac, the presentationPath here will be the full
+			//	path to the document on the user's computer ('/Users/JohnDoe/.../filename.pro6'),
+			//  which differs from objData.presentationPath returned by an action like 
+			//  'presentationTriggerIndex' or 'presentationSlideIndex' which only contains the
+			//  filename.
+			// These two values need to match or we'll re-request 'presentationCurrent' on every
+			//  slide change. Strip off everything before and including the final '/'.
+			objData.presentationPath = objData.presentationPath.replace(/.*\//, '');
+
 			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
 			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
 			self.updateVariable('presentation_name', presentationName);
