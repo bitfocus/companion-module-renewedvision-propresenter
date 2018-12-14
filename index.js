@@ -423,7 +423,7 @@ instance.prototype.action = function(action) {
 			var presentationPath = self.currentState.internal.presentationPath;
 			if(opt.path.match(/^\d+$/) !== null) {
 				// Is a relative presentation path. Refers to the current playlist, so extract it
-				//	from the current presentationPath and append the opt.path to it.
+				//  from the current presentationPath and append the opt.path to it.
 				presentationPath = presentationPath.split(':')[0] + ':' + opt.path;
 			} else if (opt.path !== '') {
 				// Use the path provided. The option's regex validated the format.
