@@ -331,12 +331,20 @@ instance.prototype.actions = function(system) {
 			label: 'Specific Slide',
 			options: [
 				{
-					 type: 'textinput',
-					 label: 'Slide Number',
-					 id: 'slide',
-					 default: 1,
-					 regex: self.REGEX_SIGNED_NUMBER
-				}
+					type: 'textinput',
+					label: 'Slide Number',
+					id: 'slide',
+					default: 1,
+					regex: self.REGEX_SIGNED_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Presentation Path',
+					id: 'path',
+					default: '',
+					tooltip: 'See the README for more information',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				},
 			]
 		},
 		'clearall': { label: 'Clear All' },
@@ -393,21 +401,40 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'slideNumber':
-			var index = parseInt(opt.slide) - 1;
+			var index = self.currentState.internal.slideIndex;
+
+			if(opt.slide[0] === '-' || opt.slide[0] === '+') {
+				// Move back/forward a relative number of slides.
+				index += parseInt(opt.slide.substring(1), 10) * ((opt.slide[0] === '+') ? 1 : -1);
+				index = Math.max(0, index);
+			} else {
+				// Absolute slide number. Convert to an index.
+				index = parseInt(opt.slide) - 1;
+			}
 
 			if(index < 0) {
 				// Negative slide indexes are invalid. In such a case use the current slideIndex.
-				// This allows the "Specific Slide", when set to 0 (index is -1), to trigger the
-				//  current slide again. Can be used to bring back a slide after using an action
-				//  like 'clearAll' or 'clearText'. 
+				// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
+				//  trigger the current slide again. Can be used to bring back a slide after using
+				//  an action like 'clearAll' or 'clearText'. 
 				index = self.currentState.internal.slideIndex;
+			}
+
+			var presentationPath = self.currentState.internal.presentationPath;
+			if(opt.path.match(/^\d+$/) !== null) {
+				// Is a relative presentation path. Refers to the current playlist, so extract it
+				//	from the current presentationPath and append the opt.path to it.
+				presentationPath = presentationPath.split(':')[0] + ':' + opt.path;
+			} else if (opt.path !== '') {
+				// Use the path provided. The option's regex validated the format.
+				presentationPath = opt.path;
 			}
 
 			cmd = JSON.stringify({
 				action: "presentationTriggerIndex",
 				slideIndex: index,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
-				presentationPath: self.currentState.internal.presentationPath
+				presentationPath: presentationPath
 			});
 			break;
 
@@ -504,7 +531,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'presentationSlideIndex':
 			// Update the current slide index.
 			var slideIndex = parseInt(objData.slideIndex, 10);
-			
+
 			self.currentState.internal.slideIndex = slideIndex;
 			self.updateVariable('current_slide', slideIndex + 1);
 			break;
