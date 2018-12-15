@@ -122,6 +122,7 @@ instance.prototype.emptyCurrentState = function() {
 	self.currentState.internal = {
 		wsConnected: false,
 		presentationPath: '-',
+		slideIndex: 0,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -330,12 +331,20 @@ instance.prototype.actions = function(system) {
 			label: 'Specific Slide',
 			options: [
 				{
-					 type: 'textinput',
-					 label: 'Slide Number',
-					 id: 'slide',
-					 default: 1,
-					 regex: self.REGEX_SIGNED_NUMBER
-				}
+					type: 'textinput',
+					label: 'Slide Number',
+					id: 'slide',
+					default: 1,
+					regex: self.REGEX_SIGNED_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Presentation Path',
+					id: 'path',
+					default: '',
+					tooltip: 'See the README for more information',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				},
 			]
 		},
 		'clearall': { label: 'Clear All' },
@@ -392,12 +401,40 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'slideNumber':
-			var nextIndex = parseInt(opt.slide)-1;
+			var index = self.currentState.internal.slideIndex;
+
+			if(opt.slide[0] === '-' || opt.slide[0] === '+') {
+				// Move back/forward a relative number of slides.
+				index += parseInt(opt.slide.substring(1), 10) * ((opt.slide[0] === '+') ? 1 : -1);
+				index = Math.max(0, index);
+			} else {
+				// Absolute slide number. Convert to an index.
+				index = parseInt(opt.slide) - 1;
+			}
+
+			if(index < 0) {
+				// Negative slide indexes are invalid. In such a case use the current slideIndex.
+				// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
+				//  trigger the current slide again. Can be used to bring back a slide after using
+				//  an action like 'clearAll' or 'clearText'. 
+				index = self.currentState.internal.slideIndex;
+			}
+
+			var presentationPath = self.currentState.internal.presentationPath;
+			if(opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
+				// Is a relative presentation path. Refers to the current playlist, so extract it
+				//  from the current presentationPath and append the opt.path to it.
+				presentationPath = presentationPath.split(':')[0] + ':' + opt.path;
+			} else if (opt.path !== '') {
+				// Use the path provided. The option's regex validated the format.
+				presentationPath = opt.path;
+			}
+
 			cmd = JSON.stringify({
 				action: "presentationTriggerIndex",
-				slideIndex: nextIndex,
+				slideIndex: index,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
-				presentationPath: self.currentState.internal.presentationPath
+				presentationPath: presentationPath
 			});
 			break;
 
@@ -492,17 +529,29 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 		case 'presentationTriggerIndex':
 		case 'presentationSlideIndex':
-			// Update the current slide index
-			this.updateVariable('current_slide', parseInt(objData.slideIndex, 10) + 1);
+			// Update the current slide index.
+			var slideIndex = parseInt(objData.slideIndex, 10);
+
+			self.currentState.internal.slideIndex = slideIndex;
+			self.updateVariable('current_slide', slideIndex + 1);
 			break;
 
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
 
+			// If playing from the library on Mac, the presentationPath here will be the full
+			//	path to the document on the user's computer ('/Users/JohnDoe/.../filename.pro6'),
+			//  which differs from objData.presentationPath returned by an action like 
+			//  'presentationTriggerIndex' or 'presentationSlideIndex' which only contains the
+			//  filename.
+			// These two values need to match or we'll re-request 'presentationCurrent' on every
+			//  slide change. Strip off everything before and including the final '/'.
+			objData.presentationPath = objData.presentationPath.replace(/.*\//, '');
+
 			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
 			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
-			this.updateVariable('presentation_name', presentationName);
+			self.updateVariable('presentation_name', presentationName);
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
