@@ -1,20 +1,26 @@
 {
-  "name": "renewedvision-propresenter",
-  "legacy": [ "propresenter6", "propresenter" ],
-  "version": "2.1.0",
-  "api_version": "1.0.0",
-  "keywords": [ "Software", "Presentation" ],
-  "manufacturer": "Renewed Vision",
-  "product": "ProPresenter",
-  "shortname": "propresenter",
-  "description": "A Companion Module for ProPresenter",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "Oliver Herrmann <oliver@monoxane.com>",
-  "license": "MIT",
-  "dependencies": {
-    "websocket": "^1.0.26"
-  }
+	"name": "renewedvision-propresenter",
+	"legacy": [
+		"propresenter6",
+		"propresenter"
+	],
+	"version": "2.1.1",
+	"api_version": "1.0.0",
+	"keywords": [
+		"Software",
+		"Presentation"
+	],
+	"manufacturer": "Renewed Vision",
+	"product": "ProPresenter",
+	"shortname": "propresenter",
+	"description": "A Companion Module for ProPresenter",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "Oliver Herrmann <oliver@monoxane.com>",
+	"license": "MIT",
+	"dependencies": {
+		"websocket": "^1.0.26"
+	}
 }
