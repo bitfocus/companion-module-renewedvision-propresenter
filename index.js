@@ -416,8 +416,15 @@ instance.prototype.actions = function(system) {
 					type: 'textinput',
 					label: 'Clock Time',
 					id: 'clockTime',
-					default: "02:00:00",
+					default: "00:05:00",
 				},
+			 	{
+				 	type: 'dropdown',
+				 	label: 'Over Run',
+				 	id: 'clockOverRun',
+					default: 'false',
+				 	choices: [ { id: 'false', label: 'False' }, { id: 'true', label: 'True' } ]
+			 	},
 			]
 		},
 
@@ -531,7 +538,7 @@ instance.prototype.action = function(action) {
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
 			var clockTime = opt.clockTime;
-			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'"}';
+			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'","clockOverrun":"'+opt.clockOverRun+'"}';
 			break;
 	};
 
