@@ -377,7 +377,49 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-		'stageDisplayHideMessage': { label: 'Stage Display Hide Message' }
+		'stageDisplayHideMessage': { label: 'Stage Display Hide Message' },
+		'clockStart': {
+			label: 'Start Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'clockReset': {
+			label: 'Reset Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'clockUpdate': {
+			label: 'Update Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					regex: self.REGEX_SIGNED_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Clock Time',
+					id: 'clockTime',
+					default: "02:00:00",
+				},
+			]
+		},
 
 	});
 };
@@ -477,6 +519,19 @@ instance.prototype.action = function(action) {
 
 		case 'stageDisplayHideMessage':
 			cmd = '{"action":"stageDisplayHideMessage"}';
+			break;
+		case 'clockStart':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockStart","clockIndex":"'+clockIndex+'"}';
+			break;
+		case 'clockReset':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockReset","clockIndex":"'+clockIndex+'"}';
+			break;
+		case 'clockUpdate':
+			var clockIndex = parseInt(opt.clockIndex);
+			var clockTime = opt.clockTime;
+			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'"}';
 			break;
 	};
 
