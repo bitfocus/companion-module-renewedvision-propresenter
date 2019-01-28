@@ -390,6 +390,18 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
+		'clockStop': {
+			label: 'Stop Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
 		'clockReset': {
 			label: 'Reset Clock',
 			options: [
@@ -403,7 +415,7 @@ instance.prototype.actions = function(system) {
 			]
 		},
 		'clockUpdate': {
-			label: 'Update Clock',
+			label: 'Update CountDown Clock',
 			options: [
 				{
 					type: 'textinput',
@@ -531,6 +543,10 @@ instance.prototype.action = function(action) {
 			var clockIndex = parseInt(opt.clockIndex);
 			cmd = '{"action":"clockStart","clockIndex":"'+clockIndex+'"}';
 			break;
+		case 'clockStop':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockStop","clockIndex":"'+clockIndex+'"}';
+			break;	
 		case 'clockReset':
 			var clockIndex = parseInt(opt.clockIndex);
 			cmd = '{"action":"clockReset","clockIndex":"'+clockIndex+'"}';
@@ -538,7 +554,7 @@ instance.prototype.action = function(action) {
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
 			var clockTime = opt.clockTime;
-			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'","clockOverrun":"'+opt.clockOverRun+'"}';
+			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"0"}';
 			break;
 	};
 
