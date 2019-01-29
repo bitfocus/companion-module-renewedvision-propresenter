@@ -429,6 +429,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Time',
 					id: 'clockTime',
 					default: "00:05:00",
+					regex: '/^\\d*:?\\d*:?\\d*$/'
 				},
 			 	{
 				 	type: 'dropdown',
