@@ -65,6 +65,13 @@ Stage Display Message | Shows the message on the stage display output
 Stage Display Hide Message | Removes the stage display message
 Stage Display Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
 
+## Clocks (Timers)
+Command | Description
+------- | -----------
+Start Clock | Starts clock (timer) - identified by index (0 based)
+Stop Clock | Stops clock (timer) - identified by index (0 based)
+Reset Clock | Resets clock (timer) - identified by index (0 based)
+Update Clock | Update count down timer with new value - identified by index (0 based).  If you send this command to a non-countdown clock it will be converted to a countdown clock. Clock Time is the new value for the countdown clock in the format HH:MM:SS.  You may optionally use a shorthand if you like where you leave can out any values and they will default to zero - you can even leave out one or both of the : to enter just mins and/or seconds.
 
 # Dynamic Variables
 Variable | Description
