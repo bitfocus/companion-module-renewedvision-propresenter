@@ -71,7 +71,13 @@ Command | Description
 Start Clock | Starts clock (timer) - identified by index (0 based)
 Stop Clock | Stops clock (timer) - identified by index (0 based)
 Reset Clock | Resets clock (timer) - identified by index (0 based)
-Update Clock | Update count down timer with new value - identified by index (0 based).  If you send this command to a non-countdown clock it will be converted to a countdown clock. Clock Time is the new value for the countdown clock in the format HH:MM:SS.  You may optionally use a shorthand if you like where you leave can out any values and they will default to zero - you can even leave out one or both of the : to enter just mins and/or seconds.
+Update Clock | Update count-down timer with new duration - identified by index (0 based).  Note that if you send this command to a timer/clock that is not a count-down timer it will be converted to a count-down timer! "Clock Time" is the new duration value for the count-down timer in the format HH:MM:SS.  You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can also change whether or not the countdown timer is able to over-run.
+
+**Tip: One-Touch Preset CountDown Timers.**
+If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
+1. *Update CountDown Clock* - Set new duration value of the count-down timer. This new value will be used when the timer is next reset.
+2. *Reset Clock* - Stop the count-down timer if running and reset current value back to duration. You  might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
+3. *Start Clock* - Start the count-down timer running. You might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
 
 # Dynamic Variables
 Variable | Description
