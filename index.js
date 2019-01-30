@@ -386,6 +386,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Number',
 					id: 'clockIndex',
 					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 					regex: self.REGEX_SIGNED_NUMBER
 				}
 			]
@@ -398,6 +399,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Number',
 					id: 'clockIndex',
 					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 					regex: self.REGEX_SIGNED_NUMBER
 				}
 			]
@@ -410,6 +412,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Number',
 					id: 'clockIndex',
 					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 					regex: self.REGEX_SIGNED_NUMBER
 				}
 			]
@@ -422,6 +425,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Number',
 					id: 'clockIndex',
 					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 					regex: self.REGEX_SIGNED_NUMBER
 				},
 				{
