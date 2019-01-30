@@ -429,6 +429,7 @@ instance.prototype.actions = function(system) {
 					label: 'Clock Time',
 					id: 'clockTime',
 					default: "00:05:00",
+					tooltip: 'New value for the countdown clock. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
 					regex: '/^\\d*:?\\d*:?\\d*$/'
 				},
 			 	{
