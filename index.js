@@ -377,7 +377,74 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-		'stageDisplayHideMessage': { label: 'Stage Display Hide Message' }
+		'stageDisplayHideMessage': { label: 'Stage Display Hide Message' },
+		'clockStart': {
+			label: 'Start Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'clockStop': {
+			label: 'Stop Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'clockReset': {
+			label: 'Reset Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
+		'clockUpdate': {
+			label: 'Update CountDown Clock',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Number',
+					id: 'clockIndex',
+					default: 0,
+					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_SIGNED_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Duration',
+					id: 'clockTime',
+					default: "00:05:00",
+					tooltip: 'New value for the countdown clock. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
+					regex: '/^\\d*:?\\d*:?\\d*$/'
+				},
+			 	{
+				 	type: 'dropdown',
+				 	label: 'Over Run',
+				 	id: 'clockOverRun',
+					default: 'false',
+				 	choices: [ { id: 'false', label: 'False' }, { id: 'true', label: 'True' } ]
+			 	},
+			]
+		},
 
 	});
 };
@@ -477,6 +544,23 @@ instance.prototype.action = function(action) {
 
 		case 'stageDisplayHideMessage':
 			cmd = '{"action":"stageDisplayHideMessage"}';
+			break;
+		case 'clockStart':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockStart","clockIndex":"'+clockIndex+'"}';
+			break;
+		case 'clockStop':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockStop","clockIndex":"'+clockIndex+'"}';
+			break;	
+		case 'clockReset':
+			var clockIndex = parseInt(opt.clockIndex);
+			cmd = '{"action":"clockReset","clockIndex":"'+clockIndex+'"}';
+			break;
+		case 'clockUpdate':
+			var clockIndex = parseInt(opt.clockIndex);
+			var clockTime = opt.clockTime;
+			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"0"}';
 			break;
 	};
 
