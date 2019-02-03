@@ -60,6 +60,14 @@ instance.prototype.config_fields = function () {
 			id: 'pass',
 			label: 'ProPresenter Password',
 			width: 8,
+		},
+		{
+			type: 'textinput',
+			id: 'indexOfClockToWatch',
+			label: 'Index of Clock To Watch',
+			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
+			default: '0',
+			width: 2,
 		}
 	]
 };
@@ -123,6 +131,7 @@ instance.prototype.emptyCurrentState = function() {
 		wsConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
+		stageDisplayIndex: -1,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -131,6 +140,9 @@ instance.prototype.emptyCurrentState = function() {
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
+		watched_clock_current_time: 'N/A',
+		current_stage_display_name: 'N/A',
+		current_stage_display_index: 'N/A',
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -163,7 +175,19 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Connection status',
 			name:  'connection_status'
-		}
+		},
+		{
+			label: 'Watched Clock, Current Time',
+			name:  'watched_clock_current_time'
+		},
+		{
+			label: 'Current Stage Display Index',
+			name:  'current_stage_display_index'
+		},
+		{
+			label: 'Current Stage Display Name',
+			name:  'current_stage_display_name'
+		},
 	];
 
 	self.setVariableDefinitions(variables);
@@ -366,6 +390,27 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
+		'stageDisplayToggle': {
+			label: 'Toggle Stage Display Layout',
+			options: [
+				{
+					type: 'textinput',
+					label: 'First Stage Display Index',
+					id: 'index1',
+					default: 0,
+					tooltip: 'See the README for more information',
+					regex: self.REGEX_SIGNED_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Second Stage Display Index',
+					id: 'index2',
+					default: 1,
+					tooltip: 'See the README for more information',
+					regex: self.REGEX_SIGNED_NUMBER
+				}
+			]
+		},
 		'stageDisplayMessage': {
 			label: 'Stage Display Message',
 			options: [
@@ -536,6 +581,17 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayLayout':
 			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+opt.index+'}';
 			break;
+		
+		case 'stageDisplayToggle':
+			var newStageDisplayIndex = opt.index1;
+			self.log('info', "toggle");
+			if (self.currentState.internal.slideIndex == opt.index1)
+				newStageDisplayIndex = opt.index2;
+			else
+				newStageDisplayIndex = opt.index1;
+			self.log('info',newStageDisplayIndex);
+			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+newStageDisplayIndex+'}';
+			break;
 
 		case 'stageDisplayMessage':
 			var message = JSON.stringify(opt.message);
@@ -598,6 +654,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
+				self.socket.send(JSON.stringify({
+					action: 'clockStartSendingCurrentTime'
+				}));
 			} else {
 				self.status(self.STATE_ERROR);
 				// Bad password
@@ -650,6 +709,25 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			self.updateVariable('total_slides', totalSlides);
 			break;
+		
+		case 'clockCurrentTimes':
+			var objWatchedClock = objData.clockTimes;
+			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length)
+				self.updateVariable('watched_clock_current_time', objData.clockTimes[self.config.indexOfClockToWatch]);
+			break;
+		
+		case 'stageDisplaySetIndex': // User (or someone,else) has set the StageDisplay (get stageDisplayIndex)
+			var stageDisplayIndex = objData.stageDisplayIndex;
+			self.currentState.internal.slideIndex = parseInt(stageDisplayIndex,10);
+			self.updateVariable('current_stage_display_index', stageDisplayIndex);
+			self.getStageDisplaysInfo();
+			break;
+			
+		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply with action set to stageDisplaySets but also stageDisplayIndex set to the index
+			var stageDisplaySets = objData.stageDisplaySets;
+			var stageDisplayIndex =  parseInt(objData.stageDisplayIndex, 10);
+			self.updateVariable('current_stage_display_name', stageDisplaySets[stageDisplayIndex]);
+			break;
 
 	}
 
@@ -672,7 +750,8 @@ instance.prototype.getProPresenterState = function() {
 	}
 
 	self.socket.send(JSON.stringify({
-		action: 'presentationCurrent'
+		action: 'presentationCurrent',
+		presentationSlideQuality: 0 // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
 	}));
 
 	if(self.currentState.dynamicVariables.current_slide === 'N/A') {
@@ -683,6 +762,21 @@ instance.prototype.getProPresenterState = function() {
 	}
 
 };
+
+/*
+* Requests the list of configured stage displays (includes names)
+*/
+instance.prototype.getStageDisplaysInfo = function() {
+	var self = this;
+
+	if(self.currentState.internal.wsConnected === false) {
+		return;
+	}
+
+	self.socket.send(JSON.stringify({
+		action: 'stageDisplaySets'
+	}));
+}
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
