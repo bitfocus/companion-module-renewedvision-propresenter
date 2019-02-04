@@ -68,6 +68,7 @@ instance.prototype.config_fields = function () {
 			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
 			default: '0',
 			width: 2,
+			regex: self.REGEX_NUMBER
 		}
 	]
 };
@@ -386,7 +387,7 @@ instance.prototype.actions = function(system) {
 					label: 'Stage Display Index',
 					id: 'index',
 					default: 0,
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -399,7 +400,7 @@ instance.prototype.actions = function(system) {
 					id: 'index1',
 					default: 0,
 					tooltip: 'See the README for more information',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				},
 				{
 					type: 'textinput',
@@ -407,7 +408,7 @@ instance.prototype.actions = function(system) {
 					id: 'index2',
 					default: 1,
 					tooltip: 'See the README for more information',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -432,7 +433,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -445,7 +446,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -458,7 +459,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -471,7 +472,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				},
 				{
 					type: 'textinput',
@@ -586,8 +587,7 @@ instance.prototype.action = function(action) {
 			var newStageDisplayIndex = opt.index1;
 			if (self.currentState.internal.slideIndex == opt.index1) {
 				newStageDisplayIndex = opt.index2;
-			}
-			else {
+			} else {
 				newStageDisplayIndex = opt.index1;
 			}
 			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+newStageDisplayIndex+'}';
