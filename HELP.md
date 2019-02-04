@@ -82,6 +82,7 @@ If you use a lot of timers with commonly used values for duration, you might lik
 1. *Update CountDown Clock* - Set new duration value of the count-down timer. This new value will be used when the timer is next reset.
 2. *Reset Clock* - Stop the count-down timer if running and reset current value back to duration. You  might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
 3. *Start Clock* - Start the count-down timer running. You might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
+
 Use *relative delays*, to ensure these three action arrive in the correct order (or if you prefer absolute delays, make sure the second action has less delay than the third)
 
 # Dynamic Variables
