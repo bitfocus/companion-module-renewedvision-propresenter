@@ -584,14 +584,12 @@ instance.prototype.action = function(action) {
 		
 		case 'stageDisplayToggle':
 			var newStageDisplayIndex = opt.index1;
-			self.log('info', "toggle");
 			if (self.currentState.internal.slideIndex == opt.index1) {
 				newStageDisplayIndex = opt.index2;
 			}
 			else {
 				newStageDisplayIndex = opt.index1;
 			}
-			self.log('info',newStageDisplayIndex);
 			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+newStageDisplayIndex+'}';
 			break;
 
