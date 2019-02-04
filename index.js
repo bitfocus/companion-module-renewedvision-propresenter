@@ -95,7 +95,7 @@ instance.prototype.init = function() {
 
 	self.initVariables();
 
-	if(self.config.host !== '' && self.config.port !== '') {
+	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
 		self.startConnectionTimer();
 	}
@@ -206,7 +206,7 @@ instance.prototype.initVariables = function() {
 instance.prototype.updateVariable = function(name, value) {
 	var self = this;
 
-	if(self.currentState.dynamicVariables[name] === undefined) {
+	if (self.currentState.dynamicVariables[name] === undefined) {
 		self.log('warn', "Variable " + name + " does not exist");
 		return;
 	}
@@ -261,7 +261,7 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 
 	self.updateVariable('connection_status', status);
 
-	if(updateLog) {
+	if (updateLog) {
 		self.log('info', "ProPresenter " + status);
 	}
 
@@ -294,7 +294,7 @@ instance.prototype.connectToProPresenter = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenter();
 
-	if(self.config.host === '' || self.config.port === '') {
+	if (self.config.host === '' || self.config.port === '') {
 		return;
 	}
 
@@ -325,7 +325,7 @@ instance.prototype.connectToProPresenter = function() {
 		var wasConnected = self.currentState.internal.wsConnected;
 		self.emptyCurrentState();
 	
-		if(wasConnected === false) {
+		if (wasConnected === false) {
 			return;
 		}
 
@@ -515,7 +515,7 @@ instance.prototype.action = function(action) {
 		case 'slideNumber':
 			var index = self.currentState.internal.slideIndex;
 
-			if(opt.slide[0] === '-' || opt.slide[0] === '+') {
+			if (opt.slide[0] === '-' || opt.slide[0] === '+') {
 				// Move back/forward a relative number of slides.
 				index += parseInt(opt.slide.substring(1), 10) * ((opt.slide[0] === '+') ? 1 : -1);
 				index = Math.max(0, index);
@@ -524,7 +524,7 @@ instance.prototype.action = function(action) {
 				index = parseInt(opt.slide) - 1;
 			}
 
-			if(index < 0) {
+			if (index < 0) {
 				// Negative slide indexes are invalid. In such a case use the current slideIndex.
 				// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
 				//  trigger the current slide again. Can be used to bring back a slide after using
@@ -533,7 +533,7 @@ instance.prototype.action = function(action) {
 			}
 
 			var presentationPath = self.currentState.internal.presentationPath;
-			if(opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
+			if (opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
 				// Is a relative presentation path. Refers to the current playlist, so extract it
 				//  from the current presentationPath and append the opt.path to it.
 				presentationPath = presentationPath.split(':')[0] + ':' + opt.path;
@@ -585,10 +585,12 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayToggle':
 			var newStageDisplayIndex = opt.index1;
 			self.log('info', "toggle");
-			if (self.currentState.internal.slideIndex == opt.index1)
+			if (self.currentState.internal.slideIndex == opt.index1) {
 				newStageDisplayIndex = opt.index2;
-			else
+			}
+			else {
 				newStageDisplayIndex = opt.index1;
+			}
 			self.log('info',newStageDisplayIndex);
 			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+newStageDisplayIndex+'}';
 			break;
@@ -648,7 +650,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 	switch(objData.action) {
 		case 'authenticate':
-			if(objData.authenticated === 1) {
+			if (objData.authenticated === 1) {
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -712,8 +714,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 		
 		case 'clockCurrentTimes':
 			var objWatchedClock = objData.clockTimes;
-			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length)
+			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length) {
 				self.updateVariable('watched_clock_current_time', objData.clockTimes[self.config.indexOfClockToWatch]);
+			}
 			break;
 		
 		case 'stageDisplaySetIndex': // User (or someone,else) has set the StageDisplay (get stageDisplayIndex)
@@ -731,7 +734,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 	}
 
-	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
+	if (objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
 		// The presentationPath has changed. Update the path and request the information.
 		self.getProPresenterState();
 	}
@@ -745,7 +748,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 instance.prototype.getProPresenterState = function() {
 	var self = this;
 
-	if(self.currentState.internal.wsConnected === false) {
+	if (self.currentState.internal.wsConnected === false) {
 		return;
 	}
 
@@ -754,7 +757,7 @@ instance.prototype.getProPresenterState = function() {
 		presentationSlideQuality: 0 // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
 	}));
 
-	if(self.currentState.dynamicVariables.current_slide === 'N/A') {
+	if (self.currentState.dynamicVariables.current_slide === 'N/A') {
 		// The currentSlide will be empty when the module first loads. Request it.
 		self.socket.send(JSON.stringify({
 			action: 'presentationSlideIndex'
@@ -769,7 +772,7 @@ instance.prototype.getProPresenterState = function() {
 instance.prototype.getStageDisplaysInfo = function() {
 	var self = this;
 
-	if(self.currentState.internal.wsConnected === false) {
+	if (self.currentState.internal.wsConnected === false) {
 		return;
 	}
 
