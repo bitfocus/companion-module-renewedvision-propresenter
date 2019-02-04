@@ -64,6 +64,10 @@ Command | Description
 Stage Display Message | Shows the message on the stage display output
 Stage Display Hide Message | Removes the stage display message
 Stage Display Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
+Toggle Stage Display Layout | You can use this action to toggle (swap) between two selected stage display layouts. Enter two indexes and when this action is run the stage display layout will toggle back and forth.  If neither of these layouts is active when this action is run, the first will will be selected. 
+
+**Tip: Intuitive stage display toggle.**
+If you regularly use two stage display layouts, you can setup a button with the "Toggle Stage Display Layout" and set it's text title to $(propresenter:current_stage_display_name) so it will always display the active stage display layout and when pressed it will toggle between your two chosen layouts.
 
 ## Clocks (Timers)
 Command | Description
@@ -86,3 +90,6 @@ $(propresenter:current_slide) | The number of the active slide (>= 1), or "N/A" 
 $(propresenter:total_slides)  | The total number of slides in the current document, or "N/A" if unknown.
 $(propresenter:presentation_name) | The name of the current presentation, or "N/A" if unknown.
 $(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected" or "Connected").
+$(propresenter:watched_clock_current_time) | In the config of this module, you can specify the index of a clock (timer) that you want to monitor. This dynamic variable will be updated once per second to the current value of the clock specified. You could use this to display a live timer value on a button!
+$(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (updated whenever a new layout is selected)
+$(propresenter:current_stage_display_name) | Name of the currently selected stage display layout (updated whenever a new layout is selected)
