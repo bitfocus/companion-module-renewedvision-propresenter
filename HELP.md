@@ -64,10 +64,6 @@ Command | Description
 Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
 Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
-Toggle&nbsp;Stage&nbsp;Display&nbsp;Layout | You can use this action to toggle (swap) between two selected stage display layouts with a single action (one button). Configure the action with the indexes of two stage display layouts and when this action is run the stage display layout will toggle back and forth between the two.  If neither of the configured layouts is active when this action is run, the first will will be selected. 
-
-**Tip: Intuitive Stage Display Toggle On A Single Button.**
-If you regularly use two stage display layouts, you can setup a single button with the "Toggle Stage Display Layout" action and set it's text title to $(propresenter:current_stage_display_name) so that it will always display the active stage display layout. Whenever you press this button, it will toggle between your two chosen layouts and let you know by changing the button title.
 
 ## Clocks (Timers)
 Command | Description
