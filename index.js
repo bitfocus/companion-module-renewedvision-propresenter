@@ -93,7 +93,8 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
-
+	self.init_presets(); 
+	
 	self.initVariables();
 
 	if (self.config.host !== '' && self.config.port !== '') {
@@ -116,6 +117,156 @@ instance.prototype.destroy = function() {
 	debug("destroy", self.id);
 };
 
+
+/**
+* Define button presets
+*/
+instance.prototype.init_presets = function () {
+	var self = this;
+
+	var presets = [
+		{
+			category: 'Stage Display',
+			label: 'This button displays the name of current stage display layout. Pressing it will toggle back and forth between the two selected stage display layouts in the down and up actions.',
+			bank: {
+				style: 'text',
+				text: '$(propresenter:current_stage_display_name)',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(153,0,255),
+				latch: true
+			},
+			actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 0,
+					}
+				}
+			],
+			release_actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 1,
+					}
+				}
+			]
+		},
+		{
+			category: 'Stage Display',
+			label: 'This button will activate the selected (by index) stage display layout.',
+			bank: {
+				style: 'text',
+				text: 'Select Layout',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(153,0,255)
+			},
+			actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 0,
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will reset a selected (by index) count-down clock to 5 mins and automatically start it.  If you send this to a non-count-down clock it will be converted to one!',
+			bank: {
+				style: 'text',
+				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(0,153,51)
+			},
+			actions: [
+				{
+					action: 'clockUpdate',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+						clockTime: '00:05:00',
+						clockOverRun: false,
+					}
+				},
+				{
+					action: 'clockReset',
+					delay: 100,
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				},
+				{
+					action: 'clockStart',
+					delay: 200,
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will START a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Start\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(0,153,51)
+			},
+			actions: [
+				{
+					action: 'clockStart',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will STOP a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Stop\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(204,0,0)
+			},
+			actions: [
+				{
+					action: 'clockStop',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will RESET a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Reset\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(255,102,0)
+			},
+			actions: [
+				{
+					action: 'clockReset',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+	];
+	self.setPresetDefinitions(presets);
+}
 
 /**
  * Initialize an empty current state.
@@ -469,7 +620,6 @@ instance.prototype.actions = function(system) {
 			 	},
 			]
 		},
-
 	});
 };
 
