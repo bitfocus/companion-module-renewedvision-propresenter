@@ -132,7 +132,6 @@ instance.prototype.emptyCurrentState = function() {
 		wsConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
-		stageDisplayIndex: -1,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -391,27 +390,6 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
-		'stageDisplayToggle': {
-			label: 'Toggle Stage Display Layout',
-			options: [
-				{
-					type: 'textinput',
-					label: 'First Stage Display Index',
-					id: 'index1',
-					default: 0,
-					tooltip: 'See the README for more information',
-					regex: self.REGEX_NUMBER
-				},
-				{
-					type: 'textinput',
-					label: 'Second Stage Display Index',
-					id: 'index2',
-					default: 1,
-					tooltip: 'See the README for more information',
-					regex: self.REGEX_NUMBER
-				}
-			]
-		},
 		'stageDisplayMessage': {
 			label: 'Stage Display Message',
 			options: [
@@ -582,16 +560,6 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayLayout':
 			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+opt.index+'}';
 			break;
-		
-		case 'stageDisplayToggle':
-			var newStageDisplayIndex = opt.index1;
-			if (self.currentState.internal.slideIndex == opt.index1) {
-				newStageDisplayIndex = opt.index2;
-			} else {
-				newStageDisplayIndex = opt.index1;
-			}
-			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+newStageDisplayIndex+'}';
-			break;
 
 		case 'stageDisplayMessage':
 			var message = JSON.stringify(opt.message);
@@ -654,6 +622,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
+				// Get current Stage Display (index and Name)
+				self.getStageDisplaysInfo();
+				// Ask Pro6 to start sending clock updates (they are sent once per second)
 				self.socket.send(JSON.stringify({
 					action: 'clockStartSendingCurrentTime'
 				}));
@@ -717,17 +688,18 @@ instance.prototype.onWebSocketMessage = function(message) {
 			}
 			break;
 		
-		case 'stageDisplaySetIndex': // User (or someone,else) has set the StageDisplay (get stageDisplayIndex)
+		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
 			var stageDisplayIndex = objData.stageDisplayIndex;
 			self.currentState.internal.slideIndex = parseInt(stageDisplayIndex,10);
 			self.updateVariable('current_stage_display_index', stageDisplayIndex);
 			self.getStageDisplaysInfo();
 			break;
 			
-		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply with action set to stageDisplaySets but also stageDisplayIndex set to the index
+		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
 			var stageDisplaySets = objData.stageDisplaySets;
-			var stageDisplayIndex =  parseInt(objData.stageDisplayIndex, 10);
-			self.updateVariable('current_stage_display_name', stageDisplaySets[stageDisplayIndex]);
+			var stageDisplayIndex =  objData.stageDisplayIndex;
+			self.updateVariable('current_stage_display_index', stageDisplayIndex);
+			self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
 			break;
 
 	}
