@@ -6,9 +6,9 @@ Module for using ProPresenter with the Elgato Stream Deck and Companion
 ## Slides
 Command | Description
 ------- | -----------
-Next Slide | Advances to the next slide in the current document. If at the end of a document, will advance to the start of the next document in the playlist.
-Previous Slide | Moves to the previous slide in the current document. If at the start of a document, will move to the start of the previous document in the playlist.
-Specific Slide | Moves to that presentation/slide number. See the `Specific Slide` section below.
+Next&nbsp;Slide | Advances to the next slide in the current document. If at the end of a document, will advance to the start of the next document in the playlist.
+Previous&nbsp;Slide | Moves to the previous slide in the current document. If at the start of a document, will move to the start of the previous document in the playlist.
+Specific&nbsp;Slide | Moves to that presentation/slide number. See the `Specific Slide` section below.
 
 ### Specific Slide
 This action has two parameters:
@@ -41,12 +41,12 @@ The below image may make this more clear:
 ## Clear/Logo
 Command | Description
 ------- | -----------
-Clear All | Clears all the layers
-Clear Audio | Clears the audio track
-Clear Background | Clears only the background layer
-Clear Slide | Clears the current slide (foreground and background)
-Clear Telestrator | Clears all annotations drawn with the telestrator
-Clear to Logo | Clears all the layers and shows the logo image set in ProPresenter
+Clear&nbsp;All | Clears all the layers
+Clear&nbsp;Audio | Clears the audio track
+Clear&nbsp;Background | Clears only the background layer
+Clear&nbsp;Slide | Clears the current slide (foreground and background)
+Clear&nbsp;Telestrator | Clears all annotations drawn with the telestrator
+Clear&nbsp;to&nbsp;Logo | Clears all the layers and shows the logo image set in ProPresenter
 
 ### Clear All
 Note: When the `Clear All` action is triggered against ProPresenter for Windows, the current slide will be lost but on Mac it's preserved.
@@ -61,23 +61,25 @@ You can work around this PC limitation by using the `Specific Slide` action with
 ## Stage Display
 Command | Description
 ------- | -----------
-Stage Display Message | Shows the message on the stage display output
-Stage Display Hide Message | Removes the stage display message
-Stage Display Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
+Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
+Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
+Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
 
 ## Clocks (Timers)
 Command | Description
 ------- | -----------
-Start Clock | Starts clock (timer) - identified by index (0 based)
-Stop Clock | Stops clock (timer) - identified by index (0 based)
-Reset Clock | Resets clock (timer) - identified by index (0 based)
-Update CountDown Clock | Update count-down timer with new duration - identified by index (0 based).  Note that if you send this command to a timer/clock that is not a count-down timer it will be converted to a count-down timer! "Duration" is the new duration value for the count-down timer in the format HH:MM:SS.  You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can also change whether or not the countdown timer is able to over-run.
+Start&nbsp;Clock | Starts clock (timer) - identified by index (0 based)
+Stop&nbsp;Clock | Stops clock (timer) - identified by index (0 based)
+Reset&nbsp;Clock | Resets clock (timer) - identified by index (0 based)
+Update&nbsp;CountDown&nbsp;Clock | Update count-down timer with new duration - identified by index (0 based).  Note that if you send this command to a timer/clock that is not a count-down timer it will be converted to a count-down timer! "Duration" is the new duration value for the count-down timer in the format HH:MM:SS.  You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can also change whether or not the countdown timer is able to over-run.
 
 **Tip: One-Touch Preset CountDown Timers.**
 If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
 1. *Update CountDown Clock* - Set new duration value of the count-down timer. This new value will be used when the timer is next reset.
 2. *Reset Clock* - Stop the count-down timer if running and reset current value back to duration. You  might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
 3. *Start Clock* - Start the count-down timer running. You might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
+
+Use *relative delays*, to ensure these three action arrive in the correct order (or if you prefer absolute delays, make sure the second action has less delay than the third)
 
 # Dynamic Variables
 Variable | Description
@@ -86,3 +88,6 @@ $(propresenter:current_slide) | The number of the active slide (>= 1), or "N/A" 
 $(propresenter:total_slides)  | The total number of slides in the current document, or "N/A" if unknown.
 $(propresenter:presentation_name) | The name of the current presentation, or "N/A" if unknown.
 $(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected" or "Connected").
+$(propresenter:watched_clock_current_time) | In the config of this module, you can specify the index of a clock (timer) that you want to "watch". This dynamic variable will be updated once per second to the current value of the clock specified. You could use this to display a live timer value on a button!
+$(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (This is updated whenever a new layout is selected.)
+$(propresenter:current_stage_display_name) | Name of the currently selected stage display layout (This is updated whenever a new layout is selected.)

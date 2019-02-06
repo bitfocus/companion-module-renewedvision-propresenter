@@ -60,6 +60,15 @@ instance.prototype.config_fields = function () {
 			id: 'pass',
 			label: 'ProPresenter Password',
 			width: 8,
+		},
+		{
+			type: 'textinput',
+			id: 'indexOfClockToWatch',
+			label: 'Index of Clock To Watch',
+			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
+			default: '0',
+			width: 2,
+			regex: self.REGEX_NUMBER
 		}
 	]
 };
@@ -84,10 +93,11 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
-
+	self.init_presets(); 
+	
 	self.initVariables();
 
-	if(self.config.host !== '' && self.config.port !== '') {
+	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
 		self.startConnectionTimer();
 	}
@@ -107,6 +117,156 @@ instance.prototype.destroy = function() {
 	debug("destroy", self.id);
 };
 
+
+/**
+* Define button presets
+*/
+instance.prototype.init_presets = function () {
+	var self = this;
+
+	var presets = [
+		{
+			category: 'Stage Display',
+			label: 'This button displays the name of current stage display layout. Pressing it will toggle back and forth between the two selected stage display layouts in the down and up actions.',
+			bank: {
+				style: 'text',
+				text: '$(propresenter:current_stage_display_name)',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(153,0,255),
+				latch: true
+			},
+			actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 0,
+					}
+				}
+			],
+			release_actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 1,
+					}
+				}
+			]
+		},
+		{
+			category: 'Stage Display',
+			label: 'This button will activate the selected (by index) stage display layout.',
+			bank: {
+				style: 'text',
+				text: 'Select Layout',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(153,0,255)
+			},
+			actions: [
+				{
+					action: 'stageDisplayLayout',
+					options: {
+						index: 0,
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will reset a selected (by index) count-down clock to 5 mins and automatically start it.  If you send this to a non-count-down clock it will be converted to one!',
+			bank: {
+				style: 'text',
+				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
+				size: '18',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(0,153,51)
+			},
+			actions: [
+				{
+					action: 'clockUpdate',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+						clockTime: '00:05:00',
+						clockOverRun: false,
+					}
+				},
+				{
+					action: 'clockReset',
+					delay: 100,
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				},
+				{
+					action: 'clockStart',
+					delay: 200,
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will START a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Start\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(0,153,51)
+			},
+			actions: [
+				{
+					action: 'clockStart',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will STOP a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Stop\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(204,0,0)
+			},
+			actions: [
+				{
+					action: 'clockStop',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+		{
+			category: 'Count Down Clocks',
+			label: 'This button will RESET a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
+			bank: {
+				style: 'text',
+				text: 'Reset\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
+				size: '14',
+				color: self.rgb(255,255,255),
+				bgcolor: self.rgb(255,102,0)
+			},
+			actions: [
+				{
+					action: 'clockReset',
+					options: {
+						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
+					}
+				}
+			]
+		},
+	];
+	self.setPresetDefinitions(presets);
+}
 
 /**
  * Initialize an empty current state.
@@ -131,6 +291,9 @@ instance.prototype.emptyCurrentState = function() {
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
+		watched_clock_current_time: 'N/A',
+		current_stage_display_name: 'N/A',
+		current_stage_display_index: 'N/A',
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -163,7 +326,19 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Connection status',
 			name:  'connection_status'
-		}
+		},
+		{
+			label: 'Watched Clock, Current Time',
+			name:  'watched_clock_current_time'
+		},
+		{
+			label: 'Current Stage Display Index',
+			name:  'current_stage_display_index'
+		},
+		{
+			label: 'Current Stage Display Name',
+			name:  'current_stage_display_name'
+		},
 	];
 
 	self.setVariableDefinitions(variables);
@@ -182,7 +357,7 @@ instance.prototype.initVariables = function() {
 instance.prototype.updateVariable = function(name, value) {
 	var self = this;
 
-	if(self.currentState.dynamicVariables[name] === undefined) {
+	if (self.currentState.dynamicVariables[name] === undefined) {
 		self.log('warn', "Variable " + name + " does not exist");
 		return;
 	}
@@ -237,7 +412,7 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 
 	self.updateVariable('connection_status', status);
 
-	if(updateLog) {
+	if (updateLog) {
 		self.log('info', "ProPresenter " + status);
 	}
 
@@ -270,7 +445,7 @@ instance.prototype.connectToProPresenter = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenter();
 
-	if(self.config.host === '' || self.config.port === '') {
+	if (self.config.host === '' || self.config.port === '') {
 		return;
 	}
 
@@ -301,7 +476,7 @@ instance.prototype.connectToProPresenter = function() {
 		var wasConnected = self.currentState.internal.wsConnected;
 		self.emptyCurrentState();
 	
-		if(wasConnected === false) {
+		if (wasConnected === false) {
 			return;
 		}
 
@@ -362,7 +537,7 @@ instance.prototype.actions = function(system) {
 					label: 'Stage Display Index',
 					id: 'index',
 					default: 0,
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -387,7 +562,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -400,7 +575,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -413,7 +588,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				}
 			]
 		},
@@ -426,7 +601,7 @@ instance.prototype.actions = function(system) {
 					id: 'clockIndex',
 					default: 0,
 					tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
-					regex: self.REGEX_SIGNED_NUMBER
+					regex: self.REGEX_NUMBER
 				},
 				{
 					type: 'textinput',
@@ -445,7 +620,6 @@ instance.prototype.actions = function(system) {
 			 	},
 			]
 		},
-
 	});
 };
 
@@ -470,7 +644,7 @@ instance.prototype.action = function(action) {
 		case 'slideNumber':
 			var index = self.currentState.internal.slideIndex;
 
-			if(opt.slide[0] === '-' || opt.slide[0] === '+') {
+			if (opt.slide[0] === '-' || opt.slide[0] === '+') {
 				// Move back/forward a relative number of slides.
 				index += parseInt(opt.slide.substring(1), 10) * ((opt.slide[0] === '+') ? 1 : -1);
 				index = Math.max(0, index);
@@ -479,7 +653,7 @@ instance.prototype.action = function(action) {
 				index = parseInt(opt.slide) - 1;
 			}
 
-			if(index < 0) {
+			if (index < 0) {
 				// Negative slide indexes are invalid. In such a case use the current slideIndex.
 				// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
 				//  trigger the current slide again. Can be used to bring back a slide after using
@@ -488,7 +662,7 @@ instance.prototype.action = function(action) {
 			}
 
 			var presentationPath = self.currentState.internal.presentationPath;
-			if(opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
+			if (opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
 				// Is a relative presentation path. Refers to the current playlist, so extract it
 				//  from the current presentationPath and append the opt.path to it.
 				presentationPath = presentationPath.split(':')[0] + ':' + opt.path;
@@ -592,12 +766,18 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 	switch(objData.action) {
 		case 'authenticate':
-			if(objData.authenticated === 1) {
+			if (objData.authenticated === 1) {
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
+				// Get current Stage Display (index and Name)
+				self.getStageDisplaysInfo();
+				// Ask Pro6 to start sending clock updates (they are sent once per second)
+				self.socket.send(JSON.stringify({
+					action: 'clockStartSendingCurrentTime'
+				}));
 			} else {
 				self.status(self.STATE_ERROR);
 				// Bad password
@@ -650,10 +830,31 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			self.updateVariable('total_slides', totalSlides);
 			break;
+		
+		case 'clockCurrentTimes':
+			var objWatchedClock = objData.clockTimes;
+			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length) {
+				self.updateVariable('watched_clock_current_time', objData.clockTimes[self.config.indexOfClockToWatch]);
+			}
+			break;
+		
+		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
+			var stageDisplayIndex = objData.stageDisplayIndex;
+			self.currentState.internal.slideIndex = parseInt(stageDisplayIndex,10);
+			self.updateVariable('current_stage_display_index', stageDisplayIndex);
+			self.getStageDisplaysInfo();
+			break;
+			
+		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
+			var stageDisplaySets = objData.stageDisplaySets;
+			var stageDisplayIndex =  objData.stageDisplayIndex;
+			self.updateVariable('current_stage_display_index', stageDisplayIndex);
+			self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
+			break;
 
 	}
 
-	if(objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
+	if (objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
 		// The presentationPath has changed. Update the path and request the information.
 		self.getProPresenterState();
 	}
@@ -667,15 +868,16 @@ instance.prototype.onWebSocketMessage = function(message) {
 instance.prototype.getProPresenterState = function() {
 	var self = this;
 
-	if(self.currentState.internal.wsConnected === false) {
+	if (self.currentState.internal.wsConnected === false) {
 		return;
 	}
 
 	self.socket.send(JSON.stringify({
-		action: 'presentationCurrent'
+		action: 'presentationCurrent',
+		presentationSlideQuality: 0 // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
 	}));
 
-	if(self.currentState.dynamicVariables.current_slide === 'N/A') {
+	if (self.currentState.dynamicVariables.current_slide === 'N/A') {
 		// The currentSlide will be empty when the module first loads. Request it.
 		self.socket.send(JSON.stringify({
 			action: 'presentationSlideIndex'
@@ -683,6 +885,21 @@ instance.prototype.getProPresenterState = function() {
 	}
 
 };
+
+/*
+* Requests the list of configured stage displays (includes names)
+*/
+instance.prototype.getStageDisplaysInfo = function() {
+	var self = this;
+
+	if (self.currentState.internal.wsConnected === false) {
+		return;
+	}
+
+	self.socket.send(JSON.stringify({
+		action: 'stageDisplaySets'
+	}));
+}
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;
