@@ -696,6 +696,20 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
+		'audioStartCue': {
+			label: 'Audio Start Cue',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Audio Item Playlist Path',
+					id: 'audioChildPath',
+					default: '',
+					tooltip: 'Playlist path format 0.0',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				}
+			]
+		},
+		'audioPlayPause': { label: 'Audio Play/Pause' }
 	});
 };
 
@@ -832,6 +846,12 @@ instance.prototype.action = function(action) {
 			break;
 		case 'messageSend':
 			cmd = '{"action":"messageSend","messageIndex":"'+opt.messageIndex+'","messageKeys":['+opt.messageKeys+'],"messageValues":['+opt.messageValues+']}';
+			break;
+		case 'audioStartCue':
+			cmd = '{"action":"audioStartCue","audioChildPath":"'+opt.audioChildPath+'"}';
+			break;
+		case 'audioPlayPause':
+			cmd = '{"action":"audioPlayPause"}';
 			break;
 	};
 
