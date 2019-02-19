@@ -37,6 +37,12 @@ The below image may make this more clear:
 ![specific-slide](documentation/images/specific-slide.png)
 
 
+## Audio Cues
+Command | Description
+------- | -----------
+Audio&nbsp;Start&nbsp;Cue | Start a specific audio cue in an audio-bin playlist.  Uses the same numerical format to specify the path of the audio item (see Presentation Path explanation above)
+Audio&nbsp;Play/Pause | Pause (or resume playing) the currently playing (or paused) audio.
+
 
 ## Clear/Logo
 Command | Description
@@ -71,7 +77,7 @@ Command | Description
 Start&nbsp;Clock | Starts clock (timer) - identified by index (0 based)
 Stop&nbsp;Clock | Stops clock (timer) - identified by index (0 based)
 Reset&nbsp;Clock | Resets clock (timer) - identified by index (0 based)
-Update&nbsp;CountDown&nbsp;Clock | Update count-down timer with new duration - identified by index (0 based).  Note that if you send this command to a timer/clock that is not a count-down timer it will be converted to a count-down timer! "Duration" is the new duration value for the count-down timer in the format HH:MM:SS.  You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can also change whether or not the countdown timer is able to over-run.
+Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Count Down Timer, Count Down To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Count Down To Time clocks.
 
 **Tip: One-Touch Preset CountDown Timers.**
 If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
