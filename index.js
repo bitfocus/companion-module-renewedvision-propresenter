@@ -174,7 +174,7 @@ instance.prototype.init_presets = function () {
 		},
 		{
 			category: 'Count Down Clocks',
-			label: 'This button will reset a selected (by index) count-down clock to 5 mins and automatically start it.  If you send this to a non-count-down clock it will be converted to one!',
+			label: 'This button will reset a selected (by index) clock to a 5 min count-down clock and automatically start it.',
 			bank: {
 				style: 'text',
 				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
@@ -188,7 +188,9 @@ instance.prototype.init_presets = function () {
 					options: {
 						clockIndex: self.config.indexOfClockToWatch, // N.B. If user updates indexOfClockToWatch, this preset default will not be updated until module is reloaded.
 						clockTime: '00:05:00',
-						clockOverRun: false,
+						clockOverRun: 'false',
+						clockType: 0,
+						
 					}
 				},
 				{
@@ -593,8 +595,15 @@ instance.prototype.actions = function(system) {
 			]
 		},
 		'clockUpdate': {
-			label: 'Update CountDown Clock',
+			label: 'Update Clock',
 			options: [
+				{
+					type: 'textinput',
+					label: 'Clock Name',
+					id: 'clockName',
+					default: '',
+					tooltip: 'If you enter text here, you will update (rename) the clock!'
+				},
 				{
 					type: 'textinput',
 					label: 'Clock Number',
@@ -605,7 +614,7 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Duration',
+					label: 'Duration (Or Start Time)',
 					id: 'clockTime',
 					default: "00:05:00",
 					tooltip: 'New value for the countdown clock. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
@@ -618,8 +627,89 @@ instance.prototype.actions = function(system) {
 					default: 'false',
 				 	choices: [ { id: 'false', label: 'False' }, { id: 'true', label: 'True' } ]
 			 	},
+			 	{
+				 	type: 'dropdown',
+				 	label: 'Clock Type',
+				 	id: 'clockType',
+					default: '0',
+					tooltip: 'If the clock specified by the Clock Number is not of this type it will be UPDATED/CONVERTED this type.',
+				 	choices: [ { id: '0', label: 'Count Down Timer' }, { id: '1', label: 'Count Down To Time' }, { id: '2', label: 'Elapsed Time'} ]
+			 	},
+			 	{
+				 	type: 'dropdown',
+				 	label: 'Clock Is PM',
+				 	id: 'clockIsPM',
+					default: '0',
+					tooltip: 'Only Required for Count Down To Time Clock - otherwise this is ignored.',
+				 	choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
+			 	},
+			 	{
+				 	type: 'textinput',
+				 	label: 'Elapsed Time End',
+				 	id: 'clockElapsedTime',
+					default: '00:10:00',
+					tooltip: 'Only Required for Elapsed Time Clock - otherwise this is ignored.',
+				 	regex: '/^\\d*:?\\d*:?\\d*$/'
+			 	},
+				
 			]
 		},
+		'messageSend': {
+			label: 'Show Message',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Message Index',
+					id: 'messageIndex',
+					default: '0',
+					tooltip: 'Zero based index of message to show - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_NUMBER
+				},
+				{
+					type: 'textinput',
+					label: 'Quoted List Of Message Tokens',
+					id: 'messageKeys',
+					default: '',
+					tooltip: 'Comma separated, Double-Quoteed, list of message token names used in the message.  Associated values are given below. (WARNING! - A Typo here could crash and burn ProPresenter)',
+					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values (Too bad we can't validate that the number of items match the messageValues below)
+				},
+				{
+					type: 'textinput',
+					label: 'Quoted List Of Token Values',
+					id: 'messageValues',
+					default: '',
+					tooltip: 'Comma separated, Double-Quoteed, list of values for each message token above. (WARNING! - A Typo here could crash and burn ProPresenter)',
+					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values
+				}
+			]
+		},
+		'messageHide': {
+			label: 'Hide Message',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Message Index',
+					id: 'messageIndex',
+					default: '0',
+					tooltip: 'Zero based index of message to hide - first one is 0, second one is 1 and so on...',
+					regex: self.REGEX_NUMBER
+				}
+			]
+		},
+		'audioStartCue': {
+			label: 'Audio Start Cue',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Audio Item Playlist Path',
+					id: 'audioChildPath',
+					default: '',
+					tooltip: 'Playlist path format 0.0',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				}
+			]
+		},
+		'audioPlayPause': { label: 'Audio Play/Pause' }
 	});
 };
 
@@ -733,8 +823,35 @@ instance.prototype.action = function(action) {
 			break;
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
-			var clockTime = opt.clockTime;
-			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"0"}';
+			
+			// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
+			// If they are missing, then apply default values that result in the oringial bahaviour when it was only updating a countdown timers clockTime and clockOverRun.
+			if (!opt.hasOwnProperty('clockType'))  {
+				opt.clockType = '0';
+			}
+			if (!opt.hasOwnProperty('clockIsPM'))  {
+				opt.clockIsPM = '0';
+			}
+			if (!opt.hasOwnProperty('clockElapsedTime'))  {
+				opt.clockElapsedTime = '00:10:00';
+			}
+			if (!opt.hasOwnProperty('clockName'))  {
+				opt.clockName = '';
+			}
+			
+			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+opt.clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"'+opt.clockType+'","clockIsPM":"'+opt.clockIsPM+'","clockElapsedTime":"'+opt.clockElapsedTime+'","clockName":"'+opt.clockName+'"}';
+			break;
+		case 'messageHide':
+			cmd = '{"action":"messageHide","messageIndex":"'+opt.messageIndex+'"}';
+			break;
+		case 'messageSend':
+			cmd = '{"action":"messageSend","messageIndex":"'+opt.messageIndex+'","messageKeys":['+opt.messageKeys+'],"messageValues":['+opt.messageValues+']}';
+			break;
+		case 'audioStartCue':
+			cmd = '{"action":"audioStartCue","audioChildPath":"'+opt.audioChildPath+'"}';
+			break;
+		case 'audioPlayPause':
+			cmd = '{"action":"audioPlayPause"}';
 			break;
 	};
 
