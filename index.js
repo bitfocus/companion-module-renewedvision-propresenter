@@ -265,7 +265,7 @@ instance.prototype.init_presets = function () {
 					}
 				}
 			]
-		},
+		}
 	];
 	self.setPresetDefinitions(presets);
 }
@@ -295,7 +295,7 @@ instance.prototype.emptyCurrentState = function() {
 		connection_status: 'Disconnected',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
-		current_stage_display_index: 'N/A',
+		current_stage_display_index: 'N/A'
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -340,7 +340,7 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Stage Display Name',
 			name:  'current_stage_display_name'
-		},
+		}
 	];
 
 	self.setVariableDefinitions(variables);
