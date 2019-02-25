@@ -614,10 +614,10 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Duration (Or Start Time)',
+					label: 'Countdown Duration, Countdown To Time, Or Elapsed Start Time',
 					id: 'clockTime',
 					default: "00:05:00",
-					tooltip: 'New value for the countdown clock. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
+					tooltip: 'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
 					regex: '/^\\d*:?\\d*:?\\d*$/'
 				},
 			 	{
@@ -667,19 +667,17 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Quoted List Of Message Tokens',
+					label: 'Comma Separated List Of Message Token Names',
 					id: 'messageKeys',
 					default: '',
-					tooltip: 'Comma separated, Double-Quoteed, list of message token names used in the message.  Associated values are given below. (WARNING! - A Typo here could crash and burn ProPresenter)',
-					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values (Too bad we can't validate that the number of items match the messageValues below)
+					tooltip: 'Comma separated, list of message token names used in the message.  Associated values are given below. Use double commas (,,) to insert an actual comma in a token name. (WARNING! - A simple typo here could crash and burn ProPresenter)'
 				},
 				{
 					type: 'textinput',
-					label: 'Quoted List Of Token Values',
+					label: 'Comma Separated List Of Message Token Values',
 					id: 'messageValues',
 					default: '',
-					tooltip: 'Comma separated, Double-Quoteed, list of values for each message token above. (WARNING! - A Typo here could crash and burn ProPresenter)',
-					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values
+					tooltip: 'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. (WARNING! - A simple typo here could crash and burn ProPresenter)'
 				}
 			]
 		},
@@ -713,7 +711,6 @@ instance.prototype.actions = function(system) {
 	});
 };
 
-
 /**
  * Action triggered by Companion.
  */
@@ -724,11 +721,15 @@ instance.prototype.action = function(action) {
 	switch (action.action) {
 
 		case 'next':
-			cmd = '{"action":"presentationTriggerNext"}';
+			cmd = {
+				action: "presentationTriggerNext"
+			};
 			break;
 
 		case 'last':
-			cmd = '{"action":"presentationTriggerPrevious"}';
+			cmd = {
+				action: "presentationTriggerPrevious"
+			};
 			break;
 
 		case 'slideNumber':
@@ -761,66 +762,102 @@ instance.prototype.action = function(action) {
 				presentationPath = opt.path;
 			}
 
-			cmd = JSON.stringify({
+			cmd = {
 				action: "presentationTriggerIndex",
 				slideIndex: index,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: presentationPath
-			});
+			};
 			break;
 
 		case 'clearall':
-			cmd = '{"action":"clearAll"}';
+			cmd = {
+				action: "clearAll"
+			};
 			break;
 
 		case 'clearslide':
-			cmd = '{"action":"clearText"}';
+			cmd = {
+				action: "clearText"
+			};
 			break;
 
 		case 'clearprops':
-			cmd = '{"action":"clearProps"}';
+			cmd = {
+				action: "clearProps"
+			};
 			break;
 
 		case 'clearaudio':
-			cmd = '{"action":"clearAudio"}';
+			cmd = {
+				action: "clearAudio"
+			};
 			break;
 
 		case 'clearbackground':
-			cmd = '{"action":"clearVideo"}';
+			cmd = {
+				action: "clearVideo"
+			};
 			break;
 
 		case 'cleartelestrator':
-			cmd = '{"action":"clearTelestrator"}';
+			cmd = {
+				action: "clearTelestrator"
+			};
 			break;
 
 		case 'cleartologo':
-			cmd = '{"action":"clearToLogo"}';
+			cmd = {
+				action: "clearToLogo"
+			};
 			break;
 
 		case 'stageDisplayLayout':
-			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+opt.index+'}';
+			cmd = {
+				action: "stageDisplaySetIndex",
+				stageDisplayIndex: opt.index
+			};
 			break;
 
 		case 'stageDisplayMessage':
-			var message = JSON.stringify(opt.message);
-			cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
+			//var message = JSON.stringify(opt.message);
+			//cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
+			cmd = {
+				action: "stageDisplaySendMessage",
+				stageDisplayMessage: opt.message
+			};
 			break;
 
 		case 'stageDisplayHideMessage':
-			cmd = '{"action":"stageDisplayHideMessage"}';
+			cmd = {
+				action: "stageDisplayHideMessage"
+			};
 			break;
+			
 		case 'clockStart':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockStart","clockIndex":"'+clockIndex+'"}';
+			cmd = {
+				action: "clockStart",
+				clockIndex: clockIndex
+			};
 			break;
+			
 		case 'clockStop':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockStop","clockIndex":"'+clockIndex+'"}';
-			break;	
+			cmd = {
+				action: "clockStop",
+				clockIndex: clockIndex
+			};
+			break;
+			
 		case 'clockReset':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockReset","clockIndex":"'+clockIndex+'"}';
+			cmd = {
+				action: "clockReset",
+				clockIndex: clockIndex
+			};
 			break;
+			
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
 			
@@ -839,19 +876,48 @@ instance.prototype.action = function(action) {
 				opt.clockName = '';
 			}
 			
-			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+opt.clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"'+opt.clockType+'","clockIsPM":"'+opt.clockIsPM+'","clockElapsedTime":"'+opt.clockElapsedTime+'","clockName":"'+opt.clockName+'"}';
+			cmd = {
+				action: "clockUpdate",
+				clockIndex: clockIndex,
+				clockTime: opt.clockTime,
+				clockOverrun: opt.clockOverRun,
+				clockType: opt.clockType,
+				clockIsPM: opt.clockIsPM,
+				clockElapsedTime: opt.clockElapsedTime,
+				clockName: opt.clockName
+			};
 			break;
+			
 		case 'messageHide':
-			cmd = '{"action":"messageHide","messageIndex":"'+opt.messageIndex+'"}';
+			cmd = {
+				action: "messageHide",
+				messageIndex: opt.messageIndex
+			};
 			break;
+			
 		case 'messageSend':
-			cmd = '{"action":"messageSend","messageIndex":"'+opt.messageIndex+'","messageKeys":['+opt.messageKeys+'],"messageValues":['+opt.messageValues+']}';
+			// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
+			// It works by first replacing any double commas with a character 29, and then replacing any single commas with a character 28.  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
+			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/ 
+			cmd = {
+				action: "messageSend",
+				messageIndex: opt.messageIndex,
+				messageKeys: opt.messageKeys.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28)),
+				messageValues: opt.messageValues.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28))
+			};
 			break;
+			
 		case 'audioStartCue':
-			cmd = '{"action":"audioStartCue","audioChildPath":"'+opt.audioChildPath+'"}';
+			cmd = {
+				action: "audioStartCue",
+				audioChildPath: opt.audioChildPath
+			};
 			break;
+			
 		case 'audioPlayPause':
-			cmd = '{"action":"audioPlayPause"}';
+			cmd = {
+				action: "audioPlayPause"
+			};
 			break;
 	};
 
@@ -859,7 +925,8 @@ instance.prototype.action = function(action) {
 
 		if (self.currentStatus !== self.STATE_ERROR) {
 			try {
-				self.socket.send(cmd);
+				var cmdJSON = JSON.stringify(cmd);
+				self.socket.send(cmdJSON);
 			}
 			catch (e) {
 				debug("NETWORK " + e)
@@ -872,7 +939,6 @@ instance.prototype.action = function(action) {
 	}
 
 };
-
 
 /**
  * Received a message from ProPresenter.
