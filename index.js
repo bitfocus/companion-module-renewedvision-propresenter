@@ -58,7 +58,21 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'pass',
-			label: 'ProPresenter Password',
+			label: 'ProPresenter Remote Password',
+			width: 8,
+		},
+		{
+			type: 'textinput',
+			id: 'sdport',
+			label: 'StageDisplay App Port',
+			tooltip: 'Optionally set in ProPresenter Preferences, ProPresenter Port (above) will be used if left blank.',
+			width: 6,
+			default: ''
+		},
+		{
+			type: 'textinput',
+			id: 'sdpass',
+			label: 'StageDisplay App Password',
 			width: 8,
 		},
 		{
@@ -83,6 +97,7 @@ instance.prototype.updateConfig = function(config) {
 	self.disconnectFromProPresenter();
 	self.connectToProPresenter();
 	self.startConnectionTimer();
+	self.startSDConnectionTimer();
 };
 
 
@@ -99,7 +114,9 @@ instance.prototype.init = function() {
 
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
+		self.connectToProPresenterSD();
 		self.startConnectionTimer();
+		self.startSDConnectionTimer();
 	}
 
 };
@@ -283,6 +300,7 @@ instance.prototype.emptyCurrentState = function() {
 	// The internal state of the connection to ProPresenter
 	self.currentState.internal = {
 		wsConnected: false,
+		wsSDConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
 	};
@@ -293,6 +311,8 @@ instance.prototype.emptyCurrentState = function() {
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
+		sd_connection_status: 'Disconnected',
+		video_countdown_timer: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A'
@@ -307,7 +327,7 @@ instance.prototype.emptyCurrentState = function() {
 
 
 /**
- * Initialize the available variables.
+ * Initialize the available variables. (These are listed in the module config UI)
  */
 instance.prototype.initVariables = function() {
 	var self = this;
@@ -340,6 +360,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Stage Display Name',
 			name:  'current_stage_display_name'
+		},
+		{
+			label: 'Video CountDown Timer',
+			name:  'video_countdown_timer'
 		}
 	];
 
@@ -407,6 +431,41 @@ instance.prototype.stopConnectionTimer = function() {
 
 
 /**
+ * Create a timer to connect to ProPresenter stage display.
+ */
+instance.prototype.startSDConnectionTimer = function() {
+	var self = this;
+
+	// Stop the timer if it was already running
+	self.stopSDConnectionTimer();
+
+	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.reconSDTimer = setInterval(function() {
+
+		if (self.sdsocket === undefined || self.sdsocket.readyState === 3 /*CLOSED*/) {
+			// Not connected. Try to connect again.
+			self.connectToProPresenterSD();
+		}
+
+	}, 5000);
+
+};
+
+
+/**
+ * Stops the stage display reconnection timer.
+ */
+instance.prototype.stopSDConnectionTimer = function() {
+	var self = this;
+
+	if (self.reconSDTimer !== undefined) {
+		clearInterval(self.reconSDTimer);
+		delete self.reconSDTimer;
+	}
+
+};
+
+/**
  * Updates the connection status variable.
  */
 instance.prototype.setConnectionVariable = function(status, updateLog) {
@@ -420,6 +479,19 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 
 };
 
+/**
+ * Updates the stage display connection status variable.
+ */
+instance.prototype.setSDConnectionVariable = function(status, updateLog) {
+	var self = this;
+
+	self.updateVariable('sd_connection_status', status);
+
+	if (updateLog) {
+		self.log('info', "ProPresenter StageDisplay " + status);
+	}
+
+};
 
 /**
  * Disconnect the websocket from ProPresenter, if connected.
@@ -439,6 +511,23 @@ instance.prototype.disconnectFromProPresenter = function() {
 
 
 /**
+ * Disconnect the websocket from ProPresenter stage display, if connected.
+ */
+instance.prototype.disconnectFromProPresenterSD = function() {
+	var self = this;
+
+	if (self.sdsocket !== undefined) {
+		// Disconnect if already connected
+		if (self.sdsocket.readyState !== 3 /*CLOSED*/) {
+			self.sdsocket.terminate();
+		}
+		delete self.sdsocket;
+	}
+
+};
+
+
+/**
  * Attempts to open a websocket connection with ProPresenter.
  */
 instance.prototype.connectToProPresenter = function() {
@@ -451,6 +540,7 @@ instance.prototype.connectToProPresenter = function() {
 		return;
 	}
 
+	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
 	self.socket.on('open', function open() {
@@ -467,8 +557,8 @@ instance.prototype.connectToProPresenter = function() {
 	});
 
 	self.socket.on('connect', function () {
-		debug("Connected");
-		self.log('info', "Connected to " + self.config.host +":"+ self.config.port);
+		debug("Connected to ProPresenter remote control");
+		self.log('info', "Connected to ProPresenter remote control" + self.config.host +":"+ self.config.port);
 	});
 
 	self.socket.on('close', function(code, reason) {
@@ -491,6 +581,75 @@ instance.prototype.connectToProPresenter = function() {
 		// Handle the message received from ProPresenter
 		self.onWebSocketMessage(message);
 	});
+	
+};
+
+
+/**
+ * Attempts to open a websocket connection with ProPresenter stage display.
+ */
+instance.prototype.connectToProPresenterSD = function() {
+	var self = this;
+
+	// Disconnect if already connected
+	self.disconnectFromProPresenterSD();
+
+	if (self.config.host === '') {
+		return;
+	}
+	
+	// Use ProPresenter remote control port if stage display port is not set.
+	if (self.config.sdport === '') {
+		self.config.sdport = self.config.port;
+	}
+	
+	// Connect to StageDisplay websocket of ProPresenter
+	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
+
+	self.sdsocket.on('open', function open() {
+		self.sdsocket.send(JSON.stringify({
+			pwd: self.config.sdpass,
+			ptl: "610",
+			acn: "ath"
+		}));
+
+	});
+
+	// Since StageDisplay connection is not required to function - we will only send a warning if it fails
+	self.sdsocket.on('error', function (err) {
+		// If stage display cannt connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
+		// Therefore, a failure to connect stage display is more of a warning state.
+		// However, if the module is already in error, then we should not lower that to warning!
+		if (self.currentStatus !== self.STATUS_ERROR) {
+			self.status(self.STATUS_WARNING, 'OK, But Stage Display not connected');
+		}
+	});
+
+	self.sdsocket.on('connect', function () {
+		debug("Connected to ProPresenter stage display");
+		self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
+	});
+	
+	self.sdsocket.on('close', function(code, reason) {
+		// Event is also triggered when a reconnect attempt fails.
+		// Reset the current state then abort; don't flood logs with disconnected notices.
+
+		var wasSDConnected = self.currentState.internal.wsSDConnected;
+		self.emptyCurrentState();
+	
+		if (wasSDConnected === false) {
+			return;
+		}
+
+		self.status(self.STATUS_WARNING, 'OK, But Stage Display closed');
+		self.setSDConnectionVariable('Disconnected', true);
+
+	});
+
+	self.sdsocket.on('message', function(message) {
+		// Handle the stage display message received from ProPresenter
+		self.onSDWebSocketMessage(message);
+	});	
 
 };
 
@@ -1044,6 +1203,37 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 };
 
+
+/**
+ * Received a stage display message from ProPresenter.
+ */
+instance.prototype.onSDWebSocketMessage = function(message) {
+	var self = this;
+	var objData = JSON.parse(message);
+	switch(objData.acn) {
+		case 'ath':
+			if (objData.ath === true) {
+				self.currentState.internal.wsSDConnected = true;
+				// Successfully authenticated.
+				self.setSDConnectionVariable('Connected', true);
+				self.status(self.STATE_OK);
+			} else {
+				self.status(self.STATE_ERROR);
+				// Bad password
+				self.log('warn', "Stage Display auth error: " + objData.error);
+				
+				self.stopSDConnectionTimer(); 
+			}
+			break;
+			
+		case 'vid':
+			// Record new video countdown timer value in dynamic var
+			self.updateVariable('video_countdown_timer', objData.txt);
+			break;
+
+	}
+
+};
 
 /**
  * Requests the current state from ProPresenter.
