@@ -1,6 +1,6 @@
 # companion-module-propresenter6
 
-Module for using ProPresenter with the Elgato Stream Deck and Companion
+Module for using ProPresenter with the Elgato Stream Deck and Companion. Requires a connection to the ProPresenter Remote network port.  Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.
 
 # Commands
 ## Slides
@@ -97,3 +97,4 @@ $(propresenter:connection_status) | The current connection status to ProPresente
 $(propresenter:watched_clock_current_time) | In the config of this module, you can specify the index of a clock (timer) that you want to "watch". This dynamic variable will be updated once per second to the current value of the clock specified. You could use this to display a live timer value on a button!
 $(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (This is updated whenever a new layout is selected.)
 $(propresenter:current_stage_display_name) | Name of the currently selected stage display layout (This is updated whenever a new layout is selected.)
+$(propresenter:video_countdown_timer) | Current value of video countdown timer - automatically updated when a video is playing. (This one variable is only updated when the module is configured to also connect to the Stage Display App port)
