@@ -58,7 +58,21 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'pass',
-			label: 'ProPresenter Password',
+			label: 'ProPresenter Remote Password',
+			width: 8,
+		},
+		{
+			type: 'textinput',
+			id: 'sdport',
+			label: 'StageDisplay App Port',
+			tooltip: 'Optionally set in ProPresenter Preferences, ProPresenter Port (above) will be used if left blank.',
+			width: 6,
+			default: ''
+		},
+		{
+			type: 'textinput',
+			id: 'sdpass',
+			label: 'StageDisplay App Password',
 			width: 8,
 		},
 		{
@@ -83,6 +97,7 @@ instance.prototype.updateConfig = function(config) {
 	self.disconnectFromProPresenter();
 	self.connectToProPresenter();
 	self.startConnectionTimer();
+	self.startSDConnectionTimer();
 };
 
 
@@ -99,7 +114,9 @@ instance.prototype.init = function() {
 
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
+		self.connectToProPresenterSD();
 		self.startConnectionTimer();
+		self.startSDConnectionTimer();
 	}
 
 };
@@ -265,7 +282,7 @@ instance.prototype.init_presets = function () {
 					}
 				}
 			]
-		},
+		}
 	];
 	self.setPresetDefinitions(presets);
 }
@@ -283,6 +300,7 @@ instance.prototype.emptyCurrentState = function() {
 	// The internal state of the connection to ProPresenter
 	self.currentState.internal = {
 		wsConnected: false,
+		wsSDConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
 	};
@@ -293,9 +311,11 @@ instance.prototype.emptyCurrentState = function() {
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
+		sd_connection_status: 'Disconnected',
+		video_countdown_timer: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
-		current_stage_display_index: 'N/A',
+		current_stage_display_index: 'N/A'
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -307,7 +327,7 @@ instance.prototype.emptyCurrentState = function() {
 
 
 /**
- * Initialize the available variables.
+ * Initialize the available variables. (These are listed in the module config UI)
  */
 instance.prototype.initVariables = function() {
 	var self = this;
@@ -341,6 +361,10 @@ instance.prototype.initVariables = function() {
 			label: 'Current Stage Display Name',
 			name:  'current_stage_display_name'
 		},
+		{
+			label: 'Video CountDown Timer',
+			name:  'video_countdown_timer'
+		}
 	];
 
 	self.setVariableDefinitions(variables);
@@ -407,6 +431,41 @@ instance.prototype.stopConnectionTimer = function() {
 
 
 /**
+ * Create a timer to connect to ProPresenter stage display.
+ */
+instance.prototype.startSDConnectionTimer = function() {
+	var self = this;
+
+	// Stop the timer if it was already running
+	self.stopSDConnectionTimer();
+
+	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.reconSDTimer = setInterval(function() {
+
+		if (self.sdsocket === undefined || self.sdsocket.readyState === 3 /*CLOSED*/) {
+			// Not connected. Try to connect again.
+			self.connectToProPresenterSD();
+		}
+
+	}, 5000);
+
+};
+
+
+/**
+ * Stops the stage display reconnection timer.
+ */
+instance.prototype.stopSDConnectionTimer = function() {
+	var self = this;
+
+	if (self.reconSDTimer !== undefined) {
+		clearInterval(self.reconSDTimer);
+		delete self.reconSDTimer;
+	}
+
+};
+
+/**
  * Updates the connection status variable.
  */
 instance.prototype.setConnectionVariable = function(status, updateLog) {
@@ -420,6 +479,19 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 
 };
 
+/**
+ * Updates the stage display connection status variable.
+ */
+instance.prototype.setSDConnectionVariable = function(status, updateLog) {
+	var self = this;
+
+	self.updateVariable('sd_connection_status', status);
+
+	if (updateLog) {
+		self.log('info', "ProPresenter StageDisplay " + status);
+	}
+
+};
 
 /**
  * Disconnect the websocket from ProPresenter, if connected.
@@ -439,6 +511,23 @@ instance.prototype.disconnectFromProPresenter = function() {
 
 
 /**
+ * Disconnect the websocket from ProPresenter stage display, if connected.
+ */
+instance.prototype.disconnectFromProPresenterSD = function() {
+	var self = this;
+
+	if (self.sdsocket !== undefined) {
+		// Disconnect if already connected
+		if (self.sdsocket.readyState !== 3 /*CLOSED*/) {
+			self.sdsocket.terminate();
+		}
+		delete self.sdsocket;
+	}
+
+};
+
+
+/**
  * Attempts to open a websocket connection with ProPresenter.
  */
 instance.prototype.connectToProPresenter = function() {
@@ -451,6 +540,7 @@ instance.prototype.connectToProPresenter = function() {
 		return;
 	}
 
+	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
 	self.socket.on('open', function open() {
@@ -467,8 +557,8 @@ instance.prototype.connectToProPresenter = function() {
 	});
 
 	self.socket.on('connect', function () {
-		debug("Connected");
-		self.log('info', "Connected to " + self.config.host +":"+ self.config.port);
+		debug("Connected to ProPresenter remote control");
+		self.log('info', "Connected to ProPresenter remote control" + self.config.host +":"+ self.config.port);
 	});
 
 	self.socket.on('close', function(code, reason) {
@@ -491,6 +581,75 @@ instance.prototype.connectToProPresenter = function() {
 		// Handle the message received from ProPresenter
 		self.onWebSocketMessage(message);
 	});
+	
+};
+
+
+/**
+ * Attempts to open a websocket connection with ProPresenter stage display.
+ */
+instance.prototype.connectToProPresenterSD = function() {
+	var self = this;
+
+	// Disconnect if already connected
+	self.disconnectFromProPresenterSD();
+
+	if (self.config.host === '') {
+		return;
+	}
+	
+	// Use ProPresenter remote control port if stage display port is not set.
+	if (self.config.sdport === '') {
+		self.config.sdport = self.config.port;
+	}
+	
+	// Connect to StageDisplay websocket of ProPresenter
+	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
+
+	self.sdsocket.on('open', function open() {
+		self.sdsocket.send(JSON.stringify({
+			pwd: self.config.sdpass,
+			ptl: "610",
+			acn: "ath"
+		}));
+
+	});
+
+	// Since StageDisplay connection is not required to function - we will only send a warning if it fails
+	self.sdsocket.on('error', function (err) {
+		// If stage display cannt connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
+		// Therefore, a failure to connect stage display is more of a warning state.
+		// However, if the module is already in error, then we should not lower that to warning!
+		if (self.currentStatus !== self.STATUS_ERROR) {
+			self.status(self.STATUS_WARNING, 'OK, But Stage Display not connected');
+		}
+	});
+
+	self.sdsocket.on('connect', function () {
+		debug("Connected to ProPresenter stage display");
+		self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
+	});
+	
+	self.sdsocket.on('close', function(code, reason) {
+		// Event is also triggered when a reconnect attempt fails.
+		// Reset the current state then abort; don't flood logs with disconnected notices.
+
+		var wasSDConnected = self.currentState.internal.wsSDConnected;
+		self.emptyCurrentState();
+	
+		if (wasSDConnected === false) {
+			return;
+		}
+
+		self.status(self.STATUS_WARNING, 'OK, But Stage Display closed');
+		self.setSDConnectionVariable('Disconnected', true);
+
+	});
+
+	self.sdsocket.on('message', function(message) {
+		// Handle the stage display message received from ProPresenter
+		self.onSDWebSocketMessage(message);
+	});	
 
 };
 
@@ -614,10 +773,10 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Duration (Or Start Time)',
+					label: 'Countdown Duration, Countdown To Time, Or Elapsed Start Time',
 					id: 'clockTime',
 					default: "00:05:00",
-					tooltip: 'New value for the countdown clock. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
+					tooltip: 'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
 					regex: '/^\\d*:?\\d*:?\\d*$/'
 				},
 			 	{
@@ -667,19 +826,17 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Quoted List Of Message Tokens',
+					label: 'Comma Separated List Of Message Token Names',
 					id: 'messageKeys',
 					default: '',
-					tooltip: 'Comma separated, Double-Quoteed, list of message token names used in the message.  Associated values are given below. (WARNING! - A Typo here could crash and burn ProPresenter)',
-					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values (Too bad we can't validate that the number of items match the messageValues below)
+					tooltip: 'Comma separated, list of message token names used in the message.  Associated values are given below. Use double commas (,,) to insert an actual comma in a token name. (WARNING! - A simple typo here could crash and burn ProPresenter)'
 				},
 				{
 					type: 'textinput',
-					label: 'Quoted List Of Token Values',
+					label: 'Comma Separated List Of Message Token Values',
 					id: 'messageValues',
 					default: '',
-					tooltip: 'Comma separated, Double-Quoteed, list of values for each message token above. (WARNING! - A Typo here could crash and burn ProPresenter)',
-					regex: '/^"[^"]*"$|^"[^"]*"(,"[^"]*")*$/' // Try to enforece a single line of any number of double-quoted, comma-separated values
+					tooltip: 'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. (WARNING! - A simple typo here could crash and burn ProPresenter)'
 				}
 			]
 		},
@@ -713,7 +870,6 @@ instance.prototype.actions = function(system) {
 	});
 };
 
-
 /**
  * Action triggered by Companion.
  */
@@ -724,11 +880,15 @@ instance.prototype.action = function(action) {
 	switch (action.action) {
 
 		case 'next':
-			cmd = '{"action":"presentationTriggerNext"}';
+			cmd = {
+				action: "presentationTriggerNext"
+			};
 			break;
 
 		case 'last':
-			cmd = '{"action":"presentationTriggerPrevious"}';
+			cmd = {
+				action: "presentationTriggerPrevious"
+			};
 			break;
 
 		case 'slideNumber':
@@ -761,66 +921,102 @@ instance.prototype.action = function(action) {
 				presentationPath = opt.path;
 			}
 
-			cmd = JSON.stringify({
+			cmd = {
 				action: "presentationTriggerIndex",
 				slideIndex: index,
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: presentationPath
-			});
+			};
 			break;
 
 		case 'clearall':
-			cmd = '{"action":"clearAll"}';
+			cmd = {
+				action: "clearAll"
+			};
 			break;
 
 		case 'clearslide':
-			cmd = '{"action":"clearText"}';
+			cmd = {
+				action: "clearText"
+			};
 			break;
 
 		case 'clearprops':
-			cmd = '{"action":"clearProps"}';
+			cmd = {
+				action: "clearProps"
+			};
 			break;
 
 		case 'clearaudio':
-			cmd = '{"action":"clearAudio"}';
+			cmd = {
+				action: "clearAudio"
+			};
 			break;
 
 		case 'clearbackground':
-			cmd = '{"action":"clearVideo"}';
+			cmd = {
+				action: "clearVideo"
+			};
 			break;
 
 		case 'cleartelestrator':
-			cmd = '{"action":"clearTelestrator"}';
+			cmd = {
+				action: "clearTelestrator"
+			};
 			break;
 
 		case 'cleartologo':
-			cmd = '{"action":"clearToLogo"}';
+			cmd = {
+				action: "clearToLogo"
+			};
 			break;
 
 		case 'stageDisplayLayout':
-			cmd = '{"action":"stageDisplaySetIndex","stageDisplayIndex":'+opt.index+'}';
+			cmd = {
+				action: "stageDisplaySetIndex",
+				stageDisplayIndex: opt.index
+			};
 			break;
 
 		case 'stageDisplayMessage':
-			var message = JSON.stringify(opt.message);
-			cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
+			//var message = JSON.stringify(opt.message);
+			//cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
+			cmd = {
+				action: "stageDisplaySendMessage",
+				stageDisplayMessage: opt.message
+			};
 			break;
 
 		case 'stageDisplayHideMessage':
-			cmd = '{"action":"stageDisplayHideMessage"}';
+			cmd = {
+				action: "stageDisplayHideMessage"
+			};
 			break;
+			
 		case 'clockStart':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockStart","clockIndex":"'+clockIndex+'"}';
+			cmd = {
+				action: "clockStart",
+				clockIndex: clockIndex
+			};
 			break;
+			
 		case 'clockStop':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockStop","clockIndex":"'+clockIndex+'"}';
-			break;	
+			cmd = {
+				action: "clockStop",
+				clockIndex: clockIndex
+			};
+			break;
+			
 		case 'clockReset':
 			var clockIndex = parseInt(opt.clockIndex);
-			cmd = '{"action":"clockReset","clockIndex":"'+clockIndex+'"}';
+			cmd = {
+				action: "clockReset",
+				clockIndex: clockIndex
+			};
 			break;
+			
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
 			
@@ -839,19 +1035,48 @@ instance.prototype.action = function(action) {
 				opt.clockName = '';
 			}
 			
-			cmd = '{"action":"clockUpdate","clockIndex":"'+clockIndex+'","clockTime":"'+opt.clockTime+'","clockOverrun":"'+opt.clockOverRun+'","clockType":"'+opt.clockType+'","clockIsPM":"'+opt.clockIsPM+'","clockElapsedTime":"'+opt.clockElapsedTime+'","clockName":"'+opt.clockName+'"}';
+			cmd = {
+				action: "clockUpdate",
+				clockIndex: clockIndex,
+				clockTime: opt.clockTime,
+				clockOverrun: opt.clockOverRun,
+				clockType: opt.clockType,
+				clockIsPM: opt.clockIsPM,
+				clockElapsedTime: opt.clockElapsedTime,
+				clockName: opt.clockName
+			};
 			break;
+			
 		case 'messageHide':
-			cmd = '{"action":"messageHide","messageIndex":"'+opt.messageIndex+'"}';
+			cmd = {
+				action: "messageHide",
+				messageIndex: opt.messageIndex
+			};
 			break;
+			
 		case 'messageSend':
-			cmd = '{"action":"messageSend","messageIndex":"'+opt.messageIndex+'","messageKeys":['+opt.messageKeys+'],"messageValues":['+opt.messageValues+']}';
+			// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
+			// It works by first replacing any double commas with a character 29, and then replacing any single commas with a character 28.  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
+			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/ 
+			cmd = {
+				action: "messageSend",
+				messageIndex: opt.messageIndex,
+				messageKeys: opt.messageKeys.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28)),
+				messageValues: opt.messageValues.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28))
+			};
 			break;
+			
 		case 'audioStartCue':
-			cmd = '{"action":"audioStartCue","audioChildPath":"'+opt.audioChildPath+'"}';
+			cmd = {
+				action: "audioStartCue",
+				audioChildPath: opt.audioChildPath
+			};
 			break;
+			
 		case 'audioPlayPause':
-			cmd = '{"action":"audioPlayPause"}';
+			cmd = {
+				action: "audioPlayPause"
+			};
 			break;
 	};
 
@@ -859,7 +1084,8 @@ instance.prototype.action = function(action) {
 
 		if (self.currentStatus !== self.STATE_ERROR) {
 			try {
-				self.socket.send(cmd);
+				var cmdJSON = JSON.stringify(cmd);
+				self.socket.send(cmdJSON);
 			}
 			catch (e) {
 				debug("NETWORK " + e)
@@ -872,7 +1098,6 @@ instance.prototype.action = function(action) {
 	}
 
 };
-
 
 /**
  * Received a message from ProPresenter.
@@ -978,6 +1203,37 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 };
 
+
+/**
+ * Received a stage display message from ProPresenter.
+ */
+instance.prototype.onSDWebSocketMessage = function(message) {
+	var self = this;
+	var objData = JSON.parse(message);
+	switch(objData.acn) {
+		case 'ath':
+			if (objData.ath === true) {
+				self.currentState.internal.wsSDConnected = true;
+				// Successfully authenticated.
+				self.setSDConnectionVariable('Connected', true);
+				self.status(self.STATE_OK);
+			} else {
+				self.status(self.STATE_ERROR);
+				// Bad password
+				self.log('warn', "Stage Display auth error: " + objData.error);
+				
+				self.stopSDConnectionTimer(); 
+			}
+			break;
+			
+		case 'vid':
+			// Record new video countdown timer value in dynamic var
+			self.updateVariable('video_countdown_timer', objData.txt);
+			break;
+
+	}
+
+};
 
 /**
  * Requests the current state from ProPresenter.

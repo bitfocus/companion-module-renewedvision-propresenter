@@ -1,6 +1,6 @@
 # companion-module-propresenter6
 
-Module for using ProPresenter with the Elgato Stream Deck and Companion
+Module for using ProPresenter with the Elgato Stream Deck and Companion. Requires a connection to the ProPresenter Remote network port.  Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.
 
 # Commands
 ## Slides
@@ -63,13 +63,23 @@ For example, if you're on slide #5, trigger `Clear All`, and then trigger `Next 
 
 You can work around this PC limitation by using the `Specific Slide` action with a relative slide number of `+1` to move to the next slide. This would move you to slide #6 after the `Clear All` action.
 
+## Messages (On Output screen)
+Command | Description
+------- | -----------
+Show&nbsp;Message | Shows the message on the stage display output. You can pass values for message tokens, but you must do so very carefully - a typo here can crash ProPresenter.  Crashes can cause data loss, and ruin your setup. Learn how to correctly enter message tokens by reading below. Always type carefully and double-check. Get it right on a test machine first! The correct way to pass values for message tokens is as two lists. The two lists work together to form token NAME and token VALUE pairs.  The first list is a comma-separated list of token NAMES and the second is a comma-separated list of token VALUES. The number of items in eash list should match - e.g. if you supply two token NAMES, then you should supply two token VALUES to make matching pairs. All token names in your list *MUST* match the token names defined in the message within ProPresenter (or else Pro6 will likely crash).  The token values can be any text. You don't have to pass *all* the token names/values pairs - any name/values that you don't include will be treated as and displayed as blank. You don't have to pass any token names/values if you don't need to. Static messages without any tokens are safe - you can't make a typo if you leave the token names and token values list blank! If one of your token names or token values needs to have a comma in it, you can type a double comma (,,) to insert a literal comma - this works in either a token name or a token value. Again, make certain that your list of token NAMES perfectly match the names of the tokens defined in the message within Pro6 - Pro6 won't crash if they match perfectly - so be carefull!
+Hide&nbsp;Message | Removes a message from output screen.
+
+Messages are identified by Index. Index is a 0-based, where the first message is 0, and then count up through the messages in the order shown in the list of ProPresenter messages.
 
 ## Stage Display
 Command | Description
 ------- | -----------
 Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
-Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. Index is a 0-based number (in the order shown in ProPresenter)
+Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. 
+
+Stage Displays are indentified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
+
 
 ## Clocks (Timers)
 Command | Description
@@ -97,3 +107,4 @@ $(propresenter:connection_status) | The current connection status to ProPresente
 $(propresenter:watched_clock_current_time) | In the config of this module, you can specify the index of a clock (timer) that you want to "watch". This dynamic variable will be updated once per second to the current value of the clock specified. You could use this to display a live timer value on a button!
 $(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (This is updated whenever a new layout is selected.)
 $(propresenter:current_stage_display_name) | Name of the currently selected stage display layout (This is updated whenever a new layout is selected.)
+$(propresenter:video_countdown_timer) | Current value of video countdown timer - automatically updated when a video is playing. (This one variable is only updated when the module is configured to also connect to the Stage Display App port)
