@@ -63,9 +63,25 @@ instance.prototype.config_fields = function () {
 		},
 		{
 			type: 'textinput',
+			id: 'indexOfClockToWatch',
+			label: 'Index of Clock To Watch',
+			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
+			default: '0',
+			width: 2,
+			regex: self.REGEX_NUMBER
+		},
+	 	{
+		 	type: 'dropdown',
+		 	label: 'Connect to StageDisplay (Only required for video countdown timer)',
+		 	id: 'use_sd',
+			default: 'no',
+		 	choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+	 	},
+		{
+			type: 'textinput',
 			id: 'sdport',
-			label: 'StageDisplay App Port',
-			tooltip: 'Optionally set in ProPresenter Preferences, ProPresenter Port (above) will be used if left blank.',
+			label: 'Optional Custom StageDisplay App Port',
+			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
 			width: 6,
 			default: ''
 		},
@@ -74,15 +90,6 @@ instance.prototype.config_fields = function () {
 			id: 'sdpass',
 			label: 'StageDisplay App Password',
 			width: 8,
-		},
-		{
-			type: 'textinput',
-			id: 'indexOfClockToWatch',
-			label: 'Index of Clock To Watch',
-			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
-			default: '0',
-			width: 2,
-			regex: self.REGEX_NUMBER
 		}
 	]
 };
@@ -95,9 +102,17 @@ instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
 	self.disconnectFromProPresenter();
+	self.disconnectFromProPresenterSD();
 	self.connectToProPresenter();
 	self.startConnectionTimer();
-	self.startSDConnectionTimer();
+	if (self.config.use_sd === 'yes') {
+		self.log('info', "starting con timer");
+		self.connectToProPresenterSD();
+		self.startSDConnectionTimer();
+	} else {
+		self.stopSDConnectionTimer();
+		self.log('info', "stopping con timer");
+	}
 };
 
 
@@ -116,7 +131,9 @@ instance.prototype.init = function() {
 		self.connectToProPresenter();
 		self.connectToProPresenterSD();
 		self.startConnectionTimer();
-		self.startSDConnectionTimer();
+		if (self.config.use_sd === 'yes') {
+			self.startSDConnectionTimer();
+		}
 	}
 
 };
@@ -129,7 +146,9 @@ instance.prototype.destroy = function() {
 	var self = this;
 
 	self.disconnectFromProPresenter();
+	self.disconnectFromProPresenterSD();
 	self.stopConnectionTimer();
+	self.stopSDConnectionTimer();
 
 	debug("destroy", self.id);
 };
@@ -544,6 +563,7 @@ instance.prototype.connectToProPresenter = function() {
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
 	self.socket.on('open', function open() {
+		self.log('info', "Opened websocket to ProPresenter remote control: " + self.config.host +":"+ self.config.port);
 		self.socket.send(JSON.stringify({
 			password: self.config.pass,
 			protocol: "610",
@@ -553,13 +573,12 @@ instance.prototype.connectToProPresenter = function() {
 	});
 
 	self.socket.on('error', function (err) {
-		self.status(self.STATE_ERROR, err.message);
+		self.status(self.STATUS_ERROR, err.message);
 	});
 
-	self.socket.on('connect', function () {
-		debug("Connected to ProPresenter remote control");
-		self.log('info', "Connected to ProPresenter remote control" + self.config.host +":"+ self.config.port);
-	});
+	//self.socket.on('connect', function () {
+	//	debug("Connected to ProPresenter remote control");
+	//});
 
 	self.socket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
@@ -572,7 +591,7 @@ instance.prototype.connectToProPresenter = function() {
 			return;
 		}
 
-		self.status(self.STATE_ERROR, 'Not connected to ProPresenter');
+		self.status(self.STATUS_ERROR, 'Not connected to ProPresenter');
 		self.setConnectionVariable('Disconnected', true);
 
 	});
@@ -607,6 +626,7 @@ instance.prototype.connectToProPresenterSD = function() {
 	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
 
 	self.sdsocket.on('open', function open() {
+		self.log('info', "Opened websocket to ProPresenter stage display: " + self.config.host +":"+ self.config.sdport);
 		self.sdsocket.send(JSON.stringify({
 			pwd: self.config.sdpass,
 			ptl: "610",
@@ -617,18 +637,17 @@ instance.prototype.connectToProPresenterSD = function() {
 
 	// Since StageDisplay connection is not required to function - we will only send a warning if it fails
 	self.sdsocket.on('error', function (err) {
-		// If stage display cannt connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
+		// If stage display can't connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
 		// Therefore, a failure to connect stage display is more of a warning state.
 		// However, if the module is already in error, then we should not lower that to warning!
-		if (self.currentStatus !== self.STATUS_ERROR) {
+		if (self.currentStatus !== self.STATUS_ERROR && self.config.use_sd === 'yes') {
 			self.status(self.STATUS_WARNING, 'OK, But Stage Display not connected');
 		}
 	});
 
-	self.sdsocket.on('connect', function () {
-		debug("Connected to ProPresenter stage display");
-		self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
-	});
+	//self.sdsocket.on('connect', function () {
+	//	debug("Connected to ProPresenter stage display");
+	//});
 	
 	self.sdsocket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
@@ -640,8 +659,9 @@ instance.prototype.connectToProPresenterSD = function() {
 		if (wasSDConnected === false) {
 			return;
 		}
-
-		self.status(self.STATUS_WARNING, 'OK, But Stage Display closed');
+		if  (self.config.use_sd === 'yes') {
+			self.status(self.STATUS_WARNING, 'OK, But Stage Display closed');
+		}
 		self.setSDConnectionVariable('Disconnected', true);
 
 	});
@@ -1082,18 +1102,18 @@ instance.prototype.action = function(action) {
 
 	if (cmd !== undefined) {
 
-		if (self.currentStatus !== self.STATE_ERROR) {
+		if (self.currentStatus !== self.STATUS_ERROR) {
 			try {
 				var cmdJSON = JSON.stringify(cmd);
 				self.socket.send(cmdJSON);
 			}
 			catch (e) {
 				debug("NETWORK " + e)
-				self.status(self.STATE_ERROR, e);
+				self.status(self.STATUS_ERROR, e);
 			}
 		} else {
 			debug('Socket not connected :(');
-			self.status(self.STATE_ERROR);
+			self.status(self.STATUS_ERROR);
 		}
 	}
 
@@ -1121,7 +1141,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 					action: 'clockStartSendingCurrentTime'
 				}));
 			} else {
-				self.status(self.STATE_ERROR);
+				self.status(self.STATUS_ERROR);
 				// Bad password
 				self.log('warn', objData.error);
 				self.disconnectFromProPresenter();
@@ -1218,9 +1238,11 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 				self.setSDConnectionVariable('Connected', true);
 				self.status(self.STATE_OK);
 			} else {
-				self.status(self.STATE_ERROR);
 				// Bad password
-				self.log('warn', "Stage Display auth error: " + objData.error);
+				if (self.config.use_sd === 'yes') {
+					self.status(self.STATUS_WARNING, 'OK, But Stage Display failed auth');
+					self.log('info', "Stage Display auth error");
+				}
 				
 				self.stopSDConnectionTimer(); 
 			}
