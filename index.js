@@ -106,12 +106,10 @@ instance.prototype.updateConfig = function(config) {
 	self.connectToProPresenter();
 	self.startConnectionTimer();
 	if (self.config.use_sd === 'yes') {
-		self.log('info', "starting con timer");
 		self.connectToProPresenterSD();
 		self.startSDConnectionTimer();
 	} else {
 		self.stopSDConnectionTimer();
-		self.log('info', "stopping con timer");
 	}
 };
 
@@ -418,6 +416,7 @@ instance.prototype.startConnectionTimer = function() {
 	// Stop the timer if it was already running
 	self.stopConnectionTimer();
 
+	self.log('info', "Starting ConnectionTimer");
 	// Create a reconnect timer to watch the socket. If disconnected try to connect.
 	self.reconTimer = setInterval(function() {
 
@@ -437,6 +436,7 @@ instance.prototype.startConnectionTimer = function() {
 instance.prototype.stopConnectionTimer = function() {
 	var self = this;
 
+	self.log('info', "Stopping ConnectionTimer");
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer);
 		delete self.reconTimer;
@@ -454,7 +454,8 @@ instance.prototype.startSDConnectionTimer = function() {
 	// Stop the timer if it was already running
 	self.stopSDConnectionTimer();
 
-	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	// Create a reconnect timer to watch the socket. If disconnected try to connect
+	self.log('info', "Starting SDConnectionTimer");
 	self.reconSDTimer = setInterval(function() {
 
 		if (self.sdsocket === undefined || self.sdsocket.readyState === 3 /*CLOSED*/) {
@@ -473,6 +474,7 @@ instance.prototype.startSDConnectionTimer = function() {
 instance.prototype.stopSDConnectionTimer = function() {
 	var self = this;
 
+	self.log('info', "Stopping SDConnectionTimer");
 	if (self.reconSDTimer !== undefined) {
 		clearInterval(self.reconSDTimer);
 		delete self.reconSDTimer;
