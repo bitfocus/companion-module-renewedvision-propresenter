@@ -18,7 +18,7 @@ function instance(system, id, config) {
 /**
  * The current state of ProPresentation.
  * Initially populated by emptyCurrentState().
- * 
+ *
  * .internal contains the internal state of the module
  * .dynamicVariable contains the values of the dynamic variables
  */
@@ -124,7 +124,7 @@ instance.prototype.init = function() {
 	debug = self.debug;
 	log = self.log;
 	self.init_presets(); 
-	
+
 	self.initVariables();
 
 	if (self.config.host !== '' && self.config.port !== '') {
@@ -226,7 +226,6 @@ instance.prototype.init_presets = function () {
 						clockTime: '00:05:00',
 						clockOverRun: 'false',
 						clockType: 0,
-						
 					}
 				},
 				{
@@ -344,7 +343,6 @@ instance.prototype.emptyCurrentState = function() {
 
 };
 
-
 /**
  * Initialize the available variables. (These are listed in the module config UI)
  */
@@ -393,7 +391,6 @@ instance.prototype.initVariables = function() {
 
 };
 
-
 /**
  * Updates the dynamic variable and records the internal state of that variable.
  * 
@@ -409,7 +406,6 @@ instance.prototype.updateVariable = function(name, value) {
 
 	self.currentState.dynamicVariables[name] = value;
 	self.setVariable(name, value);
-
 };
 
 
@@ -600,7 +596,7 @@ instance.prototype.connectToProPresenter = function() {
 		// Handle the message received from ProPresenter
 		self.onWebSocketMessage(message);
 	});
-	
+
 };
 
 
@@ -616,7 +612,7 @@ instance.prototype.connectToProPresenterSD = function() {
 	if (self.config.host === '') {
 		return;
 	}
-	
+
 	// Use ProPresenter remote control port if stage display port is not set.
 	if (self.config.sdport === '') {
 		self.config.sdport = self.config.port;
@@ -647,15 +643,16 @@ instance.prototype.connectToProPresenterSD = function() {
 
 	//self.sdsocket.on('connect', function () {
 	//	debug("Connected to ProPresenter stage display");
+	//	self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
 	//});
-	
+
 	self.sdsocket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 
 		var wasSDConnected = self.currentState.internal.wsSDConnected;
 		self.emptyCurrentState();
-	
+
 		if (wasSDConnected === false) {
 			return;
 		}
@@ -669,7 +666,7 @@ instance.prototype.connectToProPresenterSD = function() {
 	self.sdsocket.on('message', function(message) {
 		// Handle the stage display message received from ProPresenter
 		self.onSDWebSocketMessage(message);
-	});	
+	});
 
 };
 
@@ -710,7 +707,7 @@ instance.prototype.actions = function(system) {
 		'clearbackground': { label: 'Clear Background' },
 		'cleartelestrator': { label: 'Clear Telestrator' },
 		'cleartologo': { label: 'Clear to Logo' },
-   		'stageDisplayLayout': {
+		'stageDisplayLayout': {
 			label: 'Stage Display Layout',
 			options: [
 				{
@@ -799,38 +796,37 @@ instance.prototype.actions = function(system) {
 					tooltip: 'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
 					regex: '/^\\d*:?\\d*:?\\d*$/'
 				},
-			 	{
-				 	type: 'dropdown',
-				 	label: 'Over Run',
-				 	id: 'clockOverRun',
+				{
+					type: 'dropdown',
+					label: 'Over Run',
+					id: 'clockOverRun',
 					default: 'false',
-				 	choices: [ { id: 'false', label: 'False' }, { id: 'true', label: 'True' } ]
-			 	},
-			 	{
-				 	type: 'dropdown',
-				 	label: 'Clock Type',
-				 	id: 'clockType',
+					choices: [ { id: 'false', label: 'False' }, { id: 'true', label: 'True' } ]
+				},
+				{
+					type: 'dropdown',
+					label: 'Clock Type',
+					id: 'clockType',
 					default: '0',
 					tooltip: 'If the clock specified by the Clock Number is not of this type it will be UPDATED/CONVERTED this type.',
-				 	choices: [ { id: '0', label: 'Count Down Timer' }, { id: '1', label: 'Count Down To Time' }, { id: '2', label: 'Elapsed Time'} ]
-			 	},
-			 	{
-				 	type: 'dropdown',
-				 	label: 'Clock Is PM',
-				 	id: 'clockIsPM',
+					choices: [ { id: '0', label: 'Count Down Timer' }, { id: '1', label: 'Count Down To Time' }, { id: '2', label: 'Elapsed Time'} ]
+				},
+				{
+					type: 'dropdown',
+					label: 'Clock Is PM',
+					id: 'clockIsPM',
 					default: '0',
 					tooltip: 'Only Required for Count Down To Time Clock - otherwise this is ignored.',
-				 	choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
-			 	},
-			 	{
-				 	type: 'textinput',
-				 	label: 'Elapsed Time End',
-				 	id: 'clockElapsedTime',
+					choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
+				},
+				{
+					type: 'textinput',
+					label: 'Elapsed Time End',
+					id: 'clockElapsedTime',
 					default: '00:10:00',
 					tooltip: 'Only Required for Elapsed Time Clock - otherwise this is ignored.',
-				 	regex: '/^\\d*:?\\d*:?\\d*$/'
-			 	},
-				
+					regex: '/^\\d*:?\\d*:?\\d*$/'
+				},
 			]
 		},
 		'messageSend': {
@@ -927,7 +923,7 @@ instance.prototype.action = function(action) {
 				// Negative slide indexes are invalid. In such a case use the current slideIndex.
 				// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
 				//  trigger the current slide again. Can be used to bring back a slide after using
-				//  an action like 'clearAll' or 'clearText'. 
+				//  an action like 'clearAll' or 'clearText'.
 				index = self.currentState.internal.slideIndex;
 			}
 
@@ -1012,7 +1008,7 @@ instance.prototype.action = function(action) {
 				action: "stageDisplayHideMessage"
 			};
 			break;
-			
+
 		case 'clockStart':
 			var clockIndex = parseInt(opt.clockIndex);
 			cmd = {
@@ -1020,7 +1016,7 @@ instance.prototype.action = function(action) {
 				clockIndex: clockIndex
 			};
 			break;
-			
+
 		case 'clockStop':
 			var clockIndex = parseInt(opt.clockIndex);
 			cmd = {
@@ -1028,7 +1024,7 @@ instance.prototype.action = function(action) {
 				clockIndex: clockIndex
 			};
 			break;
-			
+
 		case 'clockReset':
 			var clockIndex = parseInt(opt.clockIndex);
 			cmd = {
@@ -1036,7 +1032,7 @@ instance.prototype.action = function(action) {
 				clockIndex: clockIndex
 			};
 			break;
-			
+
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
 			
@@ -1054,7 +1050,7 @@ instance.prototype.action = function(action) {
 			if (!opt.hasOwnProperty('clockName'))  {
 				opt.clockName = '';
 			}
-			
+
 			cmd = {
 				action: "clockUpdate",
 				clockIndex: clockIndex,
@@ -1066,18 +1062,18 @@ instance.prototype.action = function(action) {
 				clockName: opt.clockName
 			};
 			break;
-			
+
 		case 'messageHide':
 			cmd = {
 				action: "messageHide",
 				messageIndex: opt.messageIndex
 			};
 			break;
-			
+
 		case 'messageSend':
 			// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
 			// It works by first replacing any double commas with a character 29, and then replacing any single commas with a character 28.  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
-			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/ 
+			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
 			cmd = {
 				action: "messageSend",
 				messageIndex: opt.messageIndex,
@@ -1085,14 +1081,14 @@ instance.prototype.action = function(action) {
 				messageValues: opt.messageValues.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28))
 			};
 			break;
-			
+
 		case 'audioStartCue':
 			cmd = {
 				action: "audioStartCue",
 				audioChildPath: opt.audioChildPath
 			};
 			break;
-			
+
 		case 'audioPlayPause':
 			cmd = {
 				action: "audioPlayPause"
@@ -1168,7 +1164,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			// If playing from the library on Mac, the presentationPath here will be the full
 			//	path to the document on the user's computer ('/Users/JohnDoe/.../filename.pro6'),
-			//  which differs from objData.presentationPath returned by an action like 
+			//  which differs from objData.presentationPath returned by an action like
 			//  'presentationTriggerIndex' or 'presentationSlideIndex' which only contains the
 			//  filename.
 			// These two values need to match or we'll re-request 'presentationCurrent' on every
@@ -1181,7 +1177,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
-			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead. 
+			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead.
 			self.currentState.internal.presentationPath = objData.presentationPath;
 
 			// Get the total number of slides in this presentation
@@ -1192,21 +1188,21 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			self.updateVariable('total_slides', totalSlides);
 			break;
-		
+
 		case 'clockCurrentTimes':
 			var objWatchedClock = objData.clockTimes;
 			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length) {
 				self.updateVariable('watched_clock_current_time', objData.clockTimes[self.config.indexOfClockToWatch]);
 			}
 			break;
-		
+
 		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
 			var stageDisplayIndex = objData.stageDisplayIndex;
 			self.currentState.internal.slideIndex = parseInt(stageDisplayIndex,10);
 			self.updateVariable('current_stage_display_index', stageDisplayIndex);
 			self.getStageDisplaysInfo();
 			break;
-			
+
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
 			var stageDisplaySets = objData.stageDisplaySets;
 			var stageDisplayIndex =  objData.stageDisplayIndex;
@@ -1243,11 +1239,11 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 					self.status(self.STATUS_WARNING, 'OK, But Stage Display failed auth');
 					self.log('info', "Stage Display auth error");
 				}
-				
+
 				self.stopSDConnectionTimer(); 
 			}
 			break;
-			
+
 		case 'vid':
 			// Record new video countdown timer value in dynamic var
 			self.updateVariable('video_countdown_timer', objData.txt);
