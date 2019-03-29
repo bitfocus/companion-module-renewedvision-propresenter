@@ -121,7 +121,7 @@ instance.prototype.init = function() {
 	var self = this;
 	debug = self.debug;
 	log = self.log;
-	self.init_presets(); 
+	self.init_presets();
 
 	self.initVariables();
 
@@ -391,7 +391,7 @@ instance.prototype.initVariables = function() {
 
 /**
  * Updates the dynamic variable and records the internal state of that variable.
- * 
+ *
  * Will log a warning if the variable doesn't exist.
  */
 instance.prototype.updateVariable = function(name, value) {
@@ -584,7 +584,7 @@ instance.prototype.connectToProPresenter = function() {
 
 		var wasConnected = self.currentState.internal.wsConnected;
 		self.emptyCurrentState();
-	
+
 		if (wasConnected === false) {
 			return;
 		}
@@ -619,7 +619,7 @@ instance.prototype.connectToProPresenterSD = function() {
 	if (self.config.sdport === '') {
 		self.config.sdport = self.config.port;
 	}
-	
+
 	// Connect to StageDisplay websocket of ProPresenter
 	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
 
@@ -1037,7 +1037,7 @@ instance.prototype.action = function(action) {
 
 		case 'clockUpdate':
 			var clockIndex = parseInt(opt.clockIndex);
-			
+
 			// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
 			// If they are missing, then apply default values that result in the oringial bahaviour when it was only updating a countdown timers clockTime and clockOverRun.
 			if (!opt.hasOwnProperty('clockType'))  {
@@ -1241,8 +1241,7 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 					self.status(self.STATUS_WARNING, 'OK, But Stage Display failed auth');
 					self.log('info', "Stage Display auth error");
 				}
-
-				self.stopSDConnectionTimer(); 
+				self.stopSDConnectionTimer();
 			}
 			break;
 
