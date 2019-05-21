@@ -324,6 +324,7 @@ instance.prototype.emptyCurrentState = function() {
 	// The dynamic variable exposed to Companion
 	self.currentState.dynamicVariables = {
 		current_slide: 'N/A',
+		remaining_slides: 'N/A',
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
@@ -351,6 +352,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current slide number',
 			name:  'current_slide'
+		},
+		{
+			label: 'Remaining Slides',
+			name: 'remaining_slides'
 		},
 		{
 			label: 'Total slides in presentation',
@@ -1158,8 +1163,17 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			self.currentState.internal.slideIndex = slideIndex;
 			self.updateVariable('current_slide', slideIndex + 1);
-			break;
+			if (objData.presentationPath == self.currentState.internal.presentationPath) {
+				// If the triggered slide is part of the current presentation (for which we have stored the total slides) then update the 'remaining_slides' dynamic variable
+				// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info. 
+				self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - slideIndex - 1);
+			}
 
+			// Workaround for bug that occurs when a presentation with automatically triggered slides (eg go-to-next timer), fires one of it's slides while *another* presentation is selected and before any slides within the newly selected presentation are fired. This will lead to total_slides being wrong (and staying wrong) even after the user fires slides within the newly selected presentation.
+			setTimeout(function(){
+				self.getProPresenterState();
+			}, 800);
+			break;
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
@@ -1189,6 +1203,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 			}
 
 			self.updateVariable('total_slides', totalSlides);
+
+			// Update remaining_slides (as total_slides has probably just changed)
+			self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - self.currentState.dynamicVariables['current_slide']);
 			break;
 
 		case 'clockCurrentTimes':
