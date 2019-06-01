@@ -1117,6 +1117,47 @@ instance.prototype.action = function(action) {
 
 };
 
+instance.prototype.init_feedbacks = function() {
+	var self = this;
+
+	var feedbacks = {};
+	feedbacks['stagedisplay_active'] = {
+		label: 'Change colors from active stage display',
+		description: 'If the specified stage display is active, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Foreground color',
+				id: 'fg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Background color',
+				id: 'bg',
+				default: self.rgb(0,255,0)
+			},
+			{
+				type: 'textinput',
+				label: 'Stage Display Index',
+				id: 'index',
+				default: 0,
+				regex: self.REGEX_NUMBER
+			}
+		]
+	};
+	
+	self.setFeedbackDefinitions(feedbacks);
+}
+
+instance.prototype.feedback = function(feedback, bank) {
+	var self = this;
+	if (feedback.type == 'stagedisplay_active') {
+		if (self.currentState.internal.stageDisplayIndex == feedback.options.index) {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+}
 /**
  * Received a message from ProPresenter.
  */
@@ -1132,6 +1173,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true);
 				self.getProPresenterState();
+				self.init_feedbacks();
 				// Get current Stage Display (index and Name)
 				self.getStageDisplaysInfo();
 				// Ask Pro6 to start sending clock updates (they are sent once per second)
@@ -1200,7 +1242,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
 			var stageDisplayIndex = objData.stageDisplayIndex;
-			self.currentState.internal.slideIndex = parseInt(stageDisplayIndex,10);
+			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
 			self.updateVariable('current_stage_display_index', stageDisplayIndex);
 			self.getStageDisplaysInfo();
 			break;
@@ -1208,8 +1250,10 @@ instance.prototype.onWebSocketMessage = function(message) {
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
 			var stageDisplaySets = objData.stageDisplaySets;
 			var stageDisplayIndex =  objData.stageDisplayIndex;
+			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
 			self.updateVariable('current_stage_display_index', stageDisplayIndex);
 			self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
+			self.checkFeedbacks('stagedisplay_active');
 			break;
 
 	}
