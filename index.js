@@ -1122,7 +1122,7 @@ instance.prototype.init_feedbacks = function() {
 
 	var feedbacks = {};
 	feedbacks['stagedisplay_active'] = {
-		label: 'Change colors from active stage display',
+		label: 'Change colors based on active stage display',
 		description: 'If the specified stage display is active, change colors of the bank',
 		options: [
 			{
@@ -1245,6 +1245,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
 			self.updateVariable('current_stage_display_index', stageDisplayIndex);
 			self.getStageDisplaysInfo();
+			self.checkFeedbacks('stagedisplay_active');
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
