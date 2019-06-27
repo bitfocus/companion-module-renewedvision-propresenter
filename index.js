@@ -884,12 +884,38 @@ instance.prototype.actions = function(system) {
 					label: 'Audio Item Playlist Path',
 					id: 'audioChildPath',
 					default: '',
-					tooltip: 'Playlist path format 0.0',
+					tooltip: 'PresentationPath format - See the README for more information',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
 				}
 			]
 		},
-		'audioPlayPause': { label: 'Audio Play/Pause' }
+		'audioPlayPause': { label: 'Audio Play/Pause' },
+		'timelinePlayPause': {
+			label: 'Timeline Play/Pause',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Presentation Path',
+					id: 'presentationPath',
+					default: '',
+					tooltip: 'PresentationPath format - See the README for more information',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				}
+			]
+		},
+		'timelineRewind': {
+			label: 'Timeline Rewind',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Presentation Path',
+					id: 'presentationPath',
+					default: '',
+					tooltip: 'PresentationPath format - See the README for more information',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
+				}
+			]
+		}
 	});
 };
 
@@ -1099,6 +1125,18 @@ instance.prototype.action = function(action) {
 		case 'audioPlayPause':
 			cmd = {
 				action: "audioPlayPause"
+			};
+			break;
+		case 'timelinePlayPause':
+			cmd = {
+				action: "timelinePlayPause",
+				presentationPath: opt.presentationPath
+			};
+			break;
+		case 'timelineRewind':
+			cmd = {
+				action: "timelineRewind",
+				presentationPath: opt.presentationPath
 			};
 			break;
 	};

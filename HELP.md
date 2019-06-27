@@ -97,6 +97,14 @@ If you use a lot of timers with commonly used values for duration, you might lik
 
 Use *relative delays*, to ensure these three action arrive in the correct order (or if you prefer absolute delays, make sure the second action has less delay than the third)
 
+## Timeline
+Command | Description
+------- | -----------
+Timeline&nbsp;Play/Pause | Toggle play/paused state of timeline for a specific presentation (See PresenationPath explanation above)
+Timeline&nbsp;Rewind  | Rewind timeline for a specific presentation (See PresenationPath explanation above)
+
+Please Note: There is NO direct feedback from ProPresenter for when a timeline is playing or paused - so this cannot be shown to users on the StreamDeck!
+
 # Dynamic Variables
 Variable | Description
 -------- | -----------
