@@ -25,9 +25,10 @@ If you want to connect to ProPresenter on the *same* computer that you are runni
 If your ProPresenter (and Companion) computers have a choice of using either wireless or a wired connection, always use wired, as a wired network connection is *typically* more reliable and has better latency (good for remote control).
 
 ## Configure the ProPresenter module in Companion
-Goto the module config and enter the IP address of the computer running ProPresenter.
-Enter the port number and password that you took note of from ProPresenter network preferences.
+Now you have all the info you need to go to the ProPresenter Companion module configuration and enter the IP address of the computer running ProPresenter as well as the ProPresenter port number and controller password that you took note of from ProPresenter network preferences.
+
 If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
+
 N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ingore it and use the "main" network port you recorded in step 8 above.
 
 
