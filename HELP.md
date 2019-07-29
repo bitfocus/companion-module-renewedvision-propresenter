@@ -24,7 +24,7 @@ You can control ProPresenter on any computer within the same network, you just n
 
 If you want to connect to ProPresenter on the *same* computer that you are running Companion on, you can use the special looback IP address of 127.0.0.1 (which is the default setting)
 
-If your ProPresenter (and Companion) computers have a choice of using either wireless or a wired connection, always use wired, as a wired network connection is *typically* more reliable and has better latency (good for remote control).
+If the computers running ProPresenter and Companion have a choice of using either a wireless or a wired network connection, then it is recommended to always use wired. This is because a wired network connection is *typically* more reliable and has better latency (which is better for remote control).
 
 ## Configure the ProPresenter module in Companion
 Now you have all the info you need to go to the ProPresenter Companion module configuration and enter the IP address of the computer running ProPresenter as well as the ProPresenter port number and controller password that you took note of from ProPresenter network preferences.
