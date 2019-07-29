@@ -1,6 +1,8 @@
 # Companion-module: ProPresenter6
 
-Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.  Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.
+Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.
+
+*Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.*
 
 # Setup Guide.
 ## Enable networking in ProPresenter if you haven't already done so... 
