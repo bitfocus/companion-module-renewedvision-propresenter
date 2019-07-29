@@ -560,10 +560,12 @@ instance.prototype.connectToProPresenter = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenter();
 
-	if (self.config.host === '' || self.config.port === '') {
+	if (self.config.host === undefined || self.config.port === '') {
 		return;
 	}
-
+	if (self.config.host === '127.0.0.1') {
+		return;
+	}
 	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
@@ -618,7 +620,7 @@ instance.prototype.connectToProPresenterSD = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenterSD();
 
-	if (self.config.host === '') {
+	if (self.config.host === undefined) {
 		return;
 	}
 
