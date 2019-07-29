@@ -46,6 +46,7 @@ instance.prototype.config_fields = function () {
 			id: 'host',
 			label: 'ProPresenter IP',
 			width: 6,
+			default: '127.0.0.1',
 			regex: self.REGEX_IP
 		},
 		{
@@ -70,13 +71,14 @@ instance.prototype.config_fields = function () {
 			width: 2,
 			regex: self.REGEX_NUMBER
 		},
-	 	{
-		 	type: 'dropdown',
-		 	label: 'Connect to StageDisplay (Only required for video countdown timer)',
-		 	id: 'use_sd',
+		 {
+			type: 'dropdown',
+			label: 'Connect to StageDisplay (Only required for video countdown timer)',
+			id: 'use_sd',
 			default: 'no',
-		 	choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
-	 	},
+			width: 8,
+			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+		 },
 		{
 			type: 'textinput',
 			id: 'sdport',
@@ -1189,7 +1191,7 @@ instance.prototype.init_feedbacks = function() {
 			}
 		]
 	};
-	
+
 	self.setFeedbackDefinitions(feedbacks);
 }
 
@@ -1245,7 +1247,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 			self.updateVariable('current_slide', slideIndex + 1);
 			if (objData.presentationPath == self.currentState.internal.presentationPath) {
 				// If the triggered slide is part of the current presentation (for which we have stored the total slides) then update the 'remaining_slides' dynamic variable
-				// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info. 
+				// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info.
 				self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - slideIndex - 1);
 			}
 
