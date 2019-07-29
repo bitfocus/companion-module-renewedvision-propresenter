@@ -4,7 +4,7 @@ Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requi
 
 # Setup Guide.
 ## Enable networking in ProPresenter if you haven't already done so... 
-1. Open ProPresenter and then click to open the "ProPresenter 6" Menu
+1. Open ProPresenter and then open the "ProPresenter 6" Menu.
 2. Select "Preferences..." to open the ProPresenter Preferences window.
 3. Select the Network tab to configure ProPresenter network preferences.
 4. Check the "Enable Network" option (if it is not already enabled).
