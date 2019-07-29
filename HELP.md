@@ -1,6 +1,31 @@
-# companion-module-propresenter6
+# Companion-module: ProPresenter6
 
-Module for using ProPresenter with the Elgato Stream Deck and Companion. Requires a connection to the ProPresenter Remote network port.  Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.
+Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.  Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.
+
+# Setup Guide.
+## Enable networking in ProPresenter if you haven't already done so... 
+1. Open ProPresenter and then click to open the "ProPresenter 6" Menu
+2. Select "Preferences..." to open the ProPresenter Preferences window.
+3. Select the Network tab to configure ProPresenter network preferences.
+4. Check the "Enable Network" option (if it is not already enabled).
+5. Check the "Enable ProPresenter Remote" option (if it is not already enabled).
+6. Check the "Controller" option (if it is not already enabled).
+7. Enter a controller password (or take note of the existing controller password).
+8. Take a note of the Port number (to the right of the Network Name) - this is typically 4-5 digits.
+9. If you would like your StreamDeck to be able to display "Video CountDown" timers, then you will also need to check the option for "Enable Stage Display App" and enter (or take note of the existing) password.
+9. Close ProPresenter preferences window.
+
+## Get the IP address of the computer running ProPresenter
+Use your knowledge of networking (or Google) to get the IP address of the computer running ProPresenter.
+Tip: You can control ProPresenter on any computer within the same network, you just need to know the IP address. If you want to connect to ProPresenter on the *same* computer that you are running Companion on, you can use the special looback IP address of 127.0.0.1
+If your ProPresenter (and Companion) computers have a choice of using either wireless or a wired connection, go for wired as a wired network connection is *typically* more reliable and has better latency - which is what you want when doing remote control!
+
+## Configure the ProPresenter module in Companion
+Goto the module config and enter the IP address of the computer running ProPresenter.
+Enter the port number and password that you took note of from ProPresenter network preferences.
+If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers, then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
+N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ingore it and use the "main" network port you recorded in step 8 above.
+
 
 # Commands
 ## Slides
