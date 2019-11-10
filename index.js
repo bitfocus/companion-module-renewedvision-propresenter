@@ -16,7 +16,7 @@ function instance(system, id, config) {
 
 
 /**
- * The current state of ProPresentation.
+ * The current state of ProPresenter.
  * Initially populated by emptyCurrentState().
  *
  * .internal contains the internal state of the module
@@ -46,7 +46,7 @@ instance.prototype.config_fields = function () {
 			id: 'host',
 			label: 'ProPresenter IP',
 			width: 6,
-			default: '127.0.0.1',
+			default: '',
 			regex: self.REGEX_IP
 		},
 		{
@@ -54,7 +54,8 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'ProPresenter Port',
 			width: 6,
-			default: ''
+			default: '',
+			regex: self.REGEX_PORT
 		},
 		{
 			type: 'textinput',
@@ -65,32 +66,41 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'indexOfClockToWatch',
-			label: 'Index of Clock To Watch',
+			label: 'Index of Clock to Watch',
 			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
 			default: '0',
-			width: 2,
+			width: 4,
 			regex: self.REGEX_NUMBER
 		},
-		 {
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Stage Display Settings (Optional)',
+			value: "The following fields are only needed if you want the video countdown timer in a dynamic variable."
+		},
+		{
 			type: 'dropdown',
-			label: 'Connect to StageDisplay (Only required for video countdown timer)',
+			label: 'Connect to Stage Display',
 			id: 'use_sd',
 			default: 'no',
-			width: 8,
+			width: 6,
 			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
-		 },
+		},
 		{
 			type: 'textinput',
 			id: 'sdport',
-			label: 'Optional Custom StageDisplay App Port',
+			label: 'Stage Display App Port',
 			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
 			width: 6,
-			default: ''
+			default: '',
+			// regex from instance_skel.js, but modified to make the port optional
+			regex: '/^([1-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-4])$|^$/'
 		},
 		{
 			type: 'textinput',
 			id: 'sdpass',
-			label: 'StageDisplay App Password',
+			label: 'Stage Display App Password',
 			width: 8,
 		}
 	]
@@ -209,8 +219,8 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
-			label: 'This button will reset a selected (by index) clock to a 5 min count-down clock and automatically start it.',
+			category: 'Countdown Clocks',
+			label: 'This button will reset a selected (by index) clock to a 5 min countdown clock and automatically start it.',
 			bank: {
 				style: 'text',
 				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
@@ -245,7 +255,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will START a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -264,7 +274,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will STOP a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -283,7 +293,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will RESET a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -384,7 +394,7 @@ instance.prototype.initVariables = function() {
 			name:  'current_stage_display_name'
 		},
 		{
-			label: 'Video CountDown Timer',
+			label: 'Video Countdown Timer',
 			name:  'video_countdown_timer'
 		}
 	];
@@ -512,7 +522,7 @@ instance.prototype.setSDConnectionVariable = function(status, updateLog) {
 	self.updateVariable('sd_connection_status', status);
 
 	if (updateLog) {
-		self.log('info', "ProPresenter StageDisplay " + status);
+		self.log('info', "ProPresenter Stage Display " + status);
 	}
 
 };
@@ -560,12 +570,11 @@ instance.prototype.connectToProPresenter = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenter();
 
-	if (self.config.host === undefined || self.config.port === '') {
+	// ~~ is a double NOT bitwise operator. Will change .port to a numeric value, including null, undefined, "" to 0.
+	if (self.config.host === undefined || ~~self.config.port === 0) {
 		return;
 	}
-	if (self.config.host === '127.0.0.1') {
-		return;
-	}
+
 	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
@@ -629,7 +638,7 @@ instance.prototype.connectToProPresenterSD = function() {
 		self.config.sdport = self.config.port;
 	}
 
-	// Connect to StageDisplay websocket of ProPresenter
+	// Connect to Stage Display websocket of ProPresenter
 	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
 
 	self.sdsocket.on('open', function open() {
@@ -642,13 +651,13 @@ instance.prototype.connectToProPresenterSD = function() {
 
 	});
 
-	// Since StageDisplay connection is not required to function - we will only send a warning if it fails
+	// Since Stage Display connection is not required to function - we will only send a warning if it fails
 	self.sdsocket.on('error', function (err) {
 		// If stage display can't connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
 		// Therefore, a failure to connect stage display is more of a warning state.
 		// However, if the module is already in error, then we should not lower that to warning!
 		if (self.currentStatus !== self.STATUS_ERROR && self.config.use_sd === 'yes') {
-			self.status(self.STATUS_WARNING, 'OK, But Stage Display not connected');
+			self.status(self.STATUS_WARNING, 'OK - Stage Display not connected');
 		}
 	});
 
@@ -820,14 +829,14 @@ instance.prototype.actions = function(system) {
 					id: 'clockType',
 					default: '0',
 					tooltip: 'If the clock specified by the Clock Number is not of this type it will be UPDATED/CONVERTED this type.',
-					choices: [ { id: '0', label: 'Count Down Timer' }, { id: '1', label: 'Count Down To Time' }, { id: '2', label: 'Elapsed Time'} ]
+					choices: [ { id: '0', label: 'Countdown Timer' }, { id: '1', label: 'Countdown To Time' }, { id: '2', label: 'Elapsed Time'} ]
 				},
 				{
 					type: 'dropdown',
 					label: 'Clock Is PM',
 					id: 'clockIsPM',
 					default: '0',
-					tooltip: 'Only Required for Count Down To Time Clock - otherwise this is ignored.',
+					tooltip: 'Only Required for Countdown To Time Clock - otherwise this is ignored.',
 					choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
 				},
 				{
