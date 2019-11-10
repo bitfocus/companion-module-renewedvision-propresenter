@@ -16,7 +16,7 @@ function instance(system, id, config) {
 
 
 /**
- * The current state of ProPresentation.
+ * The current state of ProPresenter.
  * Initially populated by emptyCurrentState().
  *
  * .internal contains the internal state of the module
@@ -72,7 +72,7 @@ instance.prototype.config_fields = function () {
 			width: 4,
 			regex: self.REGEX_NUMBER
 		},
-		 {
+		{
 			type: 'text',
 			id: 'info',
 			width: 12,
@@ -86,7 +86,7 @@ instance.prototype.config_fields = function () {
 			default: 'no',
 			width: 6,
 			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
-		 },
+		},
 		{
 			type: 'textinput',
 			id: 'sdport',
@@ -522,7 +522,7 @@ instance.prototype.setSDConnectionVariable = function(status, updateLog) {
 	self.updateVariable('sd_connection_status', status);
 
 	if (updateLog) {
-		self.log('info', "ProPresenter StageDisplay " + status);
+		self.log('info', "ProPresenter Stage Display " + status);
 	}
 
 };
@@ -638,7 +638,7 @@ instance.prototype.connectToProPresenterSD = function() {
 		self.config.sdport = self.config.port;
 	}
 
-	// Connect to StageDisplay websocket of ProPresenter
+	// Connect to Stage Display websocket of ProPresenter
 	self.sdsocket = new WebSocket('ws://'+self.config.host+':'+self.config.sdport+'/stagedisplay');
 
 	self.sdsocket.on('open', function open() {
@@ -651,13 +651,13 @@ instance.prototype.connectToProPresenterSD = function() {
 
 	});
 
-	// Since StageDisplay connection is not required to function - we will only send a warning if it fails
+	// Since Stage Display connection is not required to function - we will only send a warning if it fails
 	self.sdsocket.on('error', function (err) {
 		// If stage display can't connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
 		// Therefore, a failure to connect stage display is more of a warning state.
 		// However, if the module is already in error, then we should not lower that to warning!
 		if (self.currentStatus !== self.STATUS_ERROR && self.config.use_sd === 'yes') {
-			self.status(self.STATUS_WARNING, 'OK, But Stage Display not connected');
+			self.status(self.STATUS_WARNING, 'OK - Stage Display not connected');
 		}
 	});
 
