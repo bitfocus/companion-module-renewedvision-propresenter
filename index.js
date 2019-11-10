@@ -77,7 +77,7 @@ instance.prototype.config_fields = function () {
 			id: 'info',
 			width: 12,
 			label: 'Stage Display Settings (Optional)',
-			value: "The following fields are only needed if you want the video countdown information in a dynamic variable."
+			value: "The following fields are only needed if you want the video countdown timer in a dynamic variable."
 		},
 		{
 			type: 'dropdown',
@@ -219,8 +219,8 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
-			label: 'This button will reset a selected (by index) clock to a 5 min count-down clock and automatically start it.',
+			category: 'Countdown Clocks',
+			label: 'This button will reset a selected (by index) clock to a 5 min countdown clock and automatically start it.',
 			bank: {
 				style: 'text',
 				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
@@ -255,7 +255,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will START a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -274,7 +274,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will STOP a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -293,7 +293,7 @@ instance.prototype.init_presets = function () {
 			]
 		},
 		{
-			category: 'Count Down Clocks',
+			category: 'Countdown Clocks',
 			label: 'This button will RESET a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
@@ -394,7 +394,7 @@ instance.prototype.initVariables = function() {
 			name:  'current_stage_display_name'
 		},
 		{
-			label: 'Video CountDown Timer',
+			label: 'Video Countdown Timer',
 			name:  'video_countdown_timer'
 		}
 	];
@@ -829,14 +829,14 @@ instance.prototype.actions = function(system) {
 					id: 'clockType',
 					default: '0',
 					tooltip: 'If the clock specified by the Clock Number is not of this type it will be UPDATED/CONVERTED this type.',
-					choices: [ { id: '0', label: 'Count Down Timer' }, { id: '1', label: 'Count Down To Time' }, { id: '2', label: 'Elapsed Time'} ]
+					choices: [ { id: '0', label: 'Countdown Timer' }, { id: '1', label: 'Countdown To Time' }, { id: '2', label: 'Elapsed Time'} ]
 				},
 				{
 					type: 'dropdown',
 					label: 'Clock Is PM',
 					id: 'clockIsPM',
 					default: '0',
-					tooltip: 'Only Required for Count Down To Time Clock - otherwise this is ignored.',
+					tooltip: 'Only Required for Countdown To Time Clock - otherwise this is ignored.',
 					choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
 				},
 				{

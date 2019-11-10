@@ -31,7 +31,7 @@ Now you have all the info you need to go to the ProPresenter Companion module co
 
 If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
 
-N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ingore it and use the "main" network port you recorded in step 8 above.
+N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
 
 # Commands
@@ -98,7 +98,7 @@ You can work around this PC limitation by using the `Specific Slide` action with
 ## Messages (On Output screen)
 Command | Description
 ------- | -----------
-Show&nbsp;Message | Shows the message on the stage display output. You can pass values for message tokens, but you must do so very carefully - a typo here can crash ProPresenter.  Crashes can cause data loss, and ruin your setup. Learn how to correctly enter message tokens by reading below. Always type carefully and double-check. Get it right on a test machine first! The correct way to pass values for message tokens is as two lists. The two lists work together to form token NAME and token VALUE pairs.  The first list is a comma-separated list of token NAMES and the second is a comma-separated list of token VALUES. The number of items in eash list should match - e.g. if you supply two token NAMES, then you should supply two token VALUES to make matching pairs. All token names in your list *MUST* match the token names defined in the message within ProPresenter (or else Pro6 will likely crash).  The token values can be any text. You don't have to pass *all* the token names/values pairs - any name/values that you don't include will be treated as and displayed as blank. You don't have to pass any token names/values if you don't need to. Static messages without any tokens are safe - you can't make a typo if you leave the token names and token values list blank! If one of your token names or token values needs to have a comma in it, you can type a double comma (,,) to insert a literal comma - this works in either a token name or a token value. Again, make certain that your list of token NAMES perfectly match the names of the tokens defined in the message within Pro6 - Pro6 won't crash if they match perfectly - so be carefull!
+Show&nbsp;Message | Shows the message on the stage display output. You can pass values for message tokens, but you must do so very carefully - a typo here can crash ProPresenter.  Crashes can cause data loss, and ruin your setup. Learn how to correctly enter message tokens by reading below. Always type carefully and double-check. Get it right on a test machine first! The correct way to pass values for message tokens is as two lists. The two lists work together to form token NAME and token VALUE pairs.  The first list is a comma-separated list of token NAMES and the second is a comma-separated list of token VALUES. The number of items in each list should match - e.g. if you supply two token NAMES, then you should supply two token VALUES to make matching pairs. All token names in your list *MUST* match the token names defined in the message within ProPresenter (or else Pro6 will likely crash).  The token values can be any text. You don't have to pass *all* the token names/values pairs - any name/values that you don't include will be treated as and displayed as blank. You don't have to pass any token names/values if you don't need to. Static messages without any tokens are safe - you can't make a typo if you leave the token names and token values list blank! If one of your token names or token values needs to have a comma in it, you can type a double comma (,,) to insert a literal comma - this works in either a token name or a token value. Again, make certain that your list of token NAMES perfectly match the names of the tokens defined in the message within Pro6 - Pro6 won't crash if they match perfectly - so be careful!
 Hide&nbsp;Message | Removes a message from output screen.
 
 Messages are identified by Index. Index is a 0-based, where the first message is 0, and then count up through the messages in the order shown in the list of ProPresenter messages.
@@ -110,7 +110,7 @@ Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
 Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout.
 
-Stage Displays are indentified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
+Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
 
 
 ## Clocks (Timers)
@@ -119,7 +119,7 @@ Command | Description
 Start&nbsp;Clock | Starts clock (timer) - identified by index (0 based)
 Stop&nbsp;Clock | Stops clock (timer) - identified by index (0 based)
 Reset&nbsp;Clock | Resets clock (timer) - identified by index (0 based)
-Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Count Down Timer, Count Down To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Count Down To Time clocks.
+Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Countdown Timer, Countdown To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Countdown To Time clocks.
 
 **Tip: One-Touch Preset CountDown Timers.**
 If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
@@ -132,8 +132,8 @@ Use *relative delays*, to ensure these three action arrive in the correct order 
 ## Timeline
 Command | Description
 ------- | -----------
-Timeline&nbsp;Play/Pause | Toggle play/paused state of timeline for a specific presentation (See PresenationPath explanation above)
-Timeline&nbsp;Rewind  | Rewind timeline for a specific presentation (See PresenationPath explanation above)
+Timeline&nbsp;Play/Pause | Toggle play/paused state of timeline for a specific presentation (See PresentationPath explanation above)
+Timeline&nbsp;Rewind  | Rewind timeline for a specific presentation (See PresentationPath explanation above)
 
 Please Note: There is NO direct feedback from ProPresenter for when a timeline is playing or paused - so this cannot be shown to users on the StreamDeck!
 
