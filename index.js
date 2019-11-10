@@ -66,24 +66,31 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'indexOfClockToWatch',
-			label: 'Index of Clock To Watch',
+			label: 'Index of Clock to Watch',
 			tooltip: 'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
 			default: '0',
-			width: 2,
+			width: 4,
 			regex: self.REGEX_NUMBER
 		},
 		 {
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Stage Display Settings (Optional)',
+			value: "The following fields are only needed if you want the video countdown information in a dynamic variable."
+		},
+		{
 			type: 'dropdown',
-			label: 'Connect to StageDisplay (Only required for video countdown timer)',
+			label: 'Connect to Stage Display',
 			id: 'use_sd',
 			default: 'no',
-			width: 8,
+			width: 6,
 			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
 		 },
 		{
 			type: 'textinput',
 			id: 'sdport',
-			label: 'Optional Custom StageDisplay App Port',
+			label: 'Stage Display App Port',
 			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
 			width: 6,
 			default: '',
@@ -93,7 +100,7 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'sdpass',
-			label: 'StageDisplay App Password',
+			label: 'Stage Display App Password',
 			width: 8,
 		}
 	]
