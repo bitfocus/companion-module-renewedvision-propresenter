@@ -46,7 +46,7 @@ instance.prototype.config_fields = function () {
 			id: 'host',
 			label: 'ProPresenter IP',
 			width: 6,
-			default: '127.0.0.1',
+			default: '',
 			regex: self.REGEX_IP
 		},
 		{
@@ -54,7 +54,8 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'ProPresenter Port',
 			width: 6,
-			default: ''
+			default: '',
+			regex: self.REGEX_PORT
 		},
 		{
 			type: 'textinput',
@@ -85,7 +86,9 @@ instance.prototype.config_fields = function () {
 			label: 'Optional Custom StageDisplay App Port',
 			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
 			width: 6,
-			default: ''
+			default: '',
+			// regex from instance_skel.js, but modified to make the port optional
+			regex: '/^([1-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-4])$|^$/'
 		},
 		{
 			type: 'textinput',
@@ -560,12 +563,11 @@ instance.prototype.connectToProPresenter = function() {
 	// Disconnect if already connected
 	self.disconnectFromProPresenter();
 
-	if (self.config.host === undefined || self.config.port === '') {
+	// ~~ is a double NOT bitwise operator. Will change .port to a numeric value, including null, undefined, "" to 0.
+	if (self.config.host === undefined || ~~self.config.port === 0) {
 		return;
 	}
-	if (self.config.host === '127.0.0.1') {
-		return;
-	}
+
 	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
 
