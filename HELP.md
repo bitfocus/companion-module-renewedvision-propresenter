@@ -1,4 +1,5 @@
-# Companion-module: ProPresenter6/7
+# Companion-module: ProPresenter6
+
 
 Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.
 
