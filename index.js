@@ -39,7 +39,7 @@ instance.prototype.config_fields = function () {
 			id: 'info',
 			width: 12,
 			label: 'Information',
-			value: "This module communicates with Renewed Vision's ProPresenter 6"
+			value: "This module communicates with Renewed Vision's ProPresenter 6 or 7"
 		},
 		{
 			type: 'textinput',
@@ -331,6 +331,7 @@ instance.prototype.emptyCurrentState = function() {
 		wsSDConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
+		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
 	};
 
 	// The dynamic variable exposed to Companion
@@ -582,7 +583,7 @@ instance.prototype.connectToProPresenter = function() {
 		self.log('info', "Opened websocket to ProPresenter remote control: " + self.config.host +":"+ self.config.port);
 		self.socket.send(JSON.stringify({
 			password: self.config.pass,
-			protocol: "610",
+			protocol: "700", // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
 			action: "authenticate"
 		}));
 
@@ -645,7 +646,7 @@ instance.prototype.connectToProPresenterSD = function() {
 		self.log('info', "Opened websocket to ProPresenter stage display: " + self.config.host +":"+ self.config.sdport);
 		self.sdsocket.send(JSON.stringify({
 			pwd: self.config.sdpass,
-			ptl: "610",
+			ptl: "610", //TODO: update for Pro7
 			acn: "ath"
 		}));
 
@@ -795,10 +796,10 @@ instance.prototype.actions = function(system) {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Clock Name',
+					label: 'New Name For Clock', // Help person relise that this will rename clock that is updated.
 					id: 'clockName',
-					default: '',
-					tooltip: 'If you enter text here, you will update (rename) the clock!'
+					default: 'Timer',
+					tooltip: 'If this does not match the existing clock name, the clock name will be updated/renamed. Enter the existing clock name to leave it unchanged.'
 				},
 				{
 					type: 'textinput',
@@ -1224,6 +1225,19 @@ instance.prototype.onWebSocketMessage = function(message) {
 	switch(objData.action) {
 		case 'authenticate':
 			if (objData.authenticated === 1) {
+				
+				// Autodetect if Major version of ProPresenter is version 7
+				// Only Pro7 includes .majorVersion and .minorVersion properties.
+				// .majorVersion will be set to = "7" from Pro7 (Pro6 does not include these at all)
+				if (objData.hasOwnProperty('majorVersion')) {
+					if (objData.majorVersion === 7) {
+						self.currentState.internal.proMajorVersion = 7;
+					}
+				} else {
+					// Leave default 
+				}
+				
+				self.log('info', 'ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -1317,12 +1331,14 @@ instance.prototype.onWebSocketMessage = function(message) {
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
-			var stageDisplaySets = objData.stageDisplaySets;
-			var stageDisplayIndex =  objData.stageDisplayIndex;
-			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
-			self.updateVariable('current_stage_display_index', stageDisplayIndex);
-			self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
-			self.checkFeedbacks('stagedisplay_active');
+			if (self.currentState.internal.proMajorVersion === 6) {
+				var stageDisplaySets = objData.stageDisplaySets;
+				var stageDisplayIndex =  objData.stageDisplayIndex;
+				self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
+				self.updateVariable('current_stage_display_index', stageDisplayIndex);
+				self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
+				self.checkFeedbacks('stagedisplay_active');
+			}
 			break;
 
 	}
