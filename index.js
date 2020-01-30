@@ -1250,7 +1250,14 @@ instance.prototype.feedback = function(feedback, bank) {
  */
 instance.prototype.onWebSocketMessage = function(message) {
 	var self = this;
-	var objData = JSON.parse(message);
+	var objData;
+	try {
+		objData = JSON.parse(message);
+	} catch (err) {
+		self.log('warn', err.message);
+		return;
+	}
+	
 
 	switch(objData.action) {
 		case 'authenticate':
@@ -1359,7 +1366,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_index', stageDisplayIndex);
 				self.getStageDisplaysInfo();
 				self.checkFeedbacks('stagedisplay_active');
-			}
+			} // TODO: handle Pro7 stageDisplaySetIndex messages
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
@@ -1371,23 +1378,26 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
 				self.checkFeedbacks('stagedisplay_active');
 			} else if (self.currentState.internal.proMajorVersion === 7) {
-				//[{id: '', label: ''}]
-				self.currentState.internal.pro7StageScreens = [];
-				self.currentState.internal.pro7StageLayouts = [];
 				
-				objData.stageScreens.forEach(function(stageScreen) {
-					var stageScreenName = stageScreen['stageScreenName'];
-					var stageScreenUUID = stageScreen['stageScreenUUID'];
-					self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
-				});
+				if (objData.hasOwnProperty('stageScreens')) {
+					self.currentState.internal.pro7StageScreens = [];
+					objData.stageScreens.forEach(function(stageScreen) {
+						var stageScreenName = stageScreen['stageScreenName'];
+						var stageScreenUUID = stageScreen['stageScreenUUID'];
+						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+					});
+				}
 				
-				objData.stageLayouts.forEach(function(stageLayout) {
-					var stageLayoutName = stageLayout['stageLayoutName'];
-					var stageLayoutUUID = stageLayout['stageLayoutUUID'];
-					self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
-				});
+				if (objData.hasOwnProperty('stageLayouts')) {
+					self.currentState.internal.pro7StageLayouts = [];
+					objData.stageLayouts.forEach(function(stageLayout) {
+						var stageLayoutName = stageLayout['stageLayoutName'];
+						var stageLayoutUUID = stageLayout['stageLayoutUUID'];
+						self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
+					});
+				}
 				
-				self.log('info', "Got Pro7 Stage Display Sets");
+				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
 				self.actions();
 			}
 			break;
