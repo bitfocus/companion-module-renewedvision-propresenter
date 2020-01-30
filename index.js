@@ -855,11 +855,11 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'dropdown',
-					label: 'Clock Is PM',
-					id: 'clockIsPM',
+					label: 'Clock Time Format',
+					id: 'clockTimePeriodFormat',
 					default: '0',
 					tooltip: 'Only Required for Countdown To Time Clock - otherwise this is ignored.',
-					choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
+					choices: [ { id: '0', label: 'AM' }, { id: '1', label: 'PM' }, { id: '2', label: '24Hr (Pro7 Only)' } ]
 				},
 				{
 					type: 'textinput',
@@ -1133,7 +1133,8 @@ instance.prototype.action = function(action) {
 				clockTime: opt.clockTime,
 				clockOverrun: opt.clockOverRun,
 				clockType: opt.clockType,
-				clockIsPM: opt.clockIsPM,
+				clockIsPM: opt.clockTimePeriodFormat < 2 ? opt.clockTimePeriodFormat : 2, // Pro6 just wants a 1 (PM) or 0 (AM)
+				clockTimePeriodFormat: opt.clockTimePeriodFormat, 
 				clockElapsedTime: opt.clockElapsedTime,
 				clockName: opt.clockName
 			};
@@ -1352,11 +1353,13 @@ instance.prototype.onWebSocketMessage = function(message) {
 			break;
 
 		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
-			var stageDisplayIndex = objData.stageDisplayIndex;
-			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
-			self.updateVariable('current_stage_display_index', stageDisplayIndex);
-			self.getStageDisplaysInfo();
-			self.checkFeedbacks('stagedisplay_active');
+			if (self.currentState.internal.proMajorVersion === 6) {
+				var stageDisplayIndex = objData.stageDisplayIndex;
+				self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
+				self.updateVariable('current_stage_display_index', stageDisplayIndex);
+				self.getStageDisplaysInfo();
+				self.checkFeedbacks('stagedisplay_active');
+			}
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
