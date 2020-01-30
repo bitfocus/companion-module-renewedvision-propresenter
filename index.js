@@ -332,6 +332,8 @@ instance.prototype.emptyCurrentState = function() {
 		presentationPath: '-',
 		slideIndex: 0,
 		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
+		pro7StageLayouts: [],
+		pro7StageScreens: [],
 	};
 
 	// The dynamic variable exposed to Companion
@@ -345,7 +347,7 @@ instance.prototype.emptyCurrentState = function() {
 		video_countdown_timer: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
-		current_stage_display_index: 'N/A'
+		current_stage_display_index: 'N/A',
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -729,14 +731,33 @@ instance.prototype.actions = function(system) {
 		'cleartelestrator': { label: 'Clear Telestrator' },
 		'cleartologo': { label: 'Clear to Logo' },
 		'stageDisplayLayout': {
-			label: 'Stage Display Layout',
+			label: 'Pro6 Stage Display Layout',
 			options: [
 				{
 					type: 'textinput',
-					label: 'Stage Display Index',
+					label: 'Pro6 Stage Display Index',
 					id: 'index',
 					default: 0,
 					regex: self.REGEX_NUMBER
+				}
+			]
+		},
+		'pro7StageDisplayLayout': {
+			label: 'Pro7 Stage Display Layout',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Pro7 Stage Display Screen',
+					id: 'pro7StageScreenUUID',
+					tooltip: 'Choose which stage display screen you want to update layout',
+					choices: self.currentState.internal.pro7StageScreens
+				},
+				{
+					type: 'dropdown',
+					label: 'Pro7 Stage Display Layout',
+					id: 'pro7StageLayoutUUID',
+					tooltip: 'Choose the new stage display layout to apply',
+					choices: self.currentState.internal.pro7StageLayouts
 				}
 			]
 		},
@@ -1040,6 +1061,14 @@ instance.prototype.action = function(action) {
 				stageDisplayIndex: opt.index
 			};
 			break;
+			
+		case 'pro7StageDisplayLayout':
+			cmd = {
+				action: "stageDisplayChangeLayout",
+				stageScreenUUID: opt.pro7StageScreenUUID,
+				stageLayoutUUID: opt.pro7StageLayoutUUID,
+			};
+			break;
 
 		case 'stageDisplayMessage':
 			//var message = JSON.stringify(opt.message);
@@ -1338,6 +1367,25 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_index', stageDisplayIndex);
 				self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
 				self.checkFeedbacks('stagedisplay_active');
+			} else if (self.currentState.internal.proMajorVersion === 7) {
+				//[{id: '', label: ''}]
+				self.currentState.internal.pro7StageScreens = [];
+				self.currentState.internal.pro7StageLayouts = [];
+				
+				objData.stageScreens.forEach(function(stageScreen) {
+					var stageScreenName = stageScreen['stageScreenName'];
+					var stageScreenUUID = stageScreen['stageScreenUUID'];
+					self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+				});
+				
+				objData.stageLayouts.forEach(function(stageLayout) {
+					var stageLayoutName = stageLayout['stageLayoutName'];
+					var stageLayoutUUID = stageLayout['stageLayoutUUID'];
+					self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
+				});
+				
+				self.log('info', "Got Pro7 Stage Display Sets");
+				self.actions();
 			}
 			break;
 
