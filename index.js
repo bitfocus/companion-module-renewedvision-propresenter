@@ -445,7 +445,7 @@ instance.prototype.startConnectionTimer = function() {
 			self.connectToProPresenter();
 		}
 
-	}, 5000);
+	}, 1000);
 
 };
 
@@ -1007,7 +1007,7 @@ instance.prototype.action = function(action) {
 
 			cmd = {
 				action: "presentationTriggerIndex",
-				slideIndex: index,
+				slideIndex: String(index),
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: presentationPath
 			};
@@ -1058,7 +1058,7 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayLayout':
 			cmd = {
 				action: "stageDisplaySetIndex",
-				stageDisplayIndex: opt.index
+				stageDisplayIndex: String(opt.index)
 			};
 			break;
 			
@@ -1086,7 +1086,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockStart':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockStart",
 				clockIndex: clockIndex
@@ -1094,7 +1094,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockStop':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockStop",
 				clockIndex: clockIndex
@@ -1102,7 +1102,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockReset':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockReset",
 				clockIndex: clockIndex
@@ -1110,7 +1110,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockUpdate':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 
 			// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
 			// If they are missing, then apply default values that result in the oringial bahaviour when it was only updating a countdown timers clockTime and clockOverRun.
@@ -1133,8 +1133,8 @@ instance.prototype.action = function(action) {
 				clockTime: opt.clockTime,
 				clockOverrun: opt.clockOverRun,
 				clockType: opt.clockType,
-				clockIsPM: opt.clockTimePeriodFormat < 2 ? opt.clockTimePeriodFormat : 2, // Pro6 just wants a 1 (PM) or 0 (AM)
-				clockTimePeriodFormat: opt.clockTimePeriodFormat, 
+				clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
+				clockTimePeriodFormat: String(opt.clockTimePeriodFormat), 
 				clockElapsedTime: opt.clockElapsedTime,
 				clockName: opt.clockName
 			};
@@ -1143,7 +1143,7 @@ instance.prototype.action = function(action) {
 		case 'messageHide':
 			cmd = {
 				action: "messageHide",
-				messageIndex: opt.messageIndex
+				messageIndex: String(opt.messageIndex)
 			};
 			break;
 
@@ -1153,7 +1153,7 @@ instance.prototype.action = function(action) {
 			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
 			cmd = {
 				action: "messageSend",
-				messageIndex: opt.messageIndex,
+				messageIndex: String(opt.messageIndex),
 				messageKeys: opt.messageKeys.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28)),
 				messageValues: opt.messageValues.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28))
 			};
@@ -1252,6 +1252,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 	var self = this;
 	var objData;
 	try {
+		self.log('info', message); // TODO: remove this (or wrap in high-level debug option)
 		objData = JSON.parse(message);
 	} catch (err) {
 		self.log('warn', err.message);
@@ -1436,8 +1437,10 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 			break;
 
 		case 'vid':
-			// Record new video countdown timer value in dynamic var
-			self.updateVariable('video_countdown_timer', objData.txt);
+			if (objData.hasOwnProperty('txt')) {
+				// Record new video countdown timer value in dynamic var
+				self.updateVariable('video_countdown_timer', objData.txt);
+			}
 			break;
 
 	}
@@ -1456,7 +1459,7 @@ instance.prototype.getProPresenterState = function() {
 
 	self.socket.send(JSON.stringify({
 		action: 'presentationCurrent',
-		presentationSlideQuality: 0 // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+		presentationSlideQuality: '0' // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
 	}));
 
 	if (self.currentState.dynamicVariables.current_slide === 'N/A') {
