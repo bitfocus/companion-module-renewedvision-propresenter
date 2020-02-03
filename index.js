@@ -73,6 +73,15 @@ instance.prototype.config_fields = function () {
 			regex: self.REGEX_NUMBER
 		},
 		{
+			type: 'dropdown',
+			id: 'GUIDOfStageDisplayScreenToWatch',
+			label: 'Pro7 Stage Display Screen To Monitor Layout',
+			tooltip: 'Pro7 Stage Display Screen To Monitor Layout - (This list is refreshed the next time you EDIT config, after a succesful connection)',
+			default: '',
+			width: 6,
+			choices: self.currentState.internal.pro7StageScreens
+		},
+		{
 			type: 'text',
 			id: 'info',
 			width: 12,
@@ -332,8 +341,8 @@ instance.prototype.emptyCurrentState = function() {
 		presentationPath: '-',
 		slideIndex: 0,
 		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
-		pro7StageLayouts: [],
-		pro7StageScreens: [],
+		pro7StageLayouts: [{ id: '0', label: 'Connect to Pro7 to Update' }],
+		pro7StageScreens: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 	};
 
 	// The dynamic variable exposed to Companion
@@ -348,6 +357,7 @@ instance.prototype.emptyCurrentState = function() {
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A',
+		current_pro7_stage_layout_name: "N/A",
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -391,6 +401,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Stage Display Index',
 			name:  'current_stage_display_index'
+		},
+		{
+			label: 'Current Pro7 Stage Layout Name',
+			name:  'current_pro7_stage_layout_name'
 		},
 		{
 			label: 'Current Stage Display Name',
@@ -648,7 +662,7 @@ instance.prototype.connectToProPresenterSD = function() {
 		self.log('info', "Opened websocket to ProPresenter stage display: " + self.config.host +":"+ self.config.sdport);
 		self.sdsocket.send(JSON.stringify({
 			pwd: self.config.sdpass,
-			ptl: "610", //TODO: update for Pro7
+			ptl: 610, //Pro7 still wants 610 ! (so this works for both Pro6 and Pro7)
 			acn: "ath"
 		}));
 
@@ -1251,8 +1265,8 @@ instance.prototype.feedback = function(feedback, bank) {
 instance.prototype.onWebSocketMessage = function(message) {
 	var self = this;
 	var objData;
+	// Try to parse websocket payload as JSON...
 	try {
-		self.log('info', message); // TODO: remove this (or wrap in high-level debug option)
 		objData = JSON.parse(message);
 	} catch (err) {
 		self.log('warn', err.message);
@@ -1372,6 +1386,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
 			if (self.currentState.internal.proMajorVersion === 6) {
+				// Handle Pro6 Stage Display Info...
 				var stageDisplaySets = objData.stageDisplaySets;
 				var stageDisplayIndex =  objData.stageDisplayIndex;
 				self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
@@ -1379,13 +1394,18 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
 				self.checkFeedbacks('stagedisplay_active');
 			} else if (self.currentState.internal.proMajorVersion === 7) {
-				
+				// Handle Pro7 Stage Display Info...
+				var stageLayoutSelectedLayoutUUID='';
 				if (objData.hasOwnProperty('stageScreens')) {
 					self.currentState.internal.pro7StageScreens = [];
 					objData.stageScreens.forEach(function(stageScreen) {
 						var stageScreenName = stageScreen['stageScreenName'];
 						var stageScreenUUID = stageScreen['stageScreenUUID'];
 						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
+						if(stageScreenUUID === self.config.GUIDOfStageDisplayScreenToWatch) {
+							stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID'];
+						}
 					});
 				}
 				
@@ -1395,11 +1415,14 @@ instance.prototype.onWebSocketMessage = function(message) {
 						var stageLayoutName = stageLayout['stageLayoutName'];
 						var stageLayoutUUID = stageLayout['stageLayoutUUID'];
 						self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
+						if (stageLayoutUUID === stageLayoutSelectedLayoutUUID) {
+							self.updateVariable('current_pro7_stage_layout_name', stageLayoutName);
+						}
 					});
 				}
 				
 				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
-				self.actions();
+				self.actions(); // Update dropdown lists for screens and layouts used in pro7 stagedispay action.
 			}
 			break;
 
@@ -1430,7 +1453,7 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 				// Bad password
 				if (self.config.use_sd === 'yes') {
 					self.status(self.STATUS_WARNING, 'OK, But Stage Display failed auth');
-					self.log('info', "Stage Display auth error");
+					self.log('warn', "Stage Display auth error: "+String(objData.err));
 				}
 				self.stopSDConnectionTimer();
 			}
