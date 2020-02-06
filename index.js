@@ -39,7 +39,7 @@ instance.prototype.config_fields = function () {
 			id: 'info',
 			width: 12,
 			label: 'Information',
-			value: "This module communicates with Renewed Vision's ProPresenter 6"
+			value: "This module communicates with Renewed Vision's ProPresenter 6 or 7"
 		},
 		{
 			type: 'textinput',
@@ -71,6 +71,15 @@ instance.prototype.config_fields = function () {
 			default: '0',
 			width: 4,
 			regex: self.REGEX_NUMBER
+		},
+		{
+			type: 'dropdown',
+			id: 'GUIDOfStageDisplayScreenToWatch',
+			label: 'Pro7 Stage Display Screen To Monitor Layout',
+			tooltip: 'Pro7 Stage Display Screen To Monitor Layout - (This list is refreshed the next time you EDIT config, after a succesful connection)',
+			default: '',
+			width: 6,
+			choices: self.currentState.internal.pro7StageScreens
 		},
 		{
 			type: 'text',
@@ -331,6 +340,9 @@ instance.prototype.emptyCurrentState = function() {
 		wsSDConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
+		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
+		pro7StageLayouts: [{ id: '0', label: 'Connect to Pro7 to Update' }],
+		pro7StageScreens: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 	};
 
 	// The dynamic variable exposed to Companion
@@ -344,7 +356,8 @@ instance.prototype.emptyCurrentState = function() {
 		video_countdown_timer: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
-		current_stage_display_index: 'N/A'
+		current_stage_display_index: 'N/A',
+		current_pro7_stage_layout_name: "N/A",
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -388,6 +401,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Stage Display Index',
 			name:  'current_stage_display_index'
+		},
+		{
+			label: 'Current Pro7 Stage Layout Name',
+			name:  'current_pro7_stage_layout_name'
 		},
 		{
 			label: 'Current Stage Display Name',
@@ -442,7 +459,7 @@ instance.prototype.startConnectionTimer = function() {
 			self.connectToProPresenter();
 		}
 
-	}, 5000);
+	}, 1000);
 
 };
 
@@ -582,7 +599,7 @@ instance.prototype.connectToProPresenter = function() {
 		self.log('info', "Opened websocket to ProPresenter remote control: " + self.config.host +":"+ self.config.port);
 		self.socket.send(JSON.stringify({
 			password: self.config.pass,
-			protocol: "610",
+			protocol: "700", // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
 			action: "authenticate"
 		}));
 
@@ -645,7 +662,7 @@ instance.prototype.connectToProPresenterSD = function() {
 		self.log('info', "Opened websocket to ProPresenter stage display: " + self.config.host +":"+ self.config.sdport);
 		self.sdsocket.send(JSON.stringify({
 			pwd: self.config.sdpass,
-			ptl: "610",
+			ptl: 610, //Pro7 still wants 610 ! (so this works for both Pro6 and Pro7)
 			acn: "ath"
 		}));
 
@@ -728,14 +745,33 @@ instance.prototype.actions = function(system) {
 		'cleartelestrator': { label: 'Clear Telestrator' },
 		'cleartologo': { label: 'Clear to Logo' },
 		'stageDisplayLayout': {
-			label: 'Stage Display Layout',
+			label: 'Pro6 Stage Display Layout',
 			options: [
 				{
 					type: 'textinput',
-					label: 'Stage Display Index',
+					label: 'Pro6 Stage Display Index',
 					id: 'index',
 					default: 0,
 					regex: self.REGEX_NUMBER
+				}
+			]
+		},
+		'pro7StageDisplayLayout': {
+			label: 'Pro7 Stage Display Layout',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Pro7 Stage Display Screen',
+					id: 'pro7StageScreenUUID',
+					tooltip: 'Choose which stage display screen you want to update layout',
+					choices: self.currentState.internal.pro7StageScreens
+				},
+				{
+					type: 'dropdown',
+					label: 'Pro7 Stage Display Layout',
+					id: 'pro7StageLayoutUUID',
+					tooltip: 'Choose the new stage display layout to apply',
+					choices: self.currentState.internal.pro7StageLayouts
 				}
 			]
 		},
@@ -795,10 +831,10 @@ instance.prototype.actions = function(system) {
 			options: [
 				{
 					type: 'textinput',
-					label: 'Clock Name',
+					label: 'New Name For Clock', // Help person relise that this will rename clock that is updated.
 					id: 'clockName',
-					default: '',
-					tooltip: 'If you enter text here, you will update (rename) the clock!'
+					default: 'Timer',
+					tooltip: 'If this does not match the existing clock name, the clock name will be updated/renamed. Enter the existing clock name to leave it unchanged.'
 				},
 				{
 					type: 'textinput',
@@ -833,11 +869,11 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'dropdown',
-					label: 'Clock Is PM',
-					id: 'clockIsPM',
+					label: 'Clock Time Format',
+					id: 'clockTimePeriodFormat',
 					default: '0',
 					tooltip: 'Only Required for Countdown To Time Clock - otherwise this is ignored.',
-					choices: [ { id: '0', label: 'No' }, { id: '1', label: 'Yes' } ]
+					choices: [ { id: '0', label: 'AM' }, { id: '1', label: 'PM' }, { id: '2', label: '24Hr (Pro7 Only)' } ]
 				},
 				{
 					type: 'textinput',
@@ -985,7 +1021,7 @@ instance.prototype.action = function(action) {
 
 			cmd = {
 				action: "presentationTriggerIndex",
-				slideIndex: index,
+				slideIndex: String(index),
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: presentationPath
 			};
@@ -1036,7 +1072,15 @@ instance.prototype.action = function(action) {
 		case 'stageDisplayLayout':
 			cmd = {
 				action: "stageDisplaySetIndex",
-				stageDisplayIndex: opt.index
+				stageDisplayIndex: String(opt.index)
+			};
+			break;
+			
+		case 'pro7StageDisplayLayout':
+			cmd = {
+				action: "stageDisplayChangeLayout",
+				stageScreenUUID: opt.pro7StageScreenUUID,
+				stageLayoutUUID: opt.pro7StageLayoutUUID,
 			};
 			break;
 
@@ -1056,7 +1100,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockStart':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockStart",
 				clockIndex: clockIndex
@@ -1064,7 +1108,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockStop':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockStop",
 				clockIndex: clockIndex
@@ -1072,7 +1116,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockReset':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 			cmd = {
 				action: "clockReset",
 				clockIndex: clockIndex
@@ -1080,7 +1124,7 @@ instance.prototype.action = function(action) {
 			break;
 
 		case 'clockUpdate':
-			var clockIndex = parseInt(opt.clockIndex);
+			var clockIndex = String(opt.clockIndex);
 
 			// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
 			// If they are missing, then apply default values that result in the oringial bahaviour when it was only updating a countdown timers clockTime and clockOverRun.
@@ -1103,7 +1147,8 @@ instance.prototype.action = function(action) {
 				clockTime: opt.clockTime,
 				clockOverrun: opt.clockOverRun,
 				clockType: opt.clockType,
-				clockIsPM: opt.clockIsPM,
+				clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
+				clockTimePeriodFormat: String(opt.clockTimePeriodFormat), 
 				clockElapsedTime: opt.clockElapsedTime,
 				clockName: opt.clockName
 			};
@@ -1112,7 +1157,7 @@ instance.prototype.action = function(action) {
 		case 'messageHide':
 			cmd = {
 				action: "messageHide",
-				messageIndex: opt.messageIndex
+				messageIndex: String(opt.messageIndex)
 			};
 			break;
 
@@ -1122,7 +1167,7 @@ instance.prototype.action = function(action) {
 			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
 			cmd = {
 				action: "messageSend",
-				messageIndex: opt.messageIndex,
+				messageIndex: String(opt.messageIndex),
 				messageKeys: opt.messageKeys.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28)),
 				messageValues: opt.messageValues.replace(/,,/g, String.fromCharCode(29)).replace(/,/g, String.fromCharCode(28)).replace(/\u001D/g, ',').split(String.fromCharCode(28))
 			};
@@ -1219,11 +1264,32 @@ instance.prototype.feedback = function(feedback, bank) {
  */
 instance.prototype.onWebSocketMessage = function(message) {
 	var self = this;
-	var objData = JSON.parse(message);
+	var objData;
+	// Try to parse websocket payload as JSON...
+	try {
+		objData = JSON.parse(message);
+	} catch (err) {
+		self.log('warn', err.message);
+		return;
+	}
+	
 
 	switch(objData.action) {
 		case 'authenticate':
 			if (objData.authenticated === 1) {
+				
+				// Autodetect if Major version of ProPresenter is version 7
+				// Only Pro7 includes .majorVersion and .minorVersion properties.
+				// .majorVersion will be set to = "7" from Pro7 (Pro6 does not include these at all)
+				if (objData.hasOwnProperty('majorVersion')) {
+					if (objData.majorVersion === 7) {
+						self.currentState.internal.proMajorVersion = 7;
+					}
+				} else {
+					// Leave default 
+				}
+				
+				self.log('info', 'ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -1309,20 +1375,55 @@ instance.prototype.onWebSocketMessage = function(message) {
 			break;
 
 		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
-			var stageDisplayIndex = objData.stageDisplayIndex;
-			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
-			self.updateVariable('current_stage_display_index', stageDisplayIndex);
-			self.getStageDisplaysInfo();
-			self.checkFeedbacks('stagedisplay_active');
+			if (self.currentState.internal.proMajorVersion === 6) {
+				var stageDisplayIndex = objData.stageDisplayIndex;
+				self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
+				self.updateVariable('current_stage_display_index', stageDisplayIndex);
+				self.getStageDisplaysInfo();
+				self.checkFeedbacks('stagedisplay_active');
+			} // TODO: handle Pro7 stageDisplaySetIndex messages
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
-			var stageDisplaySets = objData.stageDisplaySets;
-			var stageDisplayIndex =  objData.stageDisplayIndex;
-			self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
-			self.updateVariable('current_stage_display_index', stageDisplayIndex);
-			self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
-			self.checkFeedbacks('stagedisplay_active');
+			if (self.currentState.internal.proMajorVersion === 6) {
+				// Handle Pro6 Stage Display Info...
+				var stageDisplaySets = objData.stageDisplaySets;
+				var stageDisplayIndex =  objData.stageDisplayIndex;
+				self.currentState.internal.stageDisplayIndex = parseInt(stageDisplayIndex,10);
+				self.updateVariable('current_stage_display_index', stageDisplayIndex);
+				self.updateVariable('current_stage_display_name', stageDisplaySets[parseInt(stageDisplayIndex,10)]);
+				self.checkFeedbacks('stagedisplay_active');
+			} else if (self.currentState.internal.proMajorVersion === 7) {
+				// Handle Pro7 Stage Display Info...
+				var stageLayoutSelectedLayoutUUID='';
+				if (objData.hasOwnProperty('stageScreens')) {
+					self.currentState.internal.pro7StageScreens = [];
+					objData.stageScreens.forEach(function(stageScreen) {
+						var stageScreenName = stageScreen['stageScreenName'];
+						var stageScreenUUID = stageScreen['stageScreenUUID'];
+						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
+						if(stageScreenUUID === self.config.GUIDOfStageDisplayScreenToWatch) {
+							stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID'];
+						}
+					});
+				}
+				
+				if (objData.hasOwnProperty('stageLayouts')) {
+					self.currentState.internal.pro7StageLayouts = [];
+					objData.stageLayouts.forEach(function(stageLayout) {
+						var stageLayoutName = stageLayout['stageLayoutName'];
+						var stageLayoutUUID = stageLayout['stageLayoutUUID'];
+						self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
+						if (stageLayoutUUID === stageLayoutSelectedLayoutUUID) {
+							self.updateVariable('current_pro7_stage_layout_name', stageLayoutName);
+						}
+					});
+				}
+				
+				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
+				self.actions(); // Update dropdown lists for screens and layouts used in pro7 stagedispay action.
+			}
 			break;
 
 	}
@@ -1352,15 +1453,17 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 				// Bad password
 				if (self.config.use_sd === 'yes') {
 					self.status(self.STATUS_WARNING, 'OK, But Stage Display failed auth');
-					self.log('info', "Stage Display auth error");
+					self.log('warn', "Stage Display auth error: "+String(objData.err));
 				}
 				self.stopSDConnectionTimer();
 			}
 			break;
 
 		case 'vid':
-			// Record new video countdown timer value in dynamic var
-			self.updateVariable('video_countdown_timer', objData.txt);
+			if (objData.hasOwnProperty('txt')) {
+				// Record new video countdown timer value in dynamic var
+				self.updateVariable('video_countdown_timer', objData.txt);
+			}
 			break;
 
 	}
@@ -1379,7 +1482,7 @@ instance.prototype.getProPresenterState = function() {
 
 	self.socket.send(JSON.stringify({
 		action: 'presentationCurrent',
-		presentationSlideQuality: 0 // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+		presentationSlideQuality: '0' // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
 	}));
 
 	if (self.currentState.dynamicVariables.current_slide === 'N/A') {

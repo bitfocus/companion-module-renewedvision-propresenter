@@ -1,12 +1,13 @@
-# Companion-module: ProPresenter6
+# Companion-module: ProPresenter6/7
 
-Module for using ProPresenter 6 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.
+
+Module for using ProPresenter 6 or 7 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.
 
 *Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.*
 
 # Setup Guide.
 ## Enable networking in ProPresenter if you haven't already done so...
-1. Open ProPresenter and then open the "ProPresenter 6" Menu.
+1. Open ProPresenter and then open the "ProPresenter (6)" Menu.
 2. Select "Preferences..." to open the ProPresenter Preferences window.
 3. Select the Network tab to configure ProPresenter network preferences.
 4. Check the "Enable Network" option (if it is not already enabled).
@@ -110,7 +111,8 @@ Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
 Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout.
 
-Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
+In Pro6 Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
+In Pro7 you can choose which screen and which stage display layout you want to set by name. (The dropdown list of name is NOT refreshed until after you have connected to PRo7).
 
 
 ## Clocks (Timers)
@@ -148,3 +150,4 @@ $(propresenter:watched_clock_current_time) | In the config of this module, you c
 $(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (This is updated whenever a new layout is selected.)
 $(propresenter:current_stage_display_name) | Name of the currently selected stage display layout (This is updated whenever a new layout is selected.)
 $(propresenter:video_countdown_timer) | Current value of video countdown timer - automatically updated when a video is playing. (This one variable is only updated when the module is configured to also connect to the Stage Display App port)
+$(propresenter:current_pro7_stage_layout_name) | The name of the current stage-display layout on the selected stage-display screen (as set in module config)
