@@ -82,6 +82,15 @@ instance.prototype.config_fields = function () {
 			choices: self.currentState.internal.pro7StageScreens
 		},
 		{
+			type: 'dropdown',
+			id: 'sendPresentationCurrentMsgs',
+			label: 'Send Presentation Info Requests To ProPresenter',
+			tooltip: 'You may want to turn this off for Pro7 as it can cause performance issues - Turning it off will mean the module does not update the dynamic variables: remaining_slides, total_slides or presentation_name',
+			default: 'yes',
+			width: 6,
+			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+		},
+		{
 			type: 'text',
 			id: 'info',
 			width: 12,
@@ -1479,11 +1488,12 @@ instance.prototype.getProPresenterState = function() {
 	if (self.currentState.internal.wsConnected === false) {
 		return;
 	}
-
-	self.socket.send(JSON.stringify({
-		action: 'presentationCurrent',
-		presentationSlideQuality: '0' // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
-	}));
+	if (self.config.sendPresentationCurrentMsgs !== 'no') { // User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with Pro7)
+		self.socket.send(JSON.stringify({
+			action: 'presentationCurrent',
+			presentationSlideQuality: '0' // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+		}));
+		}
 
 	if (self.currentState.dynamicVariables.current_slide === 'N/A') {
 		// The currentSlide will be empty when the module first loads. Request it.
