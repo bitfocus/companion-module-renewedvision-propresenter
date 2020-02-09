@@ -34,6 +34,9 @@ If you chose to also enable the stage display app option in ProPresenter prefere
 
 N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
+Pro7 users:  Currently there is a noticeable performance impact within ProPresenter 7 itself when companion sends messages to Pro7 to track info about the current presentation.
+To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. We will continue to investigate a fix with RenewedVision (or a better workaround).
+
 
 # Commands
 ## Slides
