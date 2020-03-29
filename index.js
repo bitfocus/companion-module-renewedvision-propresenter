@@ -1086,10 +1086,11 @@ instance.prototype.action = function(action) {
 			break;
 			
 		case 'pro7StageDisplayLayout':
+			// If either option is null, then default to using first items from each list kept in internal state.
 			cmd = {
 				action: "stageDisplayChangeLayout",
-				stageScreenUUID: opt.pro7StageScreenUUID,
-				stageLayoutUUID: opt.pro7StageLayoutUUID,
+				stageScreenUUID: opt.pro7StageScreenUUID ? opt.pro7StageScreenUUID : self.currentState.internal.pro7StageScreens[0].id,
+				stageLayoutUUID: opt.pro7StageLayoutUUID ? opt.pro7StageLayoutUUID : self.currentState.internal.pro7StageLayouts[0].id,
 			};
 			break;
 
