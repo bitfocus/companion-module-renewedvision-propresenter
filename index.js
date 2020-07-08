@@ -753,6 +753,7 @@ instance.prototype.actions = function(system) {
 		'clearbackground': { label: 'Clear Background' },
 		'cleartelestrator': { label: 'Clear Telestrator' },
 		'cleartologo': { label: 'Clear to Logo' },
+		'clearAnnouncements': { label: 'Clear Announcements' },
 		'stageDisplayLayout': {
 			label: 'Pro6 Stage Display Layout',
 			options: [
@@ -855,7 +856,7 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Countdown Duration, Countdown To Time, Or Elapsed Start Time',
+					label: 'Countdown Duration Or Elapsed Start Time',
 					id: 'clockTime',
 					default: "00:05:00",
 					tooltip: 'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
@@ -886,7 +887,7 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Elapsed Time End',
+					label: 'Elapsed Time End or Countdown To Time',
 					id: 'clockElapsedTime',
 					default: '00:10:00',
 					tooltip: 'Only Required for Elapsed Time Clock - otherwise this is ignored.',
@@ -1075,6 +1076,12 @@ instance.prototype.action = function(action) {
 		case 'cleartologo':
 			cmd = {
 				action: "clearToLogo"
+			};
+			break;
+		
+		case 'clearAnnouncements':
+			cmd = {
+				action: "clearAnnouncements"
 			};
 			break;
 
