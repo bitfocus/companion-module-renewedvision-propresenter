@@ -856,7 +856,7 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Countdown Duration Or Elapsed Start Time',
+					label: 'Countdown Duration, Elapsed Start Time or Countdown To Time',
 					id: 'clockTime',
 					default: "00:05:00",
 					tooltip: 'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
@@ -887,7 +887,7 @@ instance.prototype.actions = function(system) {
 				},
 				{
 					type: 'textinput',
-					label: 'Elapsed Time End or Countdown To Time',
+					label: 'Elapsed End Time',
 					id: 'clockElapsedTime',
 					default: '00:10:00',
 					tooltip: 'Only Required for Elapsed Time Clock - otherwise this is ignored.',
@@ -1166,7 +1166,7 @@ instance.prototype.action = function(action) {
 				clockType: opt.clockType,
 				clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
 				clockTimePeriodFormat: String(opt.clockTimePeriodFormat), 
-				clockElapsedTime: opt.clockElapsedTime,
+				clockElapsedTime: (opt.clockType === '1' && self.currentState.internal.proMajorVersion === 7) ? opt.clockTime : opt.clockElapsedTime,  // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
 				clockName: opt.clockName
 			};
 			break;
