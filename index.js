@@ -754,6 +754,7 @@ instance.prototype.actions = function(system) {
 		'cleartelestrator': { label: 'Clear Telestrator' },
 		'cleartologo': { label: 'Clear to Logo' },
 		'clearAnnouncements': { label: 'Clear Announcements' },
+		'clearMessages': { label: 'Clear Messages' },
 		'stageDisplayLayout': {
 			label: 'Pro6 Stage Display Layout',
 			options: [
@@ -1085,6 +1086,12 @@ instance.prototype.action = function(action) {
 			};
 			break;
 
+		case 'clearMessages':
+				cmd = {
+					action: "clearMessages"
+				};
+				break;
+	
 		case 'stageDisplayLayout':
 			cmd = {
 				action: "stageDisplaySetIndex",
