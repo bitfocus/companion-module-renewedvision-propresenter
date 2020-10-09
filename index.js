@@ -1429,6 +1429,8 @@ instance.prototype.onWebSocketMessage = function(message) {
 						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
 						if(stageScreenUUID === self.config.GUIDOfStageDisplayScreenToWatch) {
 							stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID'];
+							self.currentState.internal.stageDisplayIndex = self.currentState.internal.pro7StageLayouts.map(function(x) {return x.id; }).indexOf(stageLayoutSelectedLayoutUUID);
+							self.checkFeedbacks('stagedisplay_active');
 						}
 					});
 				}
