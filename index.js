@@ -54,7 +54,7 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'ProPresenter Port',
 			width: 6,
-			default: '',
+			default: '20652',
 			regex: self.REGEX_PORT
 		},
 		{
