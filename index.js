@@ -131,6 +131,7 @@ instance.prototype.config_fields = function () {
 instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
+    self.init_presets();
 	self.disconnectFromProPresenter();
 	self.disconnectFromProPresenterSD();
 	self.connectToProPresenter();
@@ -187,9 +188,8 @@ instance.prototype.destroy = function() {
 */
 instance.prototype.init_presets = function () {
 	var self = this;
-    var clockTitle = typeof self.config.indexOfClockToWatch !== 'undefined' ? 'Clock '+ self.config.indexOfClockToWatch : '';
-	
-    var presets = [
+
+	var presets = [
 		{
 			category: 'Stage Display',
 			label: 'This button displays the name of current stage display layout. Pressing it will toggle back and forth between the two selected stage display layouts in the down and up actions.',
@@ -242,7 +242,7 @@ instance.prototype.init_presets = function () {
 			label: 'This button will reset a selected (by index) clock to a 5 min countdown clock and automatically start it.',
 			bank: {
 				style: 'text',
-				text: (clockTitle=='' ? 'Clock' : clockTitle) +'\\n5 mins',
+				text: 'Clock '+self.config.indexOfClockToWatch+'\\n5 mins',
 				size: '18',
 				color: self.rgb(255,255,255),
 				bgcolor: self.rgb(0,153,51)
@@ -278,7 +278,7 @@ instance.prototype.init_presets = function () {
 			label: 'This button will START a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
-				text: 'Start\\n'+clockTitle+'\\n$(propresenter:watched_clock_current_time)',
+				text: 'Start\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
 				size: '14',
 				color: self.rgb(255,255,255),
 				bgcolor: self.rgb(0,153,51)
@@ -297,7 +297,7 @@ instance.prototype.init_presets = function () {
 			label: 'This button will STOP a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
-				text: 'Stop\\n '+clockTitle+'\\n$(propresenter:watched_clock_current_time)',
+				text: 'Stop\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
 				size: '14',
 				color: self.rgb(255,255,255),
 				bgcolor: self.rgb(204,0,0)
@@ -316,7 +316,7 @@ instance.prototype.init_presets = function () {
 			label: 'This button will RESET a clock selected by index (0-based). If you change the index, and still want to display the current time on the button, make sure to also update the index of the clock to watch in this modules config to match.',
 			bank: {
 				style: 'text',
-				text: 'Reset\\n '+clockTitle+'\\n$(propresenter:watched_clock_current_time)',
+				text: 'Reset\\nClock '+self.config.indexOfClockToWatch+'\\n$(propresenter:watched_clock_current_time)',
 				size: '14',
 				color: self.rgb(255,255,255),
 				bgcolor: self.rgb(255,102,0)
