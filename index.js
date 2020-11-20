@@ -54,7 +54,7 @@ instance.prototype.config_fields = function () {
 			id: 'port',
 			label: 'ProPresenter Port',
 			width: 6,
-			default: '',
+			default: '20652',
 			regex: self.REGEX_PORT
 		},
 		{
@@ -131,6 +131,7 @@ instance.prototype.config_fields = function () {
 instance.prototype.updateConfig = function(config) {
 	var self = this;
 	self.config = config;
+    self.init_presets();
 	self.disconnectFromProPresenter();
 	self.disconnectFromProPresenterSD();
 	self.connectToProPresenter();
