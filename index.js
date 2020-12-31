@@ -448,6 +448,10 @@ instance.prototype.updateVariable = function(name, value) {
 
 	self.currentState.dynamicVariables[name] = value;
 	self.setVariable(name, value);
+
+	if (name === 'connection_status') {
+		self.checkFeedbacks('propresenter_module_connected');
+	}
 };
 
 
@@ -537,7 +541,6 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 	if (updateLog) {
 		self.log('info', "ProPresenter " + status);
 	}
-
 };
 
 /**
@@ -567,6 +570,9 @@ instance.prototype.disconnectFromProPresenter = function() {
 		}
 		delete self.socket;
 	}
+	self.currentState.internal.wsConnected = false;
+	self.setConnectionVariable('Disconnected', true);
+	
 
 };
 
@@ -626,9 +632,8 @@ instance.prototype.connectToProPresenter = function() {
 	self.socket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
-
 		var wasConnected = self.currentState.internal.wsConnected;
-		self.emptyCurrentState();
+		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
 		if (wasConnected === false) {
 			return;
@@ -1273,6 +1278,37 @@ instance.prototype.init_feedbacks = function() {
 		]
 	};
 
+	feedbacks['propresenter_module_connected'] = {
+		label: 'Change colors based on Propresenter module being connected',
+		description: 'Propresenter module being connected, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Connected Foreground color',
+				id: 'cfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected Background color',
+				id: 'cbg',
+				default: self.rgb(0,153,51)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Foreground color',
+				id: 'dfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Background color',
+				id: 'dbg',
+				default: self.rgb(204,0,0)
+			}
+		]
+	};
+
 	self.setFeedbackDefinitions(feedbacks);
 }
 
@@ -1283,6 +1319,14 @@ instance.prototype.feedback = function(feedback, bank) {
 			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
 		}
 	}
+	if (feedback.type == 'propresenter_module_connected') {
+		if (self.currentState.internal.wsConnected) {
+			return { color: feedback.options.cfg, bgcolor: feedback.options.cbg };
+		} else {
+			return { color: feedback.options.dfg, bgcolor: feedback.options.dbg };
+		}
+	}
+
 }
 /**
  * Received a message from ProPresenter.
@@ -1336,6 +1380,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				// No point in trying to connect again. The user must either re-enable this
 				//	module or re-save the config changes to make another attempt.
 				self.stopConnectionTimer();
+
 			}
 			break;
 
