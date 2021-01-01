@@ -70,7 +70,7 @@ Playlists in groups (or nested groups) are identified using periods. `1.1.0:2` m
 
 The below image may make this more clear:
 
-![specific-slide](documentation/images/specific-slide.png)
+![specific-slide-playlist-indexing](documentation/images/specific-slide-playlist-indexing.png)
 
 
 ## Audio Cues
