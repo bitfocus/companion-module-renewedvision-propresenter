@@ -340,6 +340,8 @@ instance.prototype.init_presets = function () {
 instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
+	self.log('info', 'emptyCurrentState');
+
 	// Reinitialize the currentState variable, otherwise this variable (and the module's
 	//	state) will be shared between multiple instances of this module.
 	self.currentState = {};
@@ -441,6 +443,11 @@ instance.prototype.initVariables = function() {
 instance.prototype.updateVariable = function(name, value) {
 	var self = this;
 
+	if (name !== 'watched_clock_current_time') {
+		// Avoid flooding log with timer updates... (may have to manually revert to debug future timer message issues)
+		self.log('debug', 'updateVariable: ' + name + ' to ' + value);
+	}
+
 	if (self.currentState.dynamicVariables[name] === undefined) {
 		self.log('warn', "Variable " + name + " does not exist");
 		return;
@@ -448,6 +455,10 @@ instance.prototype.updateVariable = function(name, value) {
 
 	self.currentState.dynamicVariables[name] = value;
 	self.setVariable(name, value);
+
+	if (name === 'connection_status') {
+		self.checkFeedbacks('propresenter_module_connected');
+	}
 };
 
 
@@ -537,7 +548,6 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 	if (updateLog) {
 		self.log('info', "ProPresenter " + status);
 	}
-
 };
 
 /**
@@ -567,6 +577,9 @@ instance.prototype.disconnectFromProPresenter = function() {
 		}
 		delete self.socket;
 	}
+	self.currentState.internal.wsConnected = false;
+	self.setConnectionVariable('Disconnected', true);
+	
 
 };
 
@@ -626,9 +639,12 @@ instance.prototype.connectToProPresenter = function() {
 	self.socket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
-
 		var wasConnected = self.currentState.internal.wsConnected;
-		self.emptyCurrentState();
+
+
+		self.log('warn', 'socket closed');
+
+		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
 		if (wasConnected === false) {
 			return;
@@ -776,6 +792,7 @@ instance.prototype.actions = function(system) {
 					label: 'Pro7 Stage Display Screen',
 					id: 'pro7StageScreenUUID',
 					tooltip: 'Choose which stage display screen you want to update layout',
+					default: '',
 					choices: self.currentState.internal.pro7StageScreens
 				},
 				{
@@ -783,6 +800,7 @@ instance.prototype.actions = function(system) {
 					label: 'Pro7 Stage Display Layout',
 					id: 'pro7StageLayoutUUID',
 					tooltip: 'Choose the new stage display layout to apply',
+					default: '',
 					choices: self.currentState.internal.pro7StageLayouts
 				}
 			]
@@ -1261,7 +1279,7 @@ instance.prototype.init_feedbacks = function() {
 				type: 'colorpicker',
 				label: 'Background color',
 				id: 'bg',
-				default: self.rgb(0,255,0)
+				default: self.rgb(0,153,51)
 			},
 			{
 				type: 'textinput',
@@ -1269,6 +1287,71 @@ instance.prototype.init_feedbacks = function() {
 				id: 'index',
 				default: 0,
 				regex: self.REGEX_NUMBER
+			},
+		]
+	};
+
+	feedbacks['pro7_stagelayout_active'] = {
+		label: 'Change colors based on the active layout for one of Pro7\'s stage screens',
+		description: 'If the specified stage layout is active on the specified stage screen, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Foreground color',
+				id: 'fg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Background color',
+				id: 'bg',
+				default: self.rgb(0,153,51)
+			},
+			{
+				type: 'dropdown',
+				label: 'Pro7 Stage Display Screen',
+				id: 'pro7StageScreenUUID',
+				tooltip: 'Choose which stage display screen you want to monitor',
+				choices: self.currentState.internal.pro7StageScreens
+			},
+			{
+				type: 'dropdown',
+				label: 'Pro7 Stage Display Layout',
+				id: 'pro7StageLayoutUUID',
+				tooltip: 'Choose the stage display layout to trigger above color change',
+				choices: self.currentState.internal.pro7StageLayouts
+			}
+		]
+	};
+
+
+	feedbacks['propresenter_module_connected'] = {
+		label: 'Change colors based on Propresenter module being connected',
+		description: 'Propresenter module being connected, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Connected Foreground color',
+				id: 'cfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected Background color',
+				id: 'cbg',
+				default: self.rgb(0,153,51)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Foreground color',
+				id: 'dfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Background color',
+				id: 'dbg',
+				default: self.rgb(204,0,0)
 			}
 		]
 	};
@@ -1278,11 +1361,40 @@ instance.prototype.init_feedbacks = function() {
 
 instance.prototype.feedback = function(feedback, bank) {
 	var self = this;
+
+	self.log('debug', 'feedback type: ' + feedback.type);
+
 	if (feedback.type == 'stagedisplay_active') {
 		if (self.currentState.internal.stageDisplayIndex == feedback.options.index) {
 			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
 		}
 	}
+
+	if (feedback.type == 'propresenter_module_connected') {
+		if (self.currentState.internal.wsConnected) {
+			return { color: feedback.options.cfg, bgcolor: feedback.options.cbg };
+		} else {
+			return { color: feedback.options.dfg, bgcolor: feedback.options.dbg };
+		}
+	}
+
+	if (feedback.type == 'pro7_stagelayout_active') {
+		// Get screen (includes current layout)
+		var stageScreen = self.currentState.internal.pro7StageScreens.find(pro7StageScreen => pro7StageScreen.id === (feedback.options.pro7StageScreenUUID ? feedback.options.pro7StageScreenUUID : self.currentState.internal.pro7StageScreens[0].id))
+
+		self.log('debug', 'feedback for ' + feedback.options.pro7StageScreenUUID);
+
+		// Exit if we could not find matching screen
+		if (stageScreen === undefined) {
+			return;
+		}
+
+		// Check stage layout for screeen and return feedback color if matched
+		if (stageScreen.layoutUUID === (feedback.options.pro7StageLayoutUUID ? feedback.options.pro7StageLayoutUUID : self.currentState.internal.pro7StageLayouts[0].id)) {  
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg };
+		}
+	}
+
 }
 /**
  * Received a message from ProPresenter.
@@ -1314,7 +1426,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 					// Leave default 
 				}
 				
-				self.log('info', 'ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
+				self.log('info', 'Authenticated to ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -1336,6 +1448,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				// No point in trying to connect again. The user must either re-enable this
 				//	module or re-save the config changes to make another attempt.
 				self.stopConnectionTimer();
+
 			}
 			break;
 
@@ -1357,6 +1470,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 			setTimeout(function(){
 				self.getProPresenterState();
 			}, 800);
+			self.log('info', 'presentationSlideIndex: ' + slideIndex);
 			break;
 
 		case 'presentationCurrent':
@@ -1390,6 +1504,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			// Update remaining_slides (as total_slides has probably just changed)
 			self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - self.currentState.dynamicVariables['current_slide']);
+
+
+			self.log('info', 'presentationCurrent: ' + presentationName);
 			break;
 
 		case 'clockCurrentTimes':
@@ -1420,36 +1537,56 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.checkFeedbacks('stagedisplay_active');
 			} else if (self.currentState.internal.proMajorVersion === 7) {
 				// Handle Pro7 Stage Display Info...
-				var stageLayoutSelectedLayoutUUID='';
+				var watchScreen_StageLayoutSelectedLayoutUUID = '';
+
+				// Refresh list of all stagelayouts
+				if (objData.hasOwnProperty('stageLayouts')) {
+					self.currentState.internal.pro7StageLayouts = [];
+					objData.stageLayouts.forEach(function(stageLayout) {
+						self.currentState.internal.pro7StageLayouts.push({id: stageLayout['stageLayoutUUID'], label: stageLayout['stageLayoutName']});
+					});
+				}
+
+				// Refresh list of stage screens, update the records of screen names (and layout UUID), and record UUID of the current_pro7_stage_layout_name for selected watched screen
 				if (objData.hasOwnProperty('stageScreens')) {
 					self.currentState.internal.pro7StageScreens = [];
 					objData.stageScreens.forEach(function(stageScreen) {
 						var stageScreenName = stageScreen['stageScreenName'];
 						var stageScreenUUID = stageScreen['stageScreenUUID'];
-						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+						var stageLayoutSelectedLayoutUUID= stageScreen['stageLayoutSelectedLayoutUUID'];
+						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName, layoutUUID: stageLayoutSelectedLayoutUUID});
+						
+						// Update record of layout name for this pro7 stage screen
+						try {
+							self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname'] = self.currentState.internal.pro7StageLayouts.find(pro7StageLayout => pro7StageLayout.id === stageLayoutSelectedLayoutUUID).label;
+							self.updateVariable(stageScreenName + '_pro7_stagelayoutname', self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname']);
+						} catch (e) {
+							self.log('warn', "Error finding/updating layout name for " + stageScreenName + '_pro7_stagelayoutname' ); 
+						}
+
 						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
 						if(stageScreenUUID === self.config.GUIDOfStageDisplayScreenToWatch) {
-							stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID'];
-							self.currentState.internal.stageDisplayIndex = self.currentState.internal.pro7StageLayouts.map(function(x) {return x.id; }).indexOf(stageLayoutSelectedLayoutUUID);
+							watchScreen_StageLayoutSelectedLayoutUUID = stageLayoutSelectedLayoutUUID;
+							self.currentState.internal.stageDisplayIndex = self.currentState.internal.pro7StageLayouts.map(function(x) {return x.id; }).indexOf(watchScreen_StageLayoutSelectedLayoutUUID);
 							self.checkFeedbacks('stagedisplay_active');
 						}
 					});
 				}
 				
+				// Update current_pro7_stage_layout_name
 				if (objData.hasOwnProperty('stageLayouts')) {
-					self.currentState.internal.pro7StageLayouts = [];
 					objData.stageLayouts.forEach(function(stageLayout) {
-						var stageLayoutName = stageLayout['stageLayoutName'];
-						var stageLayoutUUID = stageLayout['stageLayoutUUID'];
-						self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
-						if (stageLayoutUUID === stageLayoutSelectedLayoutUUID) {
-							self.updateVariable('current_pro7_stage_layout_name', stageLayoutName);
+						if (stageLayout['stageLayoutUUID'] === watchScreen_StageLayoutSelectedLayoutUUID) {
+							self.updateVariable('current_pro7_stage_layout_name', stageLayout['stageLayoutName']);
 						}
 					});
 				}
+
+				self.checkFeedbacks('pro7_stagelayout_active');
 				
 				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
 				self.actions(); // Update dropdown lists for screens and layouts used in pro7 stagedispay action.
+				self.init_feedbacks(); // Update dropdown lists for pro7 stage layout feedback.
 			}
 			break;
 
