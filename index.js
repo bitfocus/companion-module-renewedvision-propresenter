@@ -340,6 +340,8 @@ instance.prototype.init_presets = function () {
 instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
+	self.log('info', 'emptyCurrentState');
+
 	// Reinitialize the currentState variable, otherwise this variable (and the module's
 	//	state) will be shared between multiple instances of this module.
 	self.currentState = {};
@@ -440,6 +442,11 @@ instance.prototype.initVariables = function() {
  */
 instance.prototype.updateVariable = function(name, value) {
 	var self = this;
+
+	if (name !== 'watched_clock_current_time') {
+		// Avoid flooding log with timer updates... (may have to manually revert to debug future timer message issues)
+		self.log('debug', 'updateVariable: ' + name + ' to ' + value);
+	}
 
 	if (self.currentState.dynamicVariables[name] === undefined) {
 		self.log('warn', "Variable " + name + " does not exist");
@@ -633,6 +640,10 @@ instance.prototype.connectToProPresenter = function() {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 		var wasConnected = self.currentState.internal.wsConnected;
+
+
+		self.log('warn', 'socket closed');
+
 		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
 		if (wasConnected === false) {
@@ -1358,7 +1369,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 					// Leave default 
 				}
 				
-				self.log('info', 'ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
+				self.log('info', 'Authenticated to ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -1402,6 +1413,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 			setTimeout(function(){
 				self.getProPresenterState();
 			}, 800);
+			self.log('info', 'presentationSlideIndex: ' + slideIndex);
 			break;
 
 		case 'presentationCurrent':
@@ -1435,6 +1447,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 			// Update remaining_slides (as total_slides has probably just changed)
 			self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - self.currentState.dynamicVariables['current_slide']);
+
+
+			self.log('info', 'presentationCurrent: ' + presentationName);
 			break;
 
 		case 'clockCurrentTimes':
@@ -1465,30 +1480,47 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.checkFeedbacks('stagedisplay_active');
 			} else if (self.currentState.internal.proMajorVersion === 7) {
 				// Handle Pro7 Stage Display Info...
-				var stageLayoutSelectedLayoutUUID='';
+				var watchScreen_StageLayoutSelectedLayoutUUID = '';
+
+				// Refresh list of all stagelayouts
+				if (objData.hasOwnProperty('stageLayouts')) {
+					self.currentState.internal.pro7StageLayouts = [];
+					objData.stageLayouts.forEach(function(stageLayout) {
+						self.currentState.internal.pro7StageLayouts.push({id: stageLayout['stageLayoutUUID'], label: stageLayout['stageLayoutName']});
+					});
+				}
+
+				// Refresh list of stage screens, update the records of screen/layout names, and record UUID of the current_pro7_stage_layout_name for selected watched screen
 				if (objData.hasOwnProperty('stageScreens')) {
 					self.currentState.internal.pro7StageScreens = [];
 					objData.stageScreens.forEach(function(stageScreen) {
 						var stageScreenName = stageScreen['stageScreenName'];
 						var stageScreenUUID = stageScreen['stageScreenUUID'];
+						var stageLayoutSelectedLayoutUUID= stageScreen['stageLayoutSelectedLayoutUUID'];
 						self.currentState.internal.pro7StageScreens.push({id: stageScreenUUID, label: stageScreenName});
+						
+						// Update record of layout name for this pro7 stage screen
+						try {
+							self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname'] = self.currentState.internal.pro7StageLayouts.find(pro7StageLayout => pro7StageLayout.id === stageLayoutSelectedLayoutUUID).label;
+							self.updateVariable(stageScreenName + '_pro7_stagelayoutname', self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname']);
+						} catch (e) {
+							self.log('warn', "Error finding/updating layout name for " + stageScreenName + '_pro7_stagelayoutname' ); 
+						}
+
 						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
 						if(stageScreenUUID === self.config.GUIDOfStageDisplayScreenToWatch) {
-							stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID'];
-							self.currentState.internal.stageDisplayIndex = self.currentState.internal.pro7StageLayouts.map(function(x) {return x.id; }).indexOf(stageLayoutSelectedLayoutUUID);
+							watchScreen_StageLayoutSelectedLayoutUUID = stageLayoutSelectedLayoutUUID;
+							self.currentState.internal.stageDisplayIndex = self.currentState.internal.pro7StageLayouts.map(function(x) {return x.id; }).indexOf(watchScreen_StageLayoutSelectedLayoutUUID);
 							self.checkFeedbacks('stagedisplay_active');
 						}
 					});
 				}
 				
+				// Update current_pro7_stage_layout_name
 				if (objData.hasOwnProperty('stageLayouts')) {
-					self.currentState.internal.pro7StageLayouts = [];
 					objData.stageLayouts.forEach(function(stageLayout) {
-						var stageLayoutName = stageLayout['stageLayoutName'];
-						var stageLayoutUUID = stageLayout['stageLayoutUUID'];
-						self.currentState.internal.pro7StageLayouts.push({id: stageLayoutUUID, label: stageLayoutName});
-						if (stageLayoutUUID === stageLayoutSelectedLayoutUUID) {
-							self.updateVariable('current_pro7_stage_layout_name', stageLayoutName);
+						if (stageLayout['stageLayoutUUID'] === watchScreen_StageLayoutSelectedLayoutUUID) {
+							self.updateVariable('current_pro7_stage_layout_name', stageLayout['stageLayoutName']);
 						}
 					});
 				}
