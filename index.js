@@ -683,8 +683,8 @@ instance.prototype.connectToProPresenterSD = function() {
 		return;
 	}
 
-	// Use ProPresenter remote control port if stage display port is not set.
-	if (self.config.sdport === '') {
+	// Use ProPresenter remote control port if stage display port is not set. (~~ is a double NOT bitwise operator. It will change sdport to a numeric value of 0 if it is null, undefined or "".)
+	if (~~self.config.sdport === 0) {
 		self.config.sdport = self.config.port;
 	}
 
