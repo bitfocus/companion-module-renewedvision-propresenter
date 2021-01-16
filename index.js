@@ -158,10 +158,10 @@ instance.prototype.init = function() {
 
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
-		self.connectToProPresenterSD();
 		self.startConnectionTimer();
 		if (self.config.use_sd === 'yes') {
 			self.startSDConnectionTimer();
+			self.connectToProPresenterSD();
 		}
 	}
 
@@ -607,13 +607,14 @@ instance.prototype.disconnectFromProPresenterSD = function() {
 instance.prototype.connectToProPresenter = function() {
 	var self = this;
 
-	// Disconnect if already connected
-	self.disconnectFromProPresenter();
-
-	// ~~ is a double NOT bitwise operator. Will change .port to a numeric value, including null, undefined, "" to 0.
-	if (self.config.host === undefined || ~~self.config.port === 0) {
+	// Check for undefined host or port. Also make sure port is [1-65535] and host is least 1 char long.
+	if (!self.config.host || self.config.host.length<1 || !self.config.port || self.config.port<1 || self.config.port>65535) {
+		// Do not try to connect with invalid host or port
 		return;
 	}
+	
+	// Disconnect if already connected
+	self.disconnectFromProPresenter();
 
 	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
@@ -642,7 +643,7 @@ instance.prototype.connectToProPresenter = function() {
 		var wasConnected = self.currentState.internal.wsConnected;
 
 
-		self.log('warn', 'socket closed');
+		self.log('info', 'socket closed');
 
 		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
@@ -669,6 +670,12 @@ instance.prototype.connectToProPresenter = function() {
 instance.prototype.connectToProPresenterSD = function() {
 	var self = this;
 
+	// Check for undefined host or port. Also make sure port is [1-65535] and host is least 1 char long.
+	if (!self.config.host || self.config.host.length<1 || !self.config.port || self.config.port<1 || self.config.port>65535) {
+		// Do not try to connect with invalid host or port
+		return;
+	}
+
 	// Disconnect if already connected
 	self.disconnectFromProPresenterSD();
 
@@ -676,8 +683,8 @@ instance.prototype.connectToProPresenterSD = function() {
 		return;
 	}
 
-	// Use ProPresenter remote control port if stage display port is not set.
-	if (self.config.sdport === '') {
+	// Check for undefined sdport. Also make sure sdport is [1-65535]. (Otherwise, use ProPresenter remote port)
+	if (!self.config.sdport || self.config.sdport<1 || self.config.sdport>65535) {
 		self.config.sdport = self.config.port;
 	}
 
