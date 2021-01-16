@@ -607,8 +607,8 @@ instance.prototype.disconnectFromProPresenterSD = function() {
 instance.prototype.connectToProPresenter = function() {
 	var self = this;
 
-	// ~~ is a double NOT bitwise operator. It will change port to a numeric value of 0 if it is null, undefined or "".
-	if (self.config.host === undefined || ~~self.config.port === 0) {
+	// Check for undefined host or port. Also make sure port is [1-65535] and host is least 1 char long.
+	if (!self.config.host || self.config.host.length<1 || !self.config.port || self.config.port<1 || self.config.port>65535) {
 		// Do not try to connect with invalid host or port
 		return;
 	}
@@ -670,8 +670,8 @@ instance.prototype.connectToProPresenter = function() {
 instance.prototype.connectToProPresenterSD = function() {
 	var self = this;
 
-	// ~~ is a double NOT bitwise operator. It will change port to a numeric value of 0 if it is null, undefined or "".
-	if (self.config.host === undefined || ~~self.config.port === 0) {
+	// Check for undefined host or port. Also make sure port is [1-65535] and host is least 1 char long.
+	if (!self.config.host || self.config.host.length<1 || !self.config.port || self.config.port<1 || self.config.port>65535) {
 		// Do not try to connect with invalid host or port
 		return;
 	}
@@ -683,8 +683,8 @@ instance.prototype.connectToProPresenterSD = function() {
 		return;
 	}
 
-	// Use ProPresenter remote control port if stage display port is not set. (~~ is a double NOT bitwise operator. It will change sdport to a numeric value of 0 if it is null, undefined or "".)
-	if (~~self.config.sdport === 0) {
+	// Check for undefined sdport. Also make sure sdport is [1-65535]. (Otherwise, use ProPresenter remote port)
+	if (!self.config.sdport || self.config.sdport<1 || self.config.sdport>65535) {
 		self.config.sdport = self.config.port;
 	}
 
