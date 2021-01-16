@@ -158,10 +158,10 @@ instance.prototype.init = function() {
 
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter();
-		self.connectToProPresenterSD();
 		self.startConnectionTimer();
 		if (self.config.use_sd === 'yes') {
 			self.startSDConnectionTimer();
+			self.connectToProPresenterSD();
 		}
 	}
 
@@ -607,13 +607,14 @@ instance.prototype.disconnectFromProPresenterSD = function() {
 instance.prototype.connectToProPresenter = function() {
 	var self = this;
 
-	// Disconnect if already connected
-	self.disconnectFromProPresenter();
-
-	// ~~ is a double NOT bitwise operator. Will change .port to a numeric value, including null, undefined, "" to 0.
+	// ~~ is a double NOT bitwise operator. It will change port to a numeric value of 0 if it is null, undefined or "".
 	if (self.config.host === undefined || ~~self.config.port === 0) {
+		// Do not try to connect with invalid host or port
 		return;
 	}
+	
+	// Disconnect if already connected
+	self.disconnectFromProPresenter();
 
 	// Connect to remote control websocket of ProPresenter
 	self.socket = new WebSocket('ws://'+self.config.host+':'+self.config.port+'/remote');
@@ -668,6 +669,12 @@ instance.prototype.connectToProPresenter = function() {
  */
 instance.prototype.connectToProPresenterSD = function() {
 	var self = this;
+
+	// ~~ is a double NOT bitwise operator. It will change port to a numeric value of 0 if it is null, undefined or "".
+	if (self.config.host === undefined || ~~self.config.port === 0) {
+		// Do not try to connect with invalid host or port
+		return;
+	}
 
 	// Disconnect if already connected
 	self.disconnectFromProPresenterSD();
