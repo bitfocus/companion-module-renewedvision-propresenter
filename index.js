@@ -643,7 +643,7 @@ instance.prototype.connectToProPresenter = function() {
 		var wasConnected = self.currentState.internal.wsConnected;
 
 
-		self.log('warn', 'socket closed');
+		self.log('info', 'socket closed');
 
 		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
