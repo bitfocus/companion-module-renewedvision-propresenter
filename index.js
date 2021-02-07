@@ -531,6 +531,8 @@ instance.prototype.startConnectionTimer = function() {
 		if (self.socket === undefined || self.socket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
 			self.connectToProPresenter();
+		} else {
+			self.currentState.internal.wsConnected = true;
 		}
 
 	}, 3000);
@@ -569,6 +571,8 @@ instance.prototype.startSDConnectionTimer = function() {
 		if (self.sdsocket === undefined || self.sdsocket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
 			self.connectToProPresenterSD();
+		} else {
+			self.currentState.internal.wsSDConnected = true;
 		}
 
 	}, 5000);
@@ -606,6 +610,8 @@ instance.prototype.startFollowerConnectionTimer = function() {
 		if (self.followersocket === undefined || self.followersocket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
 			self.connectToFollowerProPresenter();
+		} else {
+			self.currentState.internal.wsFollowerConnected = true;
 		}
 
 	}, 3000);
