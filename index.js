@@ -61,7 +61,7 @@ instance.prototype.config_fields = function () {
 			type: 'textinput',
 			id: 'pass',
 			label: 'ProPresenter Remote Password',
-			width: 8,
+			width: 6,
 		},
 		{
 			type: 'textinput',
@@ -99,7 +99,7 @@ instance.prototype.config_fields = function () {
 		},
 		{
 			type: 'dropdown',
-			label: 'Connect to Stage Display',
+			label: 'Connect to Stage Display?',
 			id: 'use_sd',
 			default: 'no',
 			width: 6,
@@ -119,7 +119,44 @@ instance.prototype.config_fields = function () {
 			type: 'textinput',
 			id: 'sdpass',
 			label: 'Stage Display App Password',
-			width: 8,
+			width: 6,
+		},
+		{
+			type: 'text',
+			id: 'info2',
+			width: 12,
+			label: 'Pro7 Follower Settings (Optional)',
+			value: "Optional *Beta* feature to mimic Pro6 Master-Control module"
+		},
+		{
+			type: 'dropdown',
+			label: 'Auto-Control Follower ProPresenter?',
+			id: 'control_follower',
+			default: 'no',
+			width: 6,
+			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+		},
+		{
+			type: 'textinput',
+			id: 'followerhost',
+			label: 'Follower-ProPresenter IP',
+			width: 6,
+			default: '',
+			regex: self.REGEX_IP
+		},
+		{
+			type: 'textinput',
+			id: 'followerport',
+			label: 'Follower-ProPresenter Port',
+			width: 6,
+			default: '20652',
+			regex: self.REGEX_PORT
+		},
+		{
+			type: 'textinput',
+			id: 'followerpass',
+			label: 'Follower-ProPresenter Remote Password',
+			width: 6,
 		}
 	]
 };
@@ -142,6 +179,12 @@ instance.prototype.updateConfig = function(config) {
 	} else {
 		self.stopSDConnectionTimer();
 	}
+	if (self.config.control_follower === 'yes') {
+		self.connectToFollowerProPresenter();
+		self.startFollowerConnectionTimer();
+	} else {
+		self.stopFollowerConnectionTimer();
+	}
 };
 
 
@@ -162,6 +205,10 @@ instance.prototype.init = function() {
 		if (self.config.use_sd === 'yes') {
 			self.startSDConnectionTimer();
 			self.connectToProPresenterSD();
+		}
+		if (self.config.control_follower === 'yes') {
+			self.startFollowerConnectionTimer();
+			self.connectToFollowerProPresenter();
 		}
 	}
 
@@ -340,7 +387,7 @@ instance.prototype.init_presets = function () {
 instance.prototype.emptyCurrentState = function() {
 	var self = this;
 
-	self.log('info', 'emptyCurrentState');
+	self.log('debug', 'emptyCurrentState');
 
 	// Reinitialize the currentState variable, otherwise this variable (and the module's
 	//	state) will be shared between multiple instances of this module.
@@ -350,11 +397,13 @@ instance.prototype.emptyCurrentState = function() {
 	self.currentState.internal = {
 		wsConnected: false,
 		wsSDConnected: false,
+		wsFollowerConnected: false,
 		presentationPath: '-',
 		slideIndex: 0,
 		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
 		pro7StageLayouts: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 		pro7StageScreens: [{ id: '0', label: 'Connect to Pro7 to Update' }],
+		previousTimeOfLeaderClearMessage: null,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -365,6 +414,7 @@ instance.prototype.emptyCurrentState = function() {
 		presentation_name: 'N/A',
 		connection_status: 'Disconnected',
 		sd_connection_status: 'Disconnected',
+		follower_connection_status: 'Disconnected',
 		video_countdown_timer: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
@@ -425,6 +475,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Video Countdown Timer',
 			name:  'video_countdown_timer'
+		},
+		{
+			label: 'Follower Connection Status',
+			name:  'follower_connection_status'
 		}
 	];
 
@@ -471,16 +525,18 @@ instance.prototype.startConnectionTimer = function() {
 	// Stop the timer if it was already running
 	self.stopConnectionTimer();
 
-	self.log('info', "Starting ConnectionTimer");
+	self.log('debug', "Starting ConnectionTimer");
 	// Create a reconnect timer to watch the socket. If disconnected try to connect.
 	self.reconTimer = setInterval(function() {
 
 		if (self.socket === undefined || self.socket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
 			self.connectToProPresenter();
+		} else {
+			self.currentState.internal.wsConnected = true;
 		}
 
-	}, 1000);
+	}, 3000);
 
 };
 
@@ -491,7 +547,7 @@ instance.prototype.startConnectionTimer = function() {
 instance.prototype.stopConnectionTimer = function() {
 	var self = this;
 
-	self.log('info', "Stopping ConnectionTimer");
+	self.log('debug', "Stopping ConnectionTimer");
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer);
 		delete self.reconTimer;
@@ -510,18 +566,19 @@ instance.prototype.startSDConnectionTimer = function() {
 	self.stopSDConnectionTimer();
 
 	// Create a reconnect timer to watch the socket. If disconnected try to connect
-	self.log('info', "Starting SDConnectionTimer");
+	self.log('debug', "Starting SDConnectionTimer");
 	self.reconSDTimer = setInterval(function() {
 
 		if (self.sdsocket === undefined || self.sdsocket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
 			self.connectToProPresenterSD();
+		} else {
+			self.currentState.internal.wsSDConnected = true;
 		}
 
 	}, 5000);
 
 };
-
 
 /**
  * Stops the stage display reconnection timer.
@@ -529,13 +586,54 @@ instance.prototype.startSDConnectionTimer = function() {
 instance.prototype.stopSDConnectionTimer = function() {
 	var self = this;
 
-	self.log('info', "Stopping SDConnectionTimer");
+	self.log('debug', "Stopping SDConnectionTimer");
 	if (self.reconSDTimer !== undefined) {
 		clearInterval(self.reconSDTimer);
 		delete self.reconSDTimer;
 	}
 
 };
+
+
+/**
+ * Create a timer to connect to Follower ProPresenter.
+ */
+instance.prototype.startFollowerConnectionTimer = function() {
+	var self = this;
+
+	// Stop the timer if it was already running
+	self.stopFollowerConnectionTimer();
+
+	self.log('debug', "Starting Follower ConnectionTimer");
+	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.reconFollowerTimer = setInterval(function() {
+
+		if (self.followersocket === undefined || self.followersocket.readyState === 3 /*CLOSED*/) {
+			// Not connected. Try to connect again.
+			self.connectToFollowerProPresenter();
+		} else {
+			self.currentState.internal.wsFollowerConnected = true;
+		}
+
+	}, 3000);
+
+};
+
+
+/**
+ * Stops the follower reconnection timer.
+ */
+instance.prototype.stopFollowerConnectionTimer = function() {
+	var self = this;
+
+	self.log('debug', "Stopping Follower ConnectionTimer");
+	if (self.reconFollowerTimer !== undefined) {
+		clearInterval(self.reconFollowerTimer);
+		delete self.reconFollowerTimer;
+	}
+
+};
+
 
 /**
  * Updates the connection status variable.
@@ -550,6 +648,7 @@ instance.prototype.setConnectionVariable = function(status, updateLog) {
 	}
 };
 
+
 /**
  * Updates the stage display connection status variable.
  */
@@ -563,6 +662,7 @@ instance.prototype.setSDConnectionVariable = function(status, updateLog) {
 	}
 
 };
+
 
 /**
  * Disconnect the websocket from ProPresenter, if connected.
@@ -597,6 +697,25 @@ instance.prototype.disconnectFromProPresenterSD = function() {
 		}
 		delete self.sdsocket;
 	}
+
+};
+
+
+/**
+ * Disconnect the websocket from Follower ProPresenter, if connected.
+ */
+instance.prototype.disconnectFromFollowerProPresenter = function() {
+	var self = this;
+
+	if (self.followersocket !== undefined) {
+		// Disconnect if already connected
+		if (self.followersocket.readyState !== 3 /*CLOSED*/) {
+			self.followersocket.terminate();
+		}
+		delete self.followersocket;
+	}
+
+	self.checkFeedbacks('propresenter_follower_connected');
 
 };
 
@@ -645,11 +764,11 @@ instance.prototype.connectToProPresenter = function() {
 
 		self.log('info', 'socket closed');
 
-		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
-
 		if (wasConnected === false) {
 			return;
 		}
+
+		self.emptyCurrentState();  // This is also sets self.currentState.internal.wsConnected to false
 
 		self.status(self.STATUS_ERROR, 'Not connected to ProPresenter');
 		self.setConnectionVariable('Disconnected', true);
@@ -721,11 +840,13 @@ instance.prototype.connectToProPresenterSD = function() {
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 
 		var wasSDConnected = self.currentState.internal.wsSDConnected;
-		self.emptyCurrentState();
 
 		if (wasSDConnected === false) {
 			return;
 		}
+
+		self.emptyCurrentState();
+
 		if  (self.config.use_sd === 'yes') {
 			self.status(self.STATUS_WARNING, 'OK, But Stage Display closed');
 		}
@@ -740,6 +861,60 @@ instance.prototype.connectToProPresenterSD = function() {
 
 };
 
+
+/**
+ * Attempts to open a websocket connection with Follower ProPresenter.
+ */
+instance.prototype.connectToFollowerProPresenter = function() {
+	var self = this;
+
+	// Check for undefined host or port. Also make sure port is [1-65535] and host is least 1 char long.
+	if (!self.config.followerhost || self.config.followerhost.length<1 || !self.config.followerport || self.config.followerport<1 || self.config.followerport>65535) {
+		// Do not try to connect with invalid host or port
+		return;
+	}
+	
+	// Disconnect if already connected
+	self.disconnectFromFollowerProPresenter();
+
+	// Connect to remote control websocket of ProPresenter
+	self.followersocket = new WebSocket('ws://'+self.config.followerhost+':'+self.config.followerport+'/remote');
+
+	self.followersocket.on('open', function open() {
+		self.log('info', "Opened websocket to Follower ProPresenter remote control: " + self.config.followerhost +":"+ self.config.followerport);
+		self.followersocket.send(JSON.stringify({
+			password: self.config.followerpass,
+			protocol: "700", // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
+			action: "authenticate"
+		}));
+
+	});
+
+	self.followersocket.on('error', function (err) {
+		if (self.config.control_follower === 'yes') {
+			self.log('warn', 'Follower Socket error: ' +err.message);
+		}
+	});
+
+
+	self.followersocket.on('close', function(code, reason) {
+		// Event is also triggered when a reconnect attempt fails.
+		// Reset the current state then abort; don't flood logs with disconnected notices.
+		var wasFollowerConnected = self.currentState.internal.wsFollowerConnected;
+		self.currentState.internal.wsFollowerConnected = false;
+
+		if (wasFollowerConnected === false) {
+			return;
+		}
+		self.log('info', 'Follower ProPresenter socket connection closed');
+	});
+
+	self.followersocket.on('message', function(message) {
+		// Handle the message received from ProPresenter
+		self.onFollowerWebSocketMessage(message);
+	});
+
+};
 
 /**
  * Register the available actions with Companion.
@@ -1001,9 +1176,22 @@ instance.prototype.actions = function(system) {
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
 				}
 			]
+		},
+		'enableFollowerControl': {
+			label: 'Enable Follower Control',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Enable Follower Control',
+					id: 'enableFollowerControl',
+					default: 'false',
+					choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+				}
+			]
 		}
 	});
 };
+
 
 /**
  * Action triggered by Companion.
@@ -1014,6 +1202,11 @@ instance.prototype.action = function(action) {
 
 	switch (action.action) {
 
+		case 'enableFollowerControl':
+			self.config.control_follower = opt.enableFollowerControl;
+			self.checkFeedbacks('propresenter_follower_connected');
+			cmd = undefined; // No need to send any command to Pro7 - this is an internal only action
+			break;
 		case 'next':
 			cmd = {
 				action: "presentationTriggerNext"
@@ -1268,6 +1461,7 @@ instance.prototype.action = function(action) {
 
 };
 
+
 instance.prototype.init_feedbacks = function() {
 	var self = this;
 
@@ -1363,8 +1557,52 @@ instance.prototype.init_feedbacks = function() {
 		]
 	};
 
+	feedbacks['propresenter_follower_connected'] = {
+		label: 'Change colors based on Propresenter follower being connected',
+		description: 'Propresenter follower being connected, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Connected & Controlled Foreground color',
+				id: 'fcfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Controlled Background color',
+				id: 'fcbg',
+				default: self.rgb(0,153,51)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Control Disabled Foreground color',
+				id: 'fcdfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Control Disabled Background color',
+				id: 'fcdbg',
+				default: self.rgb(255,102,10)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Foreground color',
+				id: 'fdfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Background color',
+				id: 'fdbg',
+				default: self.rgb(204,0,0)
+			}
+		]
+	};
+
 	self.setFeedbackDefinitions(feedbacks);
 }
+
 
 instance.prototype.feedback = function(feedback, bank) {
 	var self = this;
@@ -1382,6 +1620,18 @@ instance.prototype.feedback = function(feedback, bank) {
 			return { color: feedback.options.cfg, bgcolor: feedback.options.cbg };
 		} else {
 			return { color: feedback.options.dfg, bgcolor: feedback.options.dbg };
+		}
+	}
+
+	if (feedback.type == 'propresenter_follower_connected') {
+		if (self.currentState.internal.wsFollowerConnected) {
+			if (self.config.control_follower === 'yes') {
+				return { color: feedback.options.fcfg, bgcolor: feedback.options.fcbg };
+			} else {
+				return { color: feedback.options.fcdfg, bgcolor: feedback.options.fcdbg };
+			}
+		} else {
+			return { color: feedback.options.fdfg, bgcolor: feedback.options.fdbg };
 		}
 	}
 
@@ -1403,6 +1653,8 @@ instance.prototype.feedback = function(feedback, bank) {
 	}
 
 }
+
+
 /**
  * Received a message from ProPresenter.
  */
@@ -1433,7 +1685,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 					// Leave default 
 				}
 				
-				self.log('info', 'Authenticated to ProPresenter Version: ' + self.currentState.internal.proMajorVersion);
+				self.log('info', 'Authenticated to ProPresenter (Version: ' + self.currentState.internal.proMajorVersion + ')');
 				self.status(self.STATE_OK);
 				self.currentState.internal.wsConnected = true;
 				// Successfully authenticated. Request current state.
@@ -1449,7 +1701,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 			} else {
 				self.status(self.STATUS_ERROR);
 				// Bad password
-				self.log('warn', objData.error);
+				self.log('warn', 'Failed to authenticate to ProPresenter. ' + objData.error);
 				self.disconnectFromProPresenter();
 
 				// No point in trying to connect again. The user must either re-enable this
@@ -1477,8 +1729,102 @@ instance.prototype.onWebSocketMessage = function(message) {
 			setTimeout(function(){
 				self.getProPresenterState();
 			}, 800);
-			self.log('info', 'presentationSlideIndex: ' + slideIndex);
+			self.log('debug', 'presentationSlideIndex: ' + slideIndex);
+
+			// Trigger same slide in follower ProPresenter (If configured and connected)
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
+				cmd = {
+					action: "presentationTriggerIndex",
+					slideIndex: String(slideIndex),
+					// Pro 6 for Windows requires 'presentationPath' to be set.
+					presentationPath: objData.presentationPath
+				};
+				self.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd));
+				try {
+					var cmdJSON = JSON.stringify(cmd);
+					self.followersocket.send(cmdJSON);
+				}
+				catch (e) {
+					debug("Follower NETWORK " + e)
+					self.status(self.STATUS_WARNING, e);
+				}
+			}
+
 			break;
+
+		case 'clearText':
+			// Forward command to follower (Only if clearText is recieved twice less than 300msec apart - Since Pro7.4.1 on Windows sends clearText for every slide and send it twice for real clearText action)
+			var timeOfThisClearMessage = new Date();
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected && self.currentState.internal.previousTimeOfLeaderClearMessage != null && (timeOfThisClearMessage.getTime() - self.currentState.internal.previousTimeOfLeaderClearMessage.getTime() < 300)) {
+				cmd = {
+					action: "clearText",
+				};
+				self.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd));
+				try {
+					var cmdJSON = JSON.stringify(cmd);
+					self.followersocket.send(cmdJSON);
+				}
+				catch (e) {
+					debug("Follower NETWORK " + e)
+					self.status(self.STATUS_WARNING, e);
+				}
+			}
+			self.currentState.internal.previousTimeOfLeaderClearMessage = timeOfThisClearMessage;
+			break;
+
+		case 'clearAll':
+			// Forward command to follower
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
+				cmd = {
+					action: "clearAll",
+				};
+				self.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd));
+				try {
+					var cmdJSON = JSON.stringify(cmd);
+					self.followersocket.send(cmdJSON);
+				}
+				catch (e) {
+					debug("Follower NETWORK " + e)
+					self.status(self.STATUS_WARNING, e);
+				}
+			}
+			break;
+
+		case 'clearVideo':
+			// Forward command to follower
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
+				cmd = {
+					action: "clearVideo",
+				};
+				self.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd));
+				try {
+					var cmdJSON = JSON.stringify(cmd);
+					self.followersocket.send(cmdJSON);
+				}
+				catch (e) {
+					debug("Follower NETWORK " + e)
+					self.status(self.STATUS_WARNING, e);
+				}
+			}
+			break;
+
+		case 'clearAudio':
+			// Forward command to follower
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
+				cmd = {
+					action: "clearAudio",
+				};
+				self.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd));
+				try {
+					var cmdJSON = JSON.stringify(cmd);
+					self.followersocket.send(cmdJSON);
+				}
+				catch (e) {
+					debug("Follower NETWORK " + e)
+					self.status(self.STATUS_WARNING, e);
+				}
+			}
+			break;	
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation;
@@ -1530,7 +1876,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_index', stageDisplayIndex);
 				self.getStageDisplaysInfo();
 				self.checkFeedbacks('stagedisplay_active');
-			} // TODO: handle Pro7 stageDisplaySetIndex messages
+			}
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
@@ -1568,7 +1914,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 							self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname'] = self.currentState.internal.pro7StageLayouts.find(pro7StageLayout => pro7StageLayout.id === stageLayoutSelectedLayoutUUID).label;
 							self.updateVariable(stageScreenName + '_pro7_stagelayoutname', self.currentState.dynamicVariables[stageScreenName + '_pro7_stagelayoutname']);
 						} catch (e) {
-							self.log('warn', "Error finding/updating layout name for " + stageScreenName + '_pro7_stagelayoutname' ); 
+							self.log('warn', "Error finding/updating layout name for " + stageScreenName + '_pro7_stagelayoutname. ' + e.message); 
 						}
 
 						// Capture the UUID of the current_pro7_stage_layout_name for selected watched screen
@@ -1591,7 +1937,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 				self.checkFeedbacks('pro7_stagelayout_active');
 				
-				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
+				self.log('info', "Got Pro7 Stage Display Sets");
 				self.actions(); // Update dropdown lists for screens and layouts used in pro7 stagedispay action.
 				self.init_feedbacks(); // Update dropdown lists for pro7 stage layout feedback.
 			}
@@ -1602,6 +1948,79 @@ instance.prototype.onWebSocketMessage = function(message) {
 	if (objData.presentationPath !== undefined && objData.presentationPath !== self.currentState.internal.presentationPath) {
 		// The presentationPath has changed. Update the path and request the information.
 		self.getProPresenterState();
+	}
+
+};
+
+
+/**
+ * Received a message from Follower ProPresenter.
+ */
+instance.prototype.onFollowerWebSocketMessage = function(message) {
+	var self = this;
+	var objData;
+	// Try to parse websocket payload as JSON...
+	try {
+		objData = JSON.parse(message);
+	} catch (err) {
+		self.log('warn', err.message);
+		return;
+	}
+	
+
+	switch(objData.action) {
+		case 'authenticate':
+			if (objData.authenticated === 1) {
+				
+				// Autodetect if Major version of ProPresenter is version 7
+				// Only Pro7 includes .majorVersion and .minorVersion properties.
+				// .majorVersion will be set to = "7" from Pro7 (Pro6 does not include these at all)
+				if (objData.hasOwnProperty('majorVersion')) {
+					self.log('info', 'Authenticated to Follower ProPresenter (Version: ' + objData.majorVersion + ')');
+				}
+				
+				self.currentState.internal.wsFollowerConnected = true;
+
+				self.checkFeedbacks('propresenter_follower_connected');
+			} else {
+				self.status(self.STATUS_WARNING);
+				self.log('warn', 'Failed to authenticate to Follower ProPresenter'  + objData.error);
+				self.disconnectFromFollowerProPresenter();
+
+				// No point in trying to connect again. The user must either re-enable this
+				//	module or re-save the config changes to make another attempt.
+				self.stopFollowerConnectionTimer();
+
+				self.currentState.internal.wsFollowerConnected = false;
+
+			}
+			break;
+
+
+		case 'presentationTriggerIndex':
+		case 'presentationSlideIndex':
+			// Update the current slide index.
+			var slideIndex = parseInt(objData.slideIndex, 10);
+			self.log('debug', 'Follower presentationSlideIndex: ' + slideIndex);
+			break;
+
+		case 'presentationCurrent':
+			var objPresentation = objData.presentation;
+
+			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
+			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
+			self.log('info', 'Follower presentationCurrent: ' + presentationName);
+			break;
+
+		case 'clockCurrentTimes':
+			break;
+
+		case 'stageDisplaySetIndex': 
+			break;
+
+		case 'stageDisplaySets':
+			break;
+
 	}
 
 };
@@ -1641,6 +2060,7 @@ instance.prototype.onSDWebSocketMessage = function(message) {
 
 };
 
+
 /**
  * Requests the current state from ProPresenter.
  */
@@ -1666,6 +2086,7 @@ instance.prototype.getProPresenterState = function() {
 
 };
 
+
 /*
 * Requests the list of configured stage displays (includes names)
 */
@@ -1680,6 +2101,7 @@ instance.prototype.getStageDisplaysInfo = function() {
 		action: 'stageDisplaySets'
 	}));
 }
+
 
 instance_skel.extendedBy(instance);
 exports = module.exports = instance;

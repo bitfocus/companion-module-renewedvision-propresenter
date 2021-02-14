@@ -37,6 +37,8 @@ N.B. At the time of writing this module, there is a bug in ProPresenter 6 where 
 Pro7 users:  Currently there is a noticeable performance impact within ProPresenter 7 itself when companion sends messages to Pro7 to track info about the current presentation.
 To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. We will continue to investigate a fix with RenewedVision (or a better workaround).
 
+## Optional (Beta) Leader-Follower Feature
+You can optionally configure a second connection to a "Follower" ProPresenter 7 computer to have the module automatically forward slide trigger and clears actions to the Follower as you click on slides (or use clear actions) on the main ProPresenter computer (The Leader).  This emulates the old Pro6 Master-Control module.  It's not complete as some actions cannot be captured by the module to forward to the Follower (the remote protocol does not send notifications for every action - but as it improves, this module will be updated).  For now basic slide triggers and some clear actions do work - This might be enough for some people (until RV introduce a new feature in Pro7 to do the same).
 
 # Commands
 ## Slides
