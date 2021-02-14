@@ -403,6 +403,7 @@ instance.prototype.emptyCurrentState = function() {
 		proMajorVersion: 6,  // Behaviour is slightly different between the two major versions of ProPresenter (6 & 7). Use this flag to run version-specific code where required. Default to 6 -  Pro7 can be detected once authenticated.
 		pro7StageLayouts: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 		pro7StageScreens: [{ id: '0', label: 'Connect to Pro7 to Update' }],
+		previousTimeOfLeaderClearMessage: null,
 	};
 
 	// The dynamic variable exposed to Companion
@@ -714,6 +715,8 @@ instance.prototype.disconnectFromFollowerProPresenter = function() {
 		delete self.followersocket;
 	}
 
+	self.checkFeedbacks('propresenter_follower_connected');
+
 };
 
 
@@ -889,33 +892,21 @@ instance.prototype.connectToFollowerProPresenter = function() {
 
 	self.followersocket.on('error', function (err) {
 		if (self.config.control_follower === 'yes') {
-			self.status(self.STATUS_WARNING, err.message);
+			self.log('warn', 'Follower Socket error: ' +err.message);
 		}
 	});
 
-	//self.socket.on('connect', function () {
-	//	debug("Connected to ProPresenter remote control");
-	//});
 
 	self.followersocket.on('close', function(code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 		var wasFollowerConnected = self.currentState.internal.wsFollowerConnected;
-
-
-		self.log('info', 'Follower ProPresenter socket connection closed');
-
 		self.currentState.internal.wsFollowerConnected = false;
 
 		if (wasFollowerConnected === false) {
 			return;
 		}
-
-		if (self.config.control_follower === 'yes') {
-			self.status(self.STATUS_WARNING, 'Not connected to Follower ProPresenter');
-		}
-		self.setConnectionVariable('Disconnected', true);
-
+		self.log('info', 'Follower ProPresenter socket connection closed');
 	});
 
 	self.followersocket.on('message', function(message) {
@@ -1185,6 +1176,18 @@ instance.prototype.actions = function(system) {
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/'
 				}
 			]
+		},
+		'enableFollowerControl': {
+			label: 'Enable Follower Control',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Enable Follower Control',
+					id: 'enableFollowerControl',
+					default: 'false',
+					choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
+				}
+			]
 		}
 	});
 };
@@ -1199,6 +1202,11 @@ instance.prototype.action = function(action) {
 
 	switch (action.action) {
 
+		case 'enableFollowerControl':
+			self.config.control_follower = opt.enableFollowerControl;
+			self.checkFeedbacks('propresenter_follower_connected');
+			cmd = undefined; // No need to send any command to Pro7 - this is an internal only action
+			break;
 		case 'next':
 			cmd = {
 				action: "presentationTriggerNext"
@@ -1549,6 +1557,49 @@ instance.prototype.init_feedbacks = function() {
 		]
 	};
 
+	feedbacks['propresenter_follower_connected'] = {
+		label: 'Change colors based on Propresenter follower being connected',
+		description: 'Propresenter follower being connected, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Connected & Controlled Foreground color',
+				id: 'fcfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Controlled Background color',
+				id: 'fcbg',
+				default: self.rgb(0,153,51)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Control Disabled Foreground color',
+				id: 'fcdfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Connected & Control Disabled Background color',
+				id: 'fcdbg',
+				default: self.rgb(255,102,10)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Foreground color',
+				id: 'fdfg',
+				default: self.rgb(255,255,255)
+			},
+			{
+				type: 'colorpicker',
+				label: 'Disconnected Background color',
+				id: 'fdbg',
+				default: self.rgb(204,0,0)
+			}
+		]
+	};
+
 	self.setFeedbackDefinitions(feedbacks);
 }
 
@@ -1569,6 +1620,18 @@ instance.prototype.feedback = function(feedback, bank) {
 			return { color: feedback.options.cfg, bgcolor: feedback.options.cbg };
 		} else {
 			return { color: feedback.options.dfg, bgcolor: feedback.options.dbg };
+		}
+	}
+
+	if (feedback.type == 'propresenter_follower_connected') {
+		if (self.currentState.internal.wsFollowerConnected) {
+			if (self.config.control_follower === 'yes') {
+				return { color: feedback.options.fcfg, bgcolor: feedback.options.fcbg };
+			} else {
+				return { color: feedback.options.fcdfg, bgcolor: feedback.options.fcdbg };
+			}
+		} else {
+			return { color: feedback.options.fdfg, bgcolor: feedback.options.fdbg };
 		}
 	}
 
@@ -1690,8 +1753,9 @@ instance.prototype.onWebSocketMessage = function(message) {
 			break;
 
 		case 'clearText':
-			// Forward command to follower (TODO: only if clearText is recieved twice quickly)
-			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
+			// Forward command to follower (Only if clearText is recieved twice less than 300msec apart - Since Pro7.4.1 on Windows sends clearText for every slide and send it twice for real clearText action)
+			var timeOfThisClearMessage = new Date();
+			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected && self.currentState.internal.previousTimeOfLeaderClearMessage != null && (timeOfThisClearMessage.getTime() - self.currentState.internal.previousTimeOfLeaderClearMessage.getTime() < 300)) {
 				cmd = {
 					action: "clearText",
 				};
@@ -1705,6 +1769,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 					self.status(self.STATUS_WARNING, e);
 				}
 			}
+			self.currentState.internal.previousTimeOfLeaderClearMessage = timeOfThisClearMessage;
 			break;
 
 		case 'clearAll':
@@ -1811,7 +1876,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.updateVariable('current_stage_display_index', stageDisplayIndex);
 				self.getStageDisplaysInfo();
 				self.checkFeedbacks('stagedisplay_active');
-			} // TODO: handle Pro7 stageDisplaySetIndex messages
+			}
 			break;
 
 		case 'stageDisplaySets':  // The response from sending stageDisplaySets is a reply that includes an array of Stage Display Layout Names, and also stageDisplayIndex set to the index of the currently selected layout
@@ -1872,7 +1937,7 @@ instance.prototype.onWebSocketMessage = function(message) {
 
 				self.checkFeedbacks('pro7_stagelayout_active');
 				
-				self.log('info', "Got Pro7 Stage Display Sets"); //TODO: remove (or wrap in high level debug config option)
+				self.log('info', "Got Pro7 Stage Display Sets");
 				self.actions(); // Update dropdown lists for screens and layouts used in pro7 stagedispay action.
 				self.init_feedbacks(); // Update dropdown lists for pro7 stage layout feedback.
 			}
@@ -1915,9 +1980,8 @@ instance.prototype.onFollowerWebSocketMessage = function(message) {
 				}
 				
 				self.currentState.internal.wsFollowerConnected = true;
-				
-				// TODO: check if this is needed here...
-				// self.init_feedbacks();
+
+				self.checkFeedbacks('propresenter_follower_connected');
 			} else {
 				self.status(self.STATUS_WARNING);
 				self.log('warn', 'Failed to authenticate to Follower ProPresenter'  + objData.error);
@@ -1926,6 +1990,8 @@ instance.prototype.onFollowerWebSocketMessage = function(message) {
 				// No point in trying to connect again. The user must either re-enable this
 				//	module or re-save the config changes to make another attempt.
 				self.stopFollowerConnectionTimer();
+
+				self.currentState.internal.wsFollowerConnected = false;
 
 			}
 			break;
