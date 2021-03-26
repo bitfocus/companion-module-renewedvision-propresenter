@@ -91,6 +91,14 @@ instance.prototype.config_fields = function () {
 			choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
 		},
 		{
+			type: 'textinput',
+			id: 'clientVersion',
+			label: 'ProRemote Client Version',
+			tooltip: 'No need to update this - unless trying to work around an issue with connectivity for future Pro7 releases.',
+			width: 6,
+			default: '701'
+		},
+		{
 			type: 'text',
 			id: 'info',
 			width: 12,
@@ -742,7 +750,7 @@ instance.prototype.connectToProPresenter = function() {
 		self.log('info', "Opened websocket to ProPresenter remote control: " + self.config.host +":"+ self.config.port);
 		self.socket.send(JSON.stringify({
 			password: self.config.pass,
-			protocol: "700", // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
+			protocol: self.config.clientVersion ? self.config.clientVersion : '701', // This will connect to Pro6 and Pro7 (the version check is happy with higher versions - but versions too low will be refused)
 			action: "authenticate"
 		}));
 
@@ -884,7 +892,7 @@ instance.prototype.connectToFollowerProPresenter = function() {
 		self.log('info', "Opened websocket to Follower ProPresenter remote control: " + self.config.followerhost +":"+ self.config.followerport);
 		self.followersocket.send(JSON.stringify({
 			password: self.config.followerpass,
-			protocol: "700", // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
+			protocol: self.config.clientVersion ? self.config.clientVersion : '701', // This will connect to Pro6 and Pro7 (the version check is happy with higher versions)
 			action: "authenticate"
 		}));
 
@@ -1188,7 +1196,19 @@ instance.prototype.actions = function(system) {
 					choices: [ { id: 'no', label: 'No' }, { id: 'yes', label: 'Yes' } ]
 				}
 			]
-		}
+		},
+		'customAction': {
+			label: 'Custom Action',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Custom Action',
+					id: 'customAction',
+					default: '{"action":"customAction","customProperty":"customValue"}',
+					tooltip: 'Advanced use only. Must be a valid JSON action message that ProPresenter understands. An invalid message or even one little mistake can lead to crashes and data loss.'
+				}
+			]
+		},
 	});
 };
 
@@ -1209,13 +1229,15 @@ instance.prototype.action = function(action) {
 			break;
 		case 'next':
 			cmd = {
-				action: "presentationTriggerNext"
+				action: "presentationTriggerNext",
+				presentationDestination: "0" // Pro7.4.2 seems to need this now!
 			};
 			break;
 
 		case 'last':
 			cmd = {
-				action: "presentationTriggerPrevious"
+				action: "presentationTriggerPrevious",
+				presentationDestination: "0" // Pro7.4.2 seems to need this now!
 			};
 			break;
 
@@ -1439,6 +1461,13 @@ instance.prototype.action = function(action) {
 				action: "timelineRewind",
 				presentationPath: opt.presentationPath
 			};
+			break;
+		case 'customAction':
+			try {
+				cmd = JSON.parse(opt.customAction)
+			} catch(err) {
+				self.log('debug', 'Failed to convert custom action: ' + customAction + ' to valid JS object: ' + err.message);
+			}
 			break;
 	};
 
