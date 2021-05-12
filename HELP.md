@@ -74,6 +74,15 @@ The below image may make this more clear:
 
 ![specific-slide-playlist-indexing](documentation/images/specific-slide-playlist-indexing.png)
 
+Note: When indexing presentations in a playlist to determine the presentation path value, you must also include/count any headers. 
+
+Example Playlist:
+
+* Header A (index=0)
+  * Presentation A (index=1)
+* Header B (index=2)
+  * Presentation B (index=3)
+  * Presentation C (index=4)
 
 ## Audio Cues
 Command | Description
