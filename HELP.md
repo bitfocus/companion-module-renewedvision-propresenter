@@ -74,7 +74,15 @@ The below image may make this more clear:
 
 ![specific-slide-playlist-indexing](documentation/images/specific-slide-playlist-indexing.png)
 
-Note: The indexing for the presentation path includes headers. For example, if you have a header at the beginning of your playlist followed by a presentation, then to trigger the slide in the presentation use the value '1' instead of '0' to trigger the slide in your first presentation. In the case the first value of '0' refers to the index for the header. Likewise if you had a header after the first presentation and another presentation after that (header, presentation, header, presentation), you would need to use a value of '3' for the second presentation.
+Note: When indexing presentations in a playlist to determine the presentation path value, you must also include/count any headers. 
+
+Example Playlist:
+
+* Header A (index=0)
+  * Presentation A (index=1)
+* Header B (index=2)
+  * Presentation B (index=3)
+  * Presentation C (index=4)
 
 ## Audio Cues
 Command | Description
