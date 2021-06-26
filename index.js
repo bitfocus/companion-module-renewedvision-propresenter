@@ -165,7 +165,27 @@ instance.prototype.config_fields = function () {
 			id: 'followerpass',
 			label: 'Follower-ProPresenter Remote Password',
 			width: 6,
-		}
+		},
+        {
+            type: 'text',
+            id: 'info3',
+            width: 12,
+            label: 'Slide Label variable settings (Optional)'
+        },
+        {
+            type: 'textinput',
+            id: 'slidelabelpresentationindex',
+            label: 'slide label presentation index',
+            width: 6,
+            default: '0:0',
+        },
+        {
+            type: 'textinput',
+            id: 'slidelabelslideindex',
+            label: 'slide label Slide index',
+            width: 6,
+            default: '1',
+        }
 	]
 };
 
@@ -428,6 +448,7 @@ instance.prototype.emptyCurrentState = function() {
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A',
 		current_pro7_stage_layout_name: "N/A",
+        slide_label: 'N/A',
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -487,7 +508,11 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Follower Connection Status',
 			name:  'follower_connection_status'
-		}
+		},
+        {
+            label: 'Slide Label',
+            name: 'slide_label'
+        },
 	];
 
 	self.setVariableDefinitions(variables);
@@ -1870,6 +1895,19 @@ instance.prototype.onWebSocketMessage = function(message) {
 			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
 			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '');
 			self.updateVariable('presentation_name', presentationName);
+
+            var presentationPath = objData.presentationPath;
+            if (presentationPath == self.config.slidelabelpresentationindex) {
+                var slideindex = self.config.slidelabelslideindex - 1;
+                try {
+                    var slideLabel = objPresentation.presentationSlideGroups[slideindex].groupSlides[0].slideLabel;
+                    self.updateVariable('slide_label', slideLabel);
+                } catch (error) {
+                    //pass
+                };
+            } else {
+                break;
+            }
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
