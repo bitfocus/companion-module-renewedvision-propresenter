@@ -412,6 +412,8 @@ instance.prototype.emptyCurrentState = function() {
 		pro7StageLayouts: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 		pro7StageScreens: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 		previousTimeOfLeaderClearMessage: null,
+		pro7Looks: [{id: '0', label: 'Connect to Pro7 to Update' }],
+		pro7Macros: [{id: '0', label: 'Connect to Pro7 to Update' }],
 	};
 
 	// The dynamic variable exposed to Companion
@@ -428,6 +430,7 @@ instance.prototype.emptyCurrentState = function() {
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A',
 		current_pro7_stage_layout_name: "N/A",
+		current_pro7_look_name: "N/A",
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -475,6 +478,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Pro7 Stage Layout Name',
 			name:  'current_pro7_stage_layout_name'
+		},
+		{
+			label: 'Current Pro7 Look Name',
+			name: 'current_pro7_look_name'
 		},
 		{
 			label: 'Current Stage Display Name',
@@ -995,6 +1002,32 @@ instance.prototype.actions = function(system) {
 				}
 			]
 		},
+		'pro7SetLook': {
+			label: 'Pro7 Set Look',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Look',
+					id: 'pro7LookUUID',
+					tooltip: 'Choose which Look to make live',
+					default: '',
+					choices: self.currentState.internal.pro7Looks
+				}
+			]
+		},
+		'pro7TriggerMacro': {
+			label: 'Pro7 Trigger Macro',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Macro',
+					id: 'pro7MacroUUID',
+					tooltip: 'Choose which Macro to trigger',
+					default: '',
+					choices: self.currentState.internal.pro7Macros
+				}
+			]
+		},
 		'stageDisplayMessage': {
 			label: 'Stage Display Message',
 			options: [
@@ -1348,6 +1381,22 @@ instance.prototype.action = function(action) {
 				stageLayoutUUID: opt.pro7StageLayoutUUID ? opt.pro7StageLayoutUUID : self.currentState.internal.pro7StageLayouts[0].id,
 			};
 			break;
+
+		case 'pro7SetLook':
+			// If selected Look is null, then default to using first Look from list kept in internal state
+			cmd = {
+				action: "looksTrigger",
+				lookID: opt.pro7LookUUID ? opt.pro7LookUUID : self.currentState.internal.pro7Looks[0].id
+			}
+			break;
+
+		case 'pro7TriggerMacro':
+			// If selected Macro is null, then default to using first Macro from list kept in internal state
+			cmd = {
+				action: "macrosTrigger",
+				macroID: opt.pro7MacroUUID ? opt.pro7MacroUUID : self.currentState.internal.pro7Macros[0].id
+			}
+			break;	
 
 		case 'stageDisplayMessage':
 			//var message = JSON.stringify(opt.message);
@@ -1723,6 +1772,12 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.init_feedbacks();
 				// Get current Stage Display (index and Name)
 				self.getStageDisplaysInfo();
+				// Get current Pro7 Macros & Looks List.
+				if (self.currentState.internal.proMajorVersion >= 7) {
+					self.getMacrosList();
+					self.getLooksList();
+				}
+					
 				// Ask Pro6 to start sending clock updates (they are sent once per second)
 				self.socket.send(JSON.stringify({
 					action: 'clockStartSendingCurrentTime'
@@ -1971,6 +2026,36 @@ instance.prototype.onWebSocketMessage = function(message) {
 				self.init_feedbacks(); // Update dropdown lists for pro7 stage layout feedback.
 			}
 			break;
+		
+		case 'looksRequest':  // Response from sending looksRequest
+			if (objData.hasOwnProperty('looks')) {
+				self.currentState.internal.pro7Looks = [];
+				objData.looks.forEach(function(look) {
+					var lookName = look['lookName'];
+					var lookID = look['lookID'];
+					self.currentState.internal.pro7Looks.push({id: lookID, label: lookName});
+				});
+				// Update dyn var for current look name
+				self.updateVariable('current_pro7_look_name', objData.activeLook.lookName);
+
+				self.log('info', objData.activeLook.lookName);
+				self.log('info', "Got Pro7 Looks List");
+				self.actions(); // Update dropdown lists for Looks
+			}
+			break;
+		
+		case 'macrosRequest':  // Response from sending macrosRequest
+			if (objData.hasOwnProperty('macros')) {
+				self.currentState.internal.pro7Macros = [];
+				objData.macros.forEach(function(look) {
+					var macroName = look['macroName'];
+					var macroID = look['macroID'];
+					self.currentState.internal.pro7Macros.push({id: macroID, label: macroName});
+				});
+
+				self.log('info', "Got Pro7 Macros List");
+				self.actions(); // Update dropdown lists for Looks
+			}
 
 	}
 
@@ -2128,6 +2213,36 @@ instance.prototype.getStageDisplaysInfo = function() {
 
 	self.socket.send(JSON.stringify({
 		action: 'stageDisplaySets'
+	}));
+}
+
+/*
+* Request Looks List
+*/
+instance.prototype.getLooksList = function () {
+	var self = this;
+
+	if (self.currentState.internal.wsConnected === false) {
+		return;
+	}
+
+	self.socket.send(JSON.stringify({
+		action: 'looksRequest'
+	}));
+}
+
+/*
+* Request Macros List
+*/
+instance.prototype.getMacrosList = function () {
+	var self = this;
+
+	if (self.currentState.internal.wsConnected === false) {
+		return;
+	}
+
+	self.socket.send(JSON.stringify({
+		action: 'macrosRequest'
 	}));
 }
 

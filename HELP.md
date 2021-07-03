@@ -84,6 +84,16 @@ Example Playlist:
   * Presentation B (index=3)
   * Presentation C (index=4)
 
+## Pro7 Looks
+Command | Description
+------- | -----------
+Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7
+
+## Pro7 Macros
+Command | Description
+------- | -----------
+Pro7&nbsp;Trigger&nbsp;Macro | Choose a Macro to trigger in Pro7
+
 ## Audio Cues
 Command | Description
 ------- | -----------
@@ -166,3 +176,4 @@ $(propresenter:current_stage_display_name) | Name of the currently selected stag
 $(propresenter:video_countdown_timer) | Current value of video countdown timer - automatically updated when a video is playing. (This one variable is only updated when the module is configured to also connect to the Stage Display App port)
 $(propresenter:current_pro7_stage_layout_name) | The name of the current stage-display layout on the selected stage-display screen (as set in module config)
 $(propresenter:*StageScreenName*_pro7_stagelayoutname) | The name of the current stage-display layout on the stage screen with name: "stageScreenName" (Case Sensitive)
+$(propresenter2:current_pro7_look_name) | The name of the current Pro7 Look that is live (not yet working)
