@@ -430,6 +430,7 @@ instance.prototype.emptyCurrentState = function() {
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A',
 		current_pro7_stage_layout_name: "N/A",
+		current_pro7_look_name: "N/A",
 	};
 
 	// Update Companion with the default state if each dynamic variable.
@@ -477,6 +478,10 @@ instance.prototype.initVariables = function() {
 		{
 			label: 'Current Pro7 Stage Layout Name',
 			name:  'current_pro7_stage_layout_name'
+		},
+		{
+			label: 'Current Pro7 Look Name',
+			name: 'current_pro7_look_name'
 		},
 		{
 			label: 'Current Stage Display Name',
@@ -1011,7 +1016,7 @@ instance.prototype.actions = function(system) {
 			]
 		},
 		'pro7TriggerMacro': {
-			label: 'pro7 Trigger Macro',
+			label: 'Pro7 Trigger Macro',
 			options: [
 				{
 					type: 'dropdown',
@@ -2030,7 +2035,10 @@ instance.prototype.onWebSocketMessage = function(message) {
 					var lookID = look['lookID'];
 					self.currentState.internal.pro7Looks.push({id: lookID, label: lookName});
 				});
+				// Update dyn var for current look name
+				self.updateVariable('current_pro7_look_name', objData.activeLook.lookName);
 
+				self.log('info', objData.activeLook.lookName);
 				self.log('info', "Got Pro7 Looks List");
 				self.actions(); // Update dropdown lists for Looks
 			}
