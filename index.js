@@ -522,8 +522,8 @@ instance.prototype.initVariables = function () {
 instance.prototype.updateVariable = function (name, value) {
 	var self = this
 
-	if (name !== 'watched_clock_current_time') {
-		// Avoid flooding log with timer updates... (may have to manually revert to debug future timer message issues)
+	if (!name.includes('_clock_')) {
+		// Avoid flooding log with timer updates by filtering out the regular clock variable updates
 		self.log('debug', 'updateVariable: ' + name + ' to ' + value)
 	}
 
@@ -1983,10 +1983,21 @@ instance.prototype.onWebSocketMessage = function (message) {
 			break
 
 		case 'clockCurrentTimes':
-			var objWatchedClock = objData.clockTimes
+			var objClockTimes = objData.clockTimes
+			
+			// Update dyn var for watched clock/timer
 			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length) {
 				self.updateVariable('watched_clock_current_time', objData.clockTimes[self.config.indexOfClockToWatch])
 			}
+			
+			// Update complete list of dyn vars for all clocks/timers (two for each clock - one with and one without hours)
+			for (let clockIndex = 0; clockIndex < objClockTimes.length; clockIndex++) {
+				self.currentState.dynamicVariables['pro7_clock_' + clockIndex] = self.formatClockTime(objClockTimes[clockIndex])
+				self.updateVariable('pro7_clock_' + clockIndex, self.currentState.dynamicVariables['pro7_clock_' + clockIndex])
+				self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_hourless'] = self.formatClockTime(objClockTimes[clockIndex], false)
+				self.updateVariable('pro7_clock_' + clockIndex + '_hourless', self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_hourless'])
+			}
+			
 			break
 
 		case 'stageDisplaySetIndex': // Companion User (or someone else) has set a new Stage Display Layout in Pro6 (Time to refresh stage display dynamic variables)
@@ -2299,6 +2310,40 @@ instance.prototype.getMacrosList = function () {
 			action: 'macrosRequest',
 		})
 	)
+}
+
+/*
+ * Format Time string 
+ */
+instance.prototype.formatClockTime = function (clockTimeString, includeHours = true) {
+	var formattedClockTimeString = ''
+	
+	// Remove decimal (sub-seconds)
+	if (clockTimeString.indexOf('.') > 0) {
+		formattedClockTimeString = clockTimeString.slice(0,clockTimeString.indexOf('.'))
+	} else {
+		formattedClockTimeString = clockTimeString
+	}
+
+	var hours = ''
+	var minutes = ''
+	var seconds = ''
+	var timeParts = formattedClockTimeString.split(':')
+	if (timeParts.length ==  3) {
+		hours = timeParts.shift()
+	}
+	if (timeParts.length ==  2) {
+		minutes = timeParts.shift()
+	}
+	if (timeParts.length ==  1) {
+		seconds = timeParts.shift()
+	}
+	
+	if (includeHours) {
+		return hours + ":" + minutes + ":" + seconds
+	} else {
+		return  minutes + ":" + seconds
+	}
 }
 
 instance_skel.extendedBy(instance)
