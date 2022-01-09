@@ -42,10 +42,9 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'host',
-			label: 'ProPresenter IP',
+			label: 'ProPresenter IP (or hostname)',
 			width: 6,
 			default: '',
-			regex: self.REGEX_IP,
 		},
 		{
 			type: 'textinput',
@@ -757,7 +756,7 @@ instance.prototype.connectToProPresenter = function () {
 	})
 
 	//self.socket.on('connect', function () {
-	//	debug("Connected to ProPresenter remote control");
+	//	self.log('debug',"Connected to ProPresenter remote control");
 	//});
 
 	self.socket.on('close', function (code, reason) {
@@ -838,7 +837,7 @@ instance.prototype.connectToProPresenterSD = function () {
 	})
 
 	//self.sdsocket.on('connect', function () {
-	//	debug("Connected to ProPresenter stage display");
+	//	self.log('debug',"Connected to ProPresenter stage display");
 	//	self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
 	//});
 
@@ -1249,6 +1248,30 @@ instance.prototype.actions = function (system) {
 				},
 			],
 		},
+		nwSpecificSlide: {
+			label: 'Specific Slide (Network Link - Beta)',
+			options: [
+				{
+					type: 'textinput',
+					label: 'Play List Name',
+					id: 'playlistName',
+					tooltip: 'Name of the playlist that contains the presentation with the slide you want to trigger',
+				},
+				{
+					type: 'textinput',
+					label: 'Presentation Name',
+					id: 'presentationName',
+					tooltip: 'Name of the presentation with the slide you want to trigger',
+				},
+				{
+					type: 'textinput',
+					label: 'Slide Index',
+					id: 'slideIndex',
+					tooltip: 'Index of the slide you want to trigger',
+					regex: self.REGEX_NUMBER,
+				},
+			],
+		},
 		customAction: {
 			label: 'Custom Action',
 			options: [
@@ -1257,8 +1280,7 @@ instance.prototype.actions = function (system) {
 					label: 'Custom Action',
 					id: 'customAction',
 					default: '{"action":"customAction","customProperty":"customValue"}',
-					tooltip:
-						'Advanced use only. Must be a valid JSON action message that ProPresenter understands. An invalid message or even one little mistake can lead to crashes and data loss.',
+					tooltip: 'Advanced use only. Must be a valid JSON action message that ProPresenter understands. An invalid message or even one little mistake can lead to crashes and data loss.',
 				},
 			],
 		},
@@ -1551,22 +1573,49 @@ instance.prototype.action = function (action) {
 				self.log('debug', 'Failed to convert custom action: ' + customAction + ' to valid JS object: ' + err.message)
 			}
 			break
+		case 'nwSpecificSlide':
+			nwCmd = {
+				endpointPath: '/trigger/playlist',
+				data: { path:
+					[
+						{
+							name: opt.playlistName
+						},
+						{
+							name: opt.presentationName
+						},
+						{
+							index: parseInt(opt.slideIndex) - 1
+						}
+					]
+				}
+			}
+			break
 	}
 
-	if (cmd !== undefined) {
+	// Perform actions that use the current ProRemote API (Websocket)
+	if (typeof cmd !== 'undefined') {
 		if (self.currentStatus !== self.STATUS_ERROR) {
 			try {
 				var cmdJSON = JSON.stringify(cmd)
 				self.socket.send(cmdJSON)
 			} catch (e) {
-				debug('NETWORK ' + e)
+				self.log('debug','NETWORK ' + e)
 				self.status(self.STATUS_ERROR, e)
 			}
 		} else {
-			debug('Socket not connected :(')
+			self.log('debug','Socket not connected :(')
 			self.status(self.STATUS_ERROR)
 		}
 	}
+
+	// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
+	if (typeof nwCmd !== 'undefined'){
+		self.system.emit('rest', 'http://' + self.config.host + ':' + self.config.port + nwCmd.endpointPath, JSON.stringify(nwCmd.data), function(err, result) {
+			self.log('debug','nwCMD.path: ' + nwCmd.endpointPath + ' nwCmd.data: ' + JSON.stringify(nwCmd.data));
+		}, {},  { connection : { rejectUnauthorized : false }} // Add this header now, in case of a change to https with invalid certs in future.
+		);
+	} 
 }
 
 instance.prototype.init_feedbacks = function () {
@@ -1862,7 +1911,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					var cmdJSON = JSON.stringify(cmd)
 					self.followersocket.send(cmdJSON)
 				} catch (e) {
-					debug('Follower NETWORK ' + e)
+					self.log('debug','Follower NETWORK ' + e)
 					self.status(self.STATUS_WARNING, e)
 				}
 			}
@@ -1886,7 +1935,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					var cmdJSON = JSON.stringify(cmd)
 					self.followersocket.send(cmdJSON)
 				} catch (e) {
-					debug('Follower NETWORK ' + e)
+					self.log('debug','Follower NETWORK ' + e)
 					self.status(self.STATUS_WARNING, e)
 				}
 			}
@@ -1904,7 +1953,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					var cmdJSON = JSON.stringify(cmd)
 					self.followersocket.send(cmdJSON)
 				} catch (e) {
-					debug('Follower NETWORK ' + e)
+					self.log('debug','Follower NETWORK ' + e)
 					self.status(self.STATUS_WARNING, e)
 				}
 			}
@@ -1921,7 +1970,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					var cmdJSON = JSON.stringify(cmd)
 					self.followersocket.send(cmdJSON)
 				} catch (e) {
-					debug('Follower NETWORK ' + e)
+					self.log('debug','Follower NETWORK ' + e)
 					self.status(self.STATUS_WARNING, e)
 				}
 			}
@@ -1938,7 +1987,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					var cmdJSON = JSON.stringify(cmd)
 					self.followersocket.send(cmdJSON)
 				} catch (e) {
-					debug('Follower NETWORK ' + e)
+					self.log('debug','Follower NETWORK ' + e)
 					self.status(self.STATUS_WARNING, e)
 				}
 			}
