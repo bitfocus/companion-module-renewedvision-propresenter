@@ -1182,12 +1182,12 @@ instance.prototype.actions = function (system) {
 						'Comma separated, list of message token names used in the message.  Associated values are given below. Use double commas (,,) to insert an actual comma in a token name. (WARNING! - A simple typo here could crash and burn ProPresenter)',
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Comma Separated List Of Message Token Values',
 					id: 'messageValues',
 					default: '',
 					tooltip:
-						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. (WARNING! - A simple typo here could crash and burn ProPresenter)',
+						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (WARNING! - A simple typo here could crash and burn ProPresenter)',
 				},
 			],
 		},
@@ -1399,6 +1399,8 @@ instance.prototype.actions = function (system) {
 instance.prototype.action = function (action) {
 	var self = this
 	var opt = action.options
+	var cmd = null
+	var nwCmd = null
 
 	switch (action.action) {
 		case 'enableFollowerControl':
@@ -1642,7 +1644,7 @@ instance.prototype.action = function (action) {
 
 		case 'messageSend':
 			// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
-			// It works by first replacing any double commas with a character 29, and then replacing any single commas with a character 28.  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
+			// It works by first replacing any double commas with a character 29 (ascii group seperator char), and then replacing any single commas with a character 28 (ascii file seperator char).  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
 			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
 			cmd = {
 				action: 'messageSend',
@@ -1657,6 +1659,13 @@ instance.prototype.action = function (action) {
 					.replace(/,/g, String.fromCharCode(28))
 					.replace(/\u001D/g, ',')
 					.split(String.fromCharCode(28)),
+			}
+			// If there is only one message value - then allow parsing of optional variables...
+			if (cmd.messageValues.length == 1) {
+				// Allow parsing of optional variable in the Message values textfield
+				self.system.emit('variable_parse', cmd.messageValues[0].trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					cmd.messageValues[0] = String(value)
+				})
 			}
 			break
 
@@ -1787,7 +1796,7 @@ instance.prototype.action = function (action) {
 	}
 
 	// Perform actions that use the current ProRemote API (Websocket)
-	if (typeof cmd !== 'undefined') {
+	if (cmd !== null) {
 		if (self.currentStatus !== self.STATUS_ERROR) {
 			try {
 				var cmdJSON = JSON.stringify(cmd)
@@ -1803,7 +1812,7 @@ instance.prototype.action = function (action) {
 	}
 
 	// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
-	if (typeof nwCmd !== 'undefined'){
+	if (nwCmd !== null){
 		self.system.emit('rest', 'http://' + self.config.host + ':' + self.config.port + nwCmd.endpointPath, JSON.stringify(nwCmd.data), function(err, result) {
 			self.log('debug','nwCMD.path: ' + nwCmd.endpointPath + ' nwCmd.data: ' + JSON.stringify(nwCmd.data));
 		}, {},  { connection : { rejectUnauthorized : false }} // Add this header now, in case of a change to https with invalid certs in future.
@@ -2055,7 +2064,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					self.getLooksList()
 				}
 
-				// Ask Pro6 to start sending clock updates (they are sent once per second)
+				// Ask ProPresenter to start sending clock updates (they are sent once per second)
 				self.socket.send(
 					JSON.stringify({
 						action: 'clockStartSendingCurrentTime',
