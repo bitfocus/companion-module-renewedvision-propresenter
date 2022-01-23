@@ -1115,7 +1115,7 @@ instance.prototype.actions = function (system) {
 					default: '00:05:00',
 					tooltip:
 						'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
-					regex: '/^\\d*:?\\d*:?\\d*$/',
+					regex: '/^[-|+]?\\d*:?\\d*:?\\d*$/',
 				},
 				{
 					type: 'dropdown',
@@ -1158,7 +1158,7 @@ instance.prototype.actions = function (system) {
 					id: 'clockElapsedTime',
 					default: '00:10:00',
 					tooltip: 'Only Required for Elapsed Time Clock - otherwise this is ignored.',
-					regex: '/^\\d*:?\\d*:?\\d*$/',
+					regex: '/^[-|+]?\\d*:?\\d*:?\\d*$/',
 				},
 			],
 		},
@@ -1619,18 +1619,32 @@ instance.prototype.action = function (action) {
 				opt.clockName = ''
 			}
 
+			// Allow +- prefix to update increment/decrement clockTime
+			var newClockTime = opt.clockTime
+			if (newClockTime.charAt(0) == '-'|| newClockTime.charAt(0) == '+') {
+				var deltaSeconds = self.convertToTotalSeconds(newClockTime)
+				newClockTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
+			}
+
+			// Allow +- prefix to update increment/decrement clockElapsedTime
+			var newclockElapsedTime = opt.clockElapsedTime
+			if (newclockElapsedTime.charAt(0) == '-'|| newclockElapsedTime.charAt(0) == '+') {
+				var deltaSeconds = self.convertToTotalSeconds(newclockElapsedTime)
+				newclockElapsedTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
+			}
+
 			cmd = {
 				action: 'clockUpdate',
 				clockIndex: clockIndex,
-				clockTime: opt.clockTime,
+				clockTime: newClockTime,
 				clockOverrun: opt.clockOverRun,
 				clockType: opt.clockType,
 				clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
 				clockTimePeriodFormat: String(opt.clockTimePeriodFormat),
 				clockElapsedTime:
 					opt.clockType === '1' && self.currentState.internal.proMajorVersion === 7
-						? opt.clockTime
-						: opt.clockElapsedTime, // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
+						? newClockTime
+						: newclockElapsedTime, // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
 				clockName: opt.clockName,
 			}
 			break
@@ -1800,6 +1814,7 @@ instance.prototype.action = function (action) {
 		if (self.currentStatus !== self.STATUS_ERROR) {
 			try {
 				var cmdJSON = JSON.stringify(cmd)
+				self.log('debug','cmdJSON: ' + cmdJSON)
 				self.socket.send(cmdJSON)
 			} catch (e) {
 				self.log('debug','NETWORK ' + e)
@@ -2241,6 +2256,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 			// Update complete list of dyn vars for all clocks/timers (two for each clock - one with and one without hours)
 			var updateModuleVars = false
 			for (let clockIndex = 0; clockIndex < objClockTimes.length; clockIndex++) {
+				// Update (add) dynamic clock variable
 				self.currentState.dynamicVariables['pro7_clock_' + clockIndex] = self.formatClockTime(objClockTimes[clockIndex])
 				self.updateVariable('pro7_clock_' + clockIndex, self.currentState.dynamicVariables['pro7_clock_' + clockIndex])
 				// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
@@ -2250,6 +2266,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 					updateModuleVars = true
 				}
 
+				// Update (add) dynamic clock variable (hourless)
 				self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_hourless'] = self.formatClockTime(objClockTimes[clockIndex], false)
 				self.updateVariable('pro7_clock_' + clockIndex + '_hourless', self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_hourless'])
 				// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
@@ -2258,6 +2275,17 @@ instance.prototype.onWebSocketMessage = function (message) {
 					self.currentState.dynamicVariablesDefs.push(varDef)
 					updateModuleVars = true
 				}
+
+				// Update (add) dynamic clock variable (totalseconds)
+				self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds'] = self.convertToTotalSeconds(objClockTimes[clockIndex])
+				self.updateVariable('pro7_clock_' + clockIndex + '_totalseconds', self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds'])
+				// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
+				var varDef = { label: 'Pro7 Clock ' + clockIndex + ' Total Seconds', name: 'pro7_clock_' + clockIndex + '_totalseconds'}
+				if (!self.currentState.dynamicVariablesDefs.some(({name}) => name === varDef.name)) {
+					self.currentState.dynamicVariablesDefs.push(varDef)
+					updateModuleVars = true
+				}
+				
 			}
 
 			// Tell Companion about any new module vars for clocks that were added (so they become visible in WebUI etc)
@@ -2610,9 +2638,14 @@ instance.prototype.getMacrosList = function () {
  * Format Time string 
  */
 instance.prototype.formatClockTime = function (clockTimeString, includeHours = true) {
-	var formattedClockTimeString = ''
+	// Record if time is negative
+	var timeIsNegative = false
+	if (clockTimeString.length > 0) {
+		timeIsNegative = (clockTimeString.charAt(0) == '-')
+	}
 	
-	// Remove decimal (sub-seconds)
+	// Remove decimal (sub-seconds) and save in formattedClockTimeString
+	var formattedClockTimeString = ''
 	if (clockTimeString.indexOf('.') > 0) {
 		formattedClockTimeString = clockTimeString.slice(0,clockTimeString.indexOf('.'))
 	} else {
@@ -2636,8 +2669,67 @@ instance.prototype.formatClockTime = function (clockTimeString, includeHours = t
 	if (includeHours) {
 		return hours + ":" + minutes + ":" + seconds
 	} else {
+		// If time was negative the negative sign will in the hours component that is not returned here.  Add a negtive sign to the minutes component.
+		if (timeIsNegative) {
+			minutes = '-' + minutes
+		}
 		return  minutes + ":" + seconds
 	}
+}
+
+/*
+* Conver Time string to total seconds
+*/
+instance.prototype.convertToTotalSeconds = function (clockTimeString) {
+	var totalSeconds=0
+	
+	// Record if time is negative
+	var timeIsNegative = false
+	if (clockTimeString.length > 0) {
+		timeIsNegative = (clockTimeString.charAt(0) == '-')
+	}
+	
+	// Remove any decimal (sub-seconds) and save in formattedClockTimeString
+	var formattedClockTimeString = ''
+	if (clockTimeString.indexOf('.') > 0) {
+		formattedClockTimeString = clockTimeString.slice(0,clockTimeString.indexOf('.'))
+	} else {
+		formattedClockTimeString = clockTimeString
+	}
+
+	// If time is negative remove leading - prefix from string
+	if (timeIsNegative) {
+		formattedClockTimeString = formattedClockTimeString.slice(1)
+	}
+
+	var hours = 0
+	var minutes = 0
+	var seconds = 0
+	var timeParts = formattedClockTimeString.split(':')
+	if (timeParts.length ==  3) {
+		hours = parseInt(timeParts.shift())
+		if (!isNaN(hours)) {
+			totalSeconds = totalSeconds + 3600 * hours
+		}
+	}
+	if (timeParts.length ==  2) {
+		minutes = parseInt(timeParts.shift())
+		if (!isNaN(minutes)) {
+			totalSeconds = totalSeconds + 60 * minutes
+		}
+	}
+	if (timeParts.length ==  1) {
+		seconds = parseInt(timeParts.shift())
+		if (!isNaN(seconds)) {
+			totalSeconds = totalSeconds + seconds
+		}
+	}
+
+	if (timeIsNegative) {
+		totalSeconds = totalSeconds * -1
+	}
+	
+	return totalSeconds
 }
 
 instance_skel.extendedBy(instance)
