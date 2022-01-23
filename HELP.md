@@ -146,7 +146,7 @@ Command | Description
 Start&nbsp;Clock | Starts clock (timer) - identified by index (0 based)
 Stop&nbsp;Clock | Stops clock (timer) - identified by index (0 based)
 Reset&nbsp;Clock | Resets clock (timer) - identified by index (0 based)
-Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Countdown Timer, Countdown To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Countdown To Time clocks.
+Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Countdown Timer, Countdown To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. You can optionally add a + or - prefix to update the clock with a relative value based on it's current time. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Countdown To Time clocks.
 
 **Tip: One-Touch Preset CountDown Timers.**
 If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
@@ -179,6 +179,7 @@ $(propresenter:current_pro7_stage_layout_name) | The name of the current stage-d
 $(propresenter:*StageScreenName*_pro7_stagelayoutname) | The name of the current stage-display layout on the stage screen with name: "stageScreenName" (Case Sensitive)
 $(propresenter:pro7_clock_n) | hh:mm:ss for clock with index n
 $(propresenter:pro7_clock_n_hourless) | mm:ss for clock with index n
+$(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n (can use this for feeback - eg update button colour when clock time <0)
 
 ## ⚠️⚠️⚠️ New BETA actions using Network Link ⚠️⚠️⚠️
 Turning on the Network Link feature in the Network Preferences of ProPresenter 7.8+ enabls a new API that is not yet public (but is planned to be released earl 2022).  Once released, a new Companion module will be made using that instead of the reversed engineered remote protocol.
