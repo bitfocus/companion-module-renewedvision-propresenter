@@ -35,7 +35,8 @@ If you chose to also enable the stage display app option in ProPresenter prefere
 
 N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
-**Pro7 users:  Currently there is a noticeable performance impact within ProPresenter 7 itself when companion sends messages to Pro7 to track info about the current presentation.** To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. We will continue to investigate a fix with RenewedVision (or a better workaround).
+_**⚠️ Pro7/Windows users ⚠️**  
+Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. In addition there is another option to configure the **type** of the presentation request.  Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
 
 ## Optional (Beta) Leader-Follower Feature
 You can optionally configure a second connection to a "Follower" ProPresenter 7 computer to have the module automatically forward slide trigger and clears actions to the Follower as you click on slides (or use clear actions) on the main ProPresenter computer (The Leader).  This emulates the old Pro6 Master-Control module.  It's not complete as some actions cannot be captured by the module to forward to the Follower (the remote protocol does not send notifications for every action - but as it improves, this module will be updated).  For now basic slide triggers and some clear actions do work. - This won't really be updated any further as there is now a much better "Network Link" feature in Pro7.8+
@@ -168,8 +169,11 @@ Please Note: There is NO direct feedback from ProPresenter for when a timeline i
 Variable | Description
 -------- | -----------
 $(propresenter:current_slide) | The number of the active slide (>= 1), or "N/A" if unknown.
+$(propresenter:current_presentation_path) | The presentation path of the current presentation.
 $(propresenter:total_slides)  | The total number of slides in the current document, or "N/A" if unknown.
 $(propresenter:presentation_name) | The name of the current presentation, or "N/A" if unknown.
+$(propresenter:current_announcement_slide) | The number of the active slide on announcements layer (>= 1), or "N/A" if unknown.
+$(propresenter:current_announcement_presentation_pathh) | The presentation path of the current presentation on announcements layer
 $(propresenter:connection_status) | The current connection status to ProPresenter ("Disconnected" or "Connected").
 $(propresenter:watched_clock_current_time) | In the config of this module, you can specify the index of a clock (timer) that you want to "watch". This dynamic variable will be updated once per second to the current value of the clock specified. You could use this to display a live timer value on a button!
 $(propresenter:current_stage_display_index) | Index of the currently selected stage display layout (This is updated whenever a new layout is selected.)
