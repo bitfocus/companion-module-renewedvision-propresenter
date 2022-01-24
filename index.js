@@ -96,6 +96,19 @@ instance.prototype.config_fields = function () {
 			],
 		},
 		{
+			type: 'dropdown',
+			id: 'typeOfPresenationRequest',
+			label: 'Type of Presentation Info Requests',
+			default: 'auto',
+			tooltip:
+				'Manual may workaround performance issues for some users - give it a try',
+			width: 6,
+			choices: [
+				{ id: 'auto', label: 'Automatic' },
+				{ id: 'manual', label: 'Manual' },
+			],
+		},
+		{
 			type: 'textinput',
 			id: 'clientVersion',
 			label: 'ProRemote Client Version',
@@ -433,6 +446,8 @@ instance.prototype.emptyCurrentState = function () {
 	self.currentState.dynamicVariables = {
 		current_slide: 'N/A',
 		current_presentation_path: 'N/A',
+		current_announcement_slide: 'N/A',
+		current_announcement_presentation_path: 'N/A',
 		remaining_slides: 'N/A',
 		total_slides: 'N/A',
 		presentation_name: 'N/A',
@@ -449,7 +464,7 @@ instance.prototype.emptyCurrentState = function () {
 
 	self.currentState.dynamicVariablesDefs = [
 		{
-			label: 'Current slide number',
+			label: 'Current Slide number',
 			name: 'current_slide',
 		},
 		{
@@ -463,6 +478,14 @@ instance.prototype.emptyCurrentState = function () {
 		{
 			label: 'Total slides in presentation',
 			name: 'total_slides',
+		},
+		{
+			label: 'Current Announcement slide number',
+			name: 'current_announcement_slide',
+		},
+		{
+			label: 'Current Announcement Presentation Path',
+			name: 'current_announcement_presentation_path'
 		},
 		{
 			label: 'Presentation name',
@@ -2102,13 +2125,20 @@ instance.prototype.onWebSocketMessage = function (message) {
 			// Update the current slide index.
 			var slideIndex = parseInt(objData.slideIndex, 10)
 
-			self.currentState.internal.slideIndex = slideIndex
-			self.updateVariable('current_slide', slideIndex + 1)
-			self.updateVariable('current_presentation_path', String(objData.presentationPath))
-			if (objData.presentationPath == self.currentState.internal.presentationPath) {
-				// If the triggered slide is part of the current presentation (for which we have stored the total slides) then update the 'remaining_slides' dynamic variable
-				// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info.
-				self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - slideIndex - 1)
+			if (objData.hasOwnProperty('presentationDestination') && objData.presentationDestination == 1) {
+				// Track Announcement layer presenationPath and Slide Index
+				self.updateVariable('current_announcement_slide', slideIndex + 1)
+				self.updateVariable('current_announcement_presentation_path', String(objData.presentationPath))
+			} else {
+				// Track Presentation layer presenationPath, Slide Index )and optionally remaining slides)
+				self.currentState.internal.slideIndex = slideIndex
+				self.updateVariable('current_slide', slideIndex + 1)
+				self.updateVariable('current_presentation_path', String(objData.presentationPath))
+				if (objData.presentationPath == self.currentState.internal.presentationPath) {
+					// If the triggered slide is part of the current presentation (for which we have stored the total slides) then update the 'remaining_slides' dynamic variable
+					// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info.
+					self.updateVariable('remaining_slides', self.currentState.dynamicVariables['total_slides'] - slideIndex - 1)
+				}
 			}
 
 			// Workaround for bug that occurs when a presentation with automatically triggered slides (eg go-to-next timer), fires one of it's slides while *another* presentation is selected and before any slides within the newly selected presentation are fired. This will lead to total_slides being wrong (and staying wrong) even after the user fires slides within the newly selected presentation.
@@ -2245,6 +2275,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 			self.log('info', 'presentationCurrent: ' + presentationName)
 			break
 
+		case 'clockCurrentTime':
 		case 'clockCurrentTimes':
 			var objClockTimes = objData.clockTimes
 
@@ -2510,15 +2541,6 @@ instance.prototype.onFollowerWebSocketMessage = function (message) {
 			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '')
 			self.log('info', 'Follower presentationCurrent: ' + presentationName)
 			break
-
-		case 'clockCurrentTimes':
-			break
-
-		case 'stageDisplaySetIndex':
-			break
-
-		case 'stageDisplaySets':
-			break
 	}
 }
 
@@ -2563,14 +2585,26 @@ instance.prototype.getProPresenterState = function () {
 	if (self.currentState.internal.wsConnected === false) {
 		return
 	}
-	if (self.config.sendPresentationCurrentMsgs !== 'no') {
-		// User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with Pro7)
-		self.socket.send(
-			JSON.stringify({
-				action: 'presentationCurrent',
-				presentationSlideQuality: '0', // Setting to 0 stops Pro6 from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
-			})
-		)
+
+	if (self.config.sendPresentationCurrentMsgs !== 'no') { // User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with ProPresenter on Windows)
+		if (self.config.typeOfPresenationRequest == 'auto') {  // Decide which type of request to get current presentation info
+			// Just send presentationCurrent with presentationSlideQuality = '0' (string) (25-Jan-2022 This was the default way "always". It Performs well for Pro7 and Pro6 on MacOS - very slow for Pro6/7 on Windows)
+			self.socket.send(
+				JSON.stringify({
+					action: 'presentationCurrent',
+					presentationSlideQuality: '0', // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+				})
+			)
+		} else {
+			// Send presentationRequest with presenatationSlideQuality = 0 (int) (At time of adding this option, this was only method that performs well for Pro7.8+ on Mac/Win and Pro6 on Mac)
+			self.socket.send(
+				JSON.stringify({
+					action: 'presentationRequest',
+					presentationSlideQuality: 0, // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+					presentationPath: self.currentState.dynamicVariables['current_presentation_path'],
+				})
+			)
+		}
 	}
 
 	if (self.currentState.dynamicVariables.current_slide === 'N/A') {
