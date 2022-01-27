@@ -1,11 +1,15 @@
 # Companion-module: ProPresenter6/7
 
 
-Module for remotely controlling ProPresenter 6 or 7 with the Elgato Stream Deck and Companion. Requires a network connection to ProPresenter via it's Remote network port.
+This Companion module allows you to remotely control ProPresenter 6 or 7 with the Elgato Stream Deck:
+![StreamDeck1.png](documentation/images/StreamDeck1.png)
+You can also use Companion without a Stream Deck through it's web buttons/emulator.
 
-*Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.*
+## Setup Guide.
 
-# Setup Guide.
+This Companion module will connect to ProPresenter via a network connection (using the same connection that the official mobile remote app uses).
+You can run Companion on the same computer or on a different computer on the same network.
+
 ## Enable networking in ProPresenter if you haven't already done so...
 ## Also enable Network Link to use new beta actions
 1. Open ProPresenter and then open the "ProPresenter (6)" Menu.
@@ -34,6 +38,8 @@ Now you have all the info you need to go to the ProPresenter Companion module co
 If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
 
 N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
+
+*Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.*
 
 _**⚠️ Pro7/Windows users ⚠️**  
 Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. In addition there is another option to configure the **type** of the presentation request.  Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
