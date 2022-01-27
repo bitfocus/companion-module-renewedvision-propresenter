@@ -34,12 +34,20 @@ instance.prototype.currentState = {
 instance.prototype.config_fields = function () {
 	var self = this
 	return [
+		// ********** Required Settings ************
 		{
 			type: 'text',
 			id: 'info',
 			width: 12,
-			label: 'Information',
-			value: "This module communicates with Renewed Vision's ProPresenter 6 or 7",
+			label: '',
+			value: "<br>", // Dummy space to separate settings into obvious sections
+		},
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Required Settings',
+			value: "These settings are required by this module to communicate with Renewed Vision's ProPresenter 6 or 7.<br>Make sure to enable Network and ProPresenter Remote Controller Password in ProPresenter Preferences",
 		},
 		{
 			type: 'textinput',
@@ -59,8 +67,66 @@ instance.prototype.config_fields = function () {
 		{
 			type: 'textinput',
 			id: 'pass',
-			label: 'ProPresenter Remote Password',
+			label: 'ProPresenter Remote Controller Password',
 			width: 6,
+		},
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: '',
+			value: "<br>", // Dummy space to separate settings into obvious sections
+		},
+		// ********** Stage Display Settings ************
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Stage Display Settings (Optional)',
+			value: 'The following fields are only needed if you want to track the video countdown timer in a module variable.',
+		},
+		{
+			type: 'dropdown',
+			label: 'Connect to Stage Display?',
+			id: 'use_sd',
+			default: 'no',
+			width: 6,
+			choices: [
+				{ id: 'no', label: 'No' },
+				{ id: 'yes', label: 'Yes' },
+			],
+		},
+		{
+			type: 'textinput',
+			id: 'sdport',
+			label: 'Stage Display App Port',
+			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
+			width: 6,
+			default: '',
+			// regex from instance_skel.js, but modified to make the port optional
+			regex:
+				'/^([1-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-4])$|^$/',
+		},
+		{
+			type: 'textinput',
+			id: 'sdpass',
+			label: 'Stage Display App Password',
+			width: 6,
+		},
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: '',
+			value: "<br>", // Dummy space to separate settings into obvious sections
+		},
+		// ********** Backwards Compatibility Settings ************
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Backwards Compatibility Settings (Optional)',
+			value: "These settings are optional. They provide backwards compatibility for older features that are not longer required for new users/setups and newer features have been added that supersede them",
 		},
 		{
 			type: 'textinput',
@@ -81,6 +147,21 @@ instance.prototype.config_fields = function () {
 			default: '',
 			width: 6,
 			choices: self.currentState.internal.pro7StageScreens,
+		},
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: '',
+			value: "<br>", // Dummy space to separate settings into obvious sections
+		},
+		// ********** Workaround Settings ************
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'Workaround Settings (Optional)',
+			value: "These settings are optional. They provide \"Workarounds\" that might be needed for some setups.",
 		},
 		{
 			type: 'dropdown',
@@ -118,46 +199,32 @@ instance.prototype.config_fields = function () {
 			default: '701',
 		},
 		{
-			type: 'text',
-			id: 'info',
-			width: 12,
-			label: 'Stage Display Settings (Optional)',
-			value: 'The following fields are only needed if you want the video countdown timer in a dynamic variable.',
-		},
-		{
 			type: 'dropdown',
-			label: 'Connect to Stage Display?',
-			id: 'use_sd',
-			default: 'no',
+			id: 'looksPolling', // Pro 7.8 on MacOs already sends notifications for look changes - but Pro 7.8.2 does not - so added this optional poll to enabled look feedback
+			label: 'Looks Polling',
+			default: 'disabled',
+			tooltip:
+				'Poll ProPresenter Looks info once per second to enable Feedback for Active Look',
 			width: 6,
 			choices: [
-				{ id: 'no', label: 'No' },
-				{ id: 'yes', label: 'Yes' },
+				{ id: 'disabled', label: 'Disabled' },
+				{ id: 'enabled', label: 'Enabled' },
 			],
 		},
 		{
-			type: 'textinput',
-			id: 'sdport',
-			label: 'Stage Display App Port',
-			tooltip: 'Optionally set in ProPresenter Preferences. ProPresenter Port (above) will be used if left blank.',
-			width: 6,
-			default: '',
-			// regex from instance_skel.js, but modified to make the port optional
-			regex:
-				'/^([1-9]|[1-8][0-9]|9[0-9]|[1-8][0-9]{2}|9[0-8][0-9]|99[0-9]|[1-8][0-9]{3}|9[0-8][0-9]{2}|99[0-8][0-9]|999[0-9]|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-4])$|^$/',
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: '',
+			value: "<br><br>", // Dummy space to separate settings into obvious sections
 		},
-		{
-			type: 'textinput',
-			id: 'sdpass',
-			label: 'Stage Display App Password',
-			width: 6,
-		},
+		// ********** Pro7 Follower Settings ************
 		{
 			type: 'text',
 			id: 'info2',
 			width: 12,
 			label: 'Pro7 Follower Settings (Optional)',
-			value: 'Optional *Beta* feature to mimic Pro6 Master-Control module',
+			value: 'Optional *Beta* feature to mimic Pro6 Master-Control module. (No longer needed for Pro7.8+ users)',
 		},
 		{
 			type: 'dropdown',
@@ -234,6 +301,10 @@ instance.prototype.init = function () {
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter()
 		self.startConnectionTimer()
+
+		// Enabled Looks polling timer (which will only send looksRequests if option is enabled)
+		self.startLooksPollingTimer()
+
 		if (self.config.use_sd === 'yes') {
 			self.startSDConnectionTimer()
 			self.connectToProPresenterSD()
@@ -440,6 +511,10 @@ instance.prototype.emptyCurrentState = function () {
 		previousTimeOfLeaderClearMessage: null,
 		pro7Looks: [{ id: '0', label: 'Connect to Pro7 to Update' }],
 		pro7Macros: [{ id: '0', label: 'Connect to Pro7 to Update' }],
+		current_pro7_look_id: null,
+		awaitingSlideByLabelRequest: {}, // When user triggers action to find slide by label and trigger it, this module must first get and search the playlist.  So the request is stored here until response for playlistRequestAll is received and thee action can then be completed using the returned playlist data.
+		matchingPlaylistItemFound: false, // Flag used accross recursive calls to recursivelyScanPlaylistsObjToTriggerSlideByLabel()
+		awaitingGroupSlideRequest: {} // When user triggers a new GroupSlide request, this module must first get the presentation and then search for the group slide. So the request is stored here until response for presentationRequest is received and the action can then be completed using hte returned presentation data.
 	}
 
 	// The dynamic variable exposed to Companion
@@ -566,6 +641,24 @@ instance.prototype.updateVariable = function (name, value) {
 	if (name === 'connection_status') {
 		self.checkFeedbacks('propresenter_module_connected')
 	}
+}
+
+instance.prototype.startLooksPollingTimer = function () {
+	var self = this
+	self.log('debug', 'Starting Looks Polling Timer')
+
+	// Create timer to poll looks each second (when option is enabled)
+	self.looksPollingTimer = setInterval(function () {
+
+		if (self.config.looksPolling == 'enabled' && self.socket.readyState == 1 /*OPEN*/) { // only send when option is enabled AND socket is OPEN
+			try {
+				self.socket.send('{"action": "looksRequest"}')
+			} catch (e) {
+				self.log('debug','NETWORK ' + e)
+				self.status(self.STATUS_ERROR, e.message)
+			}
+		}
+	}, 1000)
 }
 
 /**
@@ -869,10 +962,9 @@ instance.prototype.connectToProPresenterSD = function () {
 		}
 	})
 
-	//self.sdsocket.on('connect', function () {
-	//	self.log('debug',"Connected to ProPresenter stage display");
-	//	self.log('info', "Connected to ProPresenter stage display" + self.config.host +":"+ self.config.sdport);
-	//});
+	self.sdsocket.on('connect', function () {
+		self.log('debug',"Connected to ProPresenter stage display");
+	});
 
 	self.sdsocket.on('close', function (code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
@@ -991,6 +1083,57 @@ instance.prototype.actions = function (system) {
 					tooltip: 'See the README for more information',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},
+			],
+		},
+		slideLabel: {
+			label: 'Specific Slide With Label',
+			options: [
+				{
+					type: 'textwithvariables',
+					label: 'Playlist Name',
+					tooltip: 'Find the first playlist with that matches this playlist name',
+					id: 'playlistName',
+				},
+				{
+					type: 'textwithvariables',
+					label: 'Presentation Name',
+					tooltip: 'Find the first presentation (in above playlist) that matches this presentation name',
+					id: 'presentationName',
+				},
+				{
+					type: 'textwithvariables',
+					label: 'Slide With Label',
+					tooltip: 'Find the first slide (in above presentation) with matching *Slide Label* and trigger that slide',
+					id: 'slideLabel',
+				},
+				
+			],
+		},
+		groupSlide: {
+			label: 'Specific Slide In A Group',
+			options: [
+				{
+					type: 'textwithvariables',
+					label: 'Group Name',
+					tooltip: 'Specify the Name of the Group with the slide you want to trigger',
+					id: 'groupName',
+				},
+				{
+					type: 'textwithvariables',
+					label: 'Slide Number (Within Group)',
+					default: 1,
+					tooltip: 'Which slide in the group?',
+					id: 'slideNumber',
+					regex: self.REGEX_NUMBER,
+				},
+				{
+					type: 'textwithvariables',
+					label: 'Presentation Path (Leave Blank for Current)',
+					id: 'presentationPath',
+					default: '',
+					tooltip: 'Leave this blank to target the current presenation',
+					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
+				},				
 			],
 		},
 		clearall: { label: 'Clear All' },
@@ -1283,7 +1426,7 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwSpecificSlide: {
-			label: 'Specific Slide (Network Link - Beta)',
+			label: 'Specific Slide (Network Link)',
 			options: [
 				{
 					type: 'textinput',
@@ -1304,11 +1447,25 @@ instance.prototype.actions = function (system) {
 					tooltip: 'Index of the slide you want to trigger (1-based)',
 					regex: self.REGEX_NUMBER,
 				},
+				/* Does not seem to do anything (yet)
+				{
+					type: 'textinput',
+					label: 'Slide Name',
+					id: 'slideName',
+					tooltip: 'Name of the slide you want to trigger',
+				}, */
 			],
 		},
 		nwPropTrigger: {
-			label: 'Prop Trigger (Network Link - Beta)',
+			label: 'Prop Trigger (Network Link)',
 			options: [
+				{
+					type: 'textinput',
+					label: 'Prop Index',
+					id: 'propIndex',
+					tooltip: 'Index of the Prop you want to trigger (1-based)',
+					regex: self.REGEX_NUMBER,
+				},
 				{
 					type: 'textinput',
 					label: 'Prop Name',
@@ -1318,8 +1475,15 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwPropClear: {
-			label: 'Prop Clear (Network Link - Beta)',
+			label: 'Prop Clear (Network Link)',
 			options: [
+				{
+					type: 'textinput',
+					label: 'Prop Index',
+					id: 'propIndex',
+					tooltip: 'Index of the Prop you want to clear (1-based)',
+					regex: self.REGEX_NUMBER,
+				},
 				{
 					type: 'textinput',
 					label: 'Prop Name',
@@ -1329,8 +1493,15 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwMessageClear: {
-			label: 'Message Clear (Network Link - Beta)',
+			label: 'Message Clear (Network Link)',
 			options: [
+				{
+					type: 'textinput',
+					label: 'Message Index',
+					id: 'messageIndex',
+					tooltip: 'Index of the Message you want to clear (1-based)',
+					regex: self.REGEX_NUMBER,
+				},
 				{
 					type: 'textinput',
 					label: 'Message Name',
@@ -1340,13 +1511,20 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwTriggerMedia: {
-			label: 'Trigger Media (Network Link - Beta)',
+			label: 'Trigger Media (Network Link)',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Media Playlist Name',
 					id: 'playlistName',
 					tooltip: 'Name of the Media PlayList that contains the media file you want to trigger (Case Sensitive)',
+				},
+				{
+					type: 'textinput',
+					label: 'Media Index',
+					id: 'mediaIndex',
+					tooltip: 'Index of the media file you want to trigger (1-based)',
+					regex: self.REGEX_NUMBER,
 				},
 				{
 					type: 'textinput',
@@ -1357,13 +1535,20 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwTriggerAudio: {
-			label: 'Trigger Audio (Network Link - Beta)',
+			label: 'Trigger Audio (Network Link)',
 			options: [
 				{
 					type: 'textinput',
 					label: 'Audio Playlist Name',
 					id: 'playlistName',
 					tooltip: 'Name of the Audio PlayList that contains the audio file you want to trigger (Case Sensitive)',
+				},
+				{
+					type: 'textinput',
+					label: 'Audio Index',
+					id: 'audioIndex',
+					tooltip: 'Index of the audio file you want to trigger (1-based)',
+					regex: self.REGEX_NUMBER,
 				},
 				{
 					type: 'textinput',
@@ -1374,8 +1559,15 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwVideoInput: {
-			label: 'Trigger Video Input (Network Link - Beta)',
+			label: 'Trigger Video Input (Network Link)',
 			options: [
+				{
+					type: 'textinput',
+					label: 'Video Index',
+					id: 'videoInputIndex',
+					tooltip: 'Index of the video input you want to trigger (1-based)',
+					regex: self.REGEX_NUMBER,
+				},
 				{
 					type: 'textinput',
 					label: 'Video Input Name',
@@ -1385,7 +1577,7 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		nwCustom: {
-			label: 'Custom Action (Network Link - Beta)',
+			label: 'Custom Action (Network Link - Support Use Only)',
 			options: [
 				{
 					type: 'textinput',
@@ -1402,7 +1594,7 @@ instance.prototype.actions = function (system) {
 			],
 		},
 		customAction: {
-			label: 'Custom Action',
+			label: 'Custom Action (Support Use Only)',
 			options: [
 				{
 					type: 'textinput',
@@ -1450,7 +1642,7 @@ instance.prototype.action = function (action) {
 
 			// Allow parsing of optional variable in the slide textfield as int
 			var optSlideIndex
-			self.system.emit('variable_parse', action.options.slide.trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+			self.system.emit('variable_parse', String(action.options.slide).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 				optSlideIndex = value
 			})
 
@@ -1473,7 +1665,7 @@ instance.prototype.action = function (action) {
 
 			// Allow parsing of optional variable in the presentationPath textfield as string
 			var optPath
-			self.system.emit('variable_parse', action.options.path.trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+			self.system.emit('variable_parse', String(action.options.path).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 				optPath = value
 			})
 
@@ -1492,6 +1684,68 @@ instance.prototype.action = function (action) {
 				slideIndex: String(index),
 				// Pro 6 for Windows requires 'presentationPath' to be set.
 				presentationPath: presentationPath,
+			}
+			break
+
+		case 'slideLabel':
+			// Allow parsing of optional variables in all input fields for this action
+			var playlistName
+			self.system.emit('variable_parse', String(action.options.playlistName).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				playlistName = value
+			})
+			var presentationName
+			self.system.emit('variable_parse', String(action.options.presentationName).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				presentationName = value
+			})
+			var slideLabel
+			self.system.emit('variable_parse', String(action.options.slideLabel).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				slideLabel = value
+			})
+
+			// Add new request to internal state and issue request for all playlists (later, code the handles response will see the request stored in internal state and perform the work to complete it)
+			var newSlideByLabelRequest = {}
+			newSlideByLabelRequest.playlistName = playlistName
+			newSlideByLabelRequest.presentationName = presentationName
+			newSlideByLabelRequest.slideLabel = slideLabel
+			self.currentState.internal.awaitingSlideByLabelRequest = newSlideByLabelRequest
+			cmd = {
+				action: 'playlistRequestAll',
+			}
+			break
+		
+		case 'groupSlide':
+			self.log('debug', 'action.options.presentationPath=' + action.options.presentationPath) // TODO: remove
+			// Allow parsing of optional variables in all input fields for this action
+			var groupName
+			self.system.emit('variable_parse', String(action.options.groupName).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				groupName = value
+			})
+			var slideNumber
+			self.system.emit('variable_parse', String(action.options.slideNumber).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				slideNumber = value
+			})
+			var presentationPath = ''
+			self.system.emit('variable_parse', String(action.options.presentationPath).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				presentationPath = value
+			})
+
+			// If presentationPath was blank then auto set to current presenattion.
+			if (presentationPath.length == 0) {
+				presentationPath = self.currentState.dynamicVariables['current_presentation_path']
+			}
+			
+			if (presentationPath !== undefined && presentationPath !== 'undefined' && presentationPath.length > 0) {
+				// Add new request to internal state and issue presentationRequest (later, code the handles the "presentationCurrent" response will see the request stored in internal state and perform the work to complete it)
+				var newGroupSlideRequest = {}
+				newGroupSlideRequest.groupName = groupName
+				newGroupSlideRequest.slideNumber = slideNumber
+				newGroupSlideRequest.presentationPath = presentationPath
+				self.currentState.internal.awaitingGroupSlideRequest = newGroupSlideRequest
+				cmd = {
+					action: 'presentationRequest',
+					presentationPath: presentationPath,
+					presentationSlideQuality: 0
+				}
 			}
 			break
 
@@ -1700,7 +1954,7 @@ instance.prototype.action = function (action) {
 			// If there is only one message value - then allow parsing of optional variables...
 			if (cmd.messageValues.length == 1) {
 				// Allow parsing of optional variable in the Message values textfield
-				self.system.emit('variable_parse', cmd.messageValues[0].trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				self.system.emit('variable_parse', String(cmd.messageValues[0]).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 					cmd.messageValues[0] = String(value)
 				})
 			}
@@ -1749,7 +2003,8 @@ instance.prototype.action = function (action) {
 							name: opt.presentationName
 						},
 						{
-							index: parseInt(opt.slideIndex) - 1
+							index: opt.slideIndex !== undefined && parseInt(opt.slideIndex) >0 ? opt.slideIndex - 1 : null,
+							//name: opt.slideName !== undefined && String(opt.slideName).length > 0 ? opt.slideName : null
 						}
 					]
 				}
@@ -1760,7 +2015,8 @@ instance.prototype.action = function (action) {
 				endpointPath: '/prop/trigger',
 				data: { id:
 					{
-						name: opt.propName
+						index: opt.propIndex !== undefined && parseInt(opt.propIndex) >0 ? opt.propIndex - 1 : null,
+						name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null
 					}
 				}
 			}
@@ -1770,7 +2026,8 @@ instance.prototype.action = function (action) {
 				endpointPath: '/prop/clear',
 				data: { id:
 					{
-						name: opt.propName
+						index: opt.propIndex !== undefined && parseInt(opt.propIndex) >0 ? opt.propIndex - 1 : null,
+						name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null
 					}
 				}
 			}
@@ -1780,7 +2037,8 @@ instance.prototype.action = function (action) {
 				endpointPath: '/message/clear',
 				data: { id:
 					{
-						name: opt.messageName
+						index: opt.messageIndex !== undefined && parseInt(opt.messageIndex) >0 ? opt.messageIndex - 1 : null,
+						name: opt.messageName !== undefined && String(opt.messageName).length > 0 ? opt.messageName : null
 					}
 				}
 			}
@@ -1794,7 +2052,8 @@ instance.prototype.action = function (action) {
 							name: opt.playlistName
 						},
 						{
-							name: opt.mediaName
+							index: opt.mediaIndex !== undefined && parseInt(opt.mediaIndex) >0 ? opt.mediaIndex - 1 : null,
+							name: opt.mediaName !== undefined && String(opt.mediaName).length > 0 ? opt.mediaName : null
 						}
 					]
 				}
@@ -1809,7 +2068,8 @@ instance.prototype.action = function (action) {
 							name: opt.playlistName
 						},
 						{
-							name: opt.audioName
+							index: opt.audioIndex !== undefined && parseInt(opt.audioIndex) >0 ? opt.audioIndex - 1 : null,
+							name: opt.audioName !== undefined && String(opt.audioName).length > 0 ? opt.audioName : null
 						}
 					]
 				}
@@ -1820,7 +2080,8 @@ instance.prototype.action = function (action) {
 				endpointPath: '/trigger/video_input',
 				data: { id:
 					{
-						name: opt.videoInputName
+						index: opt.videoInputIndex !== undefined && parseInt(opt.videoInputIndex) >0 ? opt.videoInputIndex - 1 : null,
+						name: opt.videoInputName !== undefined && String(opt.videoInputName).length > 0 ? opt.videoInputName : null
 					}
 				}
 			}
@@ -1837,7 +2098,7 @@ instance.prototype.action = function (action) {
 		if (self.currentStatus !== self.STATUS_ERROR) {
 			try {
 				var cmdJSON = JSON.stringify(cmd)
-				self.log('debug','cmdJSON: ' + cmdJSON)
+				self.log('debug','Sending JSON: ' + cmdJSON)
 				self.socket.send(cmdJSON)
 			} catch (e) {
 				self.log('debug','NETWORK ' + e)
@@ -1917,6 +2178,32 @@ instance.prototype.init_feedbacks = function () {
 				id: 'pro7StageLayoutUUID',
 				tooltip: 'Choose the stage display layout to trigger above color change',
 				choices: self.currentState.internal.pro7StageLayouts,
+			},
+		],
+	}
+
+	feedbacks['active_look'] = {
+		label: 'Change colors based on active look',
+		description: 'If the specified look display is active, change colors of the bank',
+		options: [
+			{
+				type: 'colorpicker',
+				label: 'Foreground color',
+				id: 'fg',
+				default: self.rgb(255, 255, 255),
+			},
+			{
+				type: 'colorpicker',
+				label: 'Background color',
+				id: 'bg',
+				default: self.rgb(0, 153, 51),
+			},
+			{
+				type: 'dropdown',
+				label: 'Look',
+				id: 'look',
+				tooltip: 'Choose the Look to trigger above color change',
+				choices: self.currentState.internal.pro7Looks,
 			},
 		],
 	}
@@ -2056,6 +2343,12 @@ instance.prototype.feedback = function (feedback, bank) {
 			return { color: feedback.options.fg, bgcolor: feedback.options.bg }
 		}
 	}
+
+	if (feedback.type == 'active_look') {
+		if (self.currentState.internal.current_pro7_look_id == feedback.options.look) {
+			return { color: feedback.options.fg, bgcolor: feedback.options.bg }
+		}
+	}
 }
 
 /**
@@ -2145,7 +2438,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 			setTimeout(function () {
 				self.getProPresenterState()
 			}, 800)
-			self.log('debug', 'presentationSlideIndex: ' + slideIndex)
+			self.log('debug', 'Slide Triggered: ' + String(objData.presentationPath) + '.' + String(objData.slideIndex) + ' on layerid: ' + String(objData.presentationDestination))
 
 			// Trigger same slide in follower ProPresenter (If configured and connected)
 			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
@@ -2239,6 +2532,96 @@ instance.prototype.onWebSocketMessage = function (message) {
 
 		case 'presentationCurrent':
 			var objPresentation = objData.presentation
+
+			// Check for awaiting SlideByLabel request
+			// If found, we need to interate over the groups/slides nested array (linearly in order) - counting slides until it finds a match...
+			// ...then we will have slideIndex to use in the {"action":"presentationTriggerIndex","slideIndex":[SLIDE INDEX],"presentationPath":"[PRESENTATION PATH]"} 
+			if (self.currentState.internal.awaitingSlideByLabelRequest.hasOwnProperty('presentationPath') && self.currentState.internal.awaitingSlideByLabelRequest.presentationPath == objData.presentationPath) {
+				self.log('debug', 'Found matching awaitingSlideByLabelRequest: ' + JSON.stringify(self.currentState.internal.awaitingSlideByLabelRequest))
+				var slideIndex = 0
+				var foundSlide = false
+				for (var presentationSlideGroupsIndex = 0; presentationSlideGroupsIndex < objPresentation.presentationSlideGroups.length; presentationSlideGroupsIndex++) {
+					for (var groupSlidesIndex = 0; groupSlidesIndex < objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides.length; groupSlidesIndex++) {
+						if (objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides[groupSlidesIndex].slideLabel == self.currentState.internal.awaitingSlideByLabelRequest.slideLabel) {
+							self.log('debug','Labels match: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides[groupSlidesIndex].slideLabel + '=' + self.currentState.internal.awaitingSlideByLabelRequest.slideLabel + ' at index: ' + slideIndex) 
+							foundSlide = true
+						}
+						if (foundSlide) {
+							break
+						} else {
+							slideIndex++
+						}
+					}
+					if (foundSlide) {
+						break
+					}
+				}
+				if (foundSlide) {
+					// we have finally found the slide, within it's presentation & playlist - send presentationTriggerIndex to trigger it
+					cmd = {
+						action: 'presentationTriggerIndex',
+						slideIndex: String(slideIndex),
+						presentationPath: self.currentState.internal.awaitingSlideByLabelRequest.presentationPath
+					}
+					self.log('debug', 'cmd=' + JSON.stringify(cmd))
+					try {
+						if (self.socket.readyState == 1 /*OPEN*/) {
+							self.socket.send(JSON.stringify(cmd))
+						}
+					} catch (e) {
+						self.log('debug','Socket Send Error: ' + e.message)
+					}
+				} else {
+					self.log('debug','Could not find slide with label: ' + self.currentState.internal.awaitingSlideByLabelRequest.slideLabel)
+				}
+				self.currentState.internal.awaitingSlideByLabelRequest = {} // All done, reset awaitingSlideByLabelRequest
+			}
+
+			// Check for awaiting GroupSlide request
+			// If found, we need to interate over the groups/slides nested array (linearly in order) - to find specified slide in specified group
+			// ...then we will have slideIndex to use in the {"action":"presentationTriggerIndex","slideIndex":[SLIDE INDEX],"presentationPath":"[PRESENTATION PATH]"} 
+			if (self.currentState.internal.awaitingGroupSlideRequest.hasOwnProperty('presentationPath') && self.currentState.internal.awaitingGroupSlideRequest.presentationPath == objData.presentationPath) {
+				self.log('debug', 'Found matching awaitingGroupSlideRequest: ' + JSON.stringify(self.currentState.internal.awaitingGroupSlideRequest))
+				var slideIndex = 0
+				var foundSlide = false
+				for (var presentationSlideGroupsIndex = 0; presentationSlideGroupsIndex < objPresentation.presentationSlideGroups.length; presentationSlideGroupsIndex++) {
+					for (var groupSlidesIndex = 0; groupSlidesIndex < objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides.length; groupSlidesIndex++) {
+						self.log('debug', 'groupname: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName + ' groupSlidesIndex: ' + groupSlidesIndex + ' total slideIndex: ' + slideIndex) //TODO: remove
+						if (objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName == self.currentState.internal.awaitingGroupSlideRequest.groupName && groupSlidesIndex == self.currentState.internal.awaitingGroupSlideRequest.slideNumber - 1 ) {
+							self.log('debug','Found Group Slide: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName  + '=' + self.currentState.internal.awaitingGroupSlideRequest.groupName + ' at index: ' + slideIndex) 
+							foundSlide = true
+						}
+						if (foundSlide) {
+							break
+						} else {
+							slideIndex++
+						}
+					}
+					if (foundSlide) {
+						break
+					}
+				}
+				if (foundSlide) {
+					// we have finally found the slide, within it's presentation & playlist - send presentationTriggerIndex to trigger it
+					cmd = {
+						action: 'presentationTriggerIndex',
+						slideIndex: String(slideIndex),
+						presentationPath: self.currentState.internal.awaitingGroupSlideRequest.presentationPath
+					}
+					self.log('debug', 'cmd=' + JSON.stringify(cmd))
+					try {
+						if (self.socket.readyState == 1 /*OPEN*/) {
+							self.socket.send(JSON.stringify(cmd))
+						}
+					} catch (e) {
+						self.log('debug','Socket Send Error: ' + e.message)
+					}
+				} else {
+					self.log('debug','Could not find slide ' + self.currentState.internal.awaitingGroupSlideRequest.slideNumber + ' in group: ' + self.currentState.internal.awaitingGroupSlideRequest.groupName)
+				}
+				self.currentState.internal.awaitingGroupSlideRequest = {} // All done, reset awaitingGroupSlideRequest
+			}
+
 
 			// If playing from the library on Mac, the presentationPath here will be the full
 			//	path to the document on the user's computer ('/Users/JohnDoe/.../filename.pro6'),
@@ -2449,18 +2832,42 @@ instance.prototype.onWebSocketMessage = function (message) {
 
 		case 'looksRequest': // Response from sending looksRequest
 			if (objData.hasOwnProperty('looks')) {
-				self.currentState.internal.pro7Looks = []
+				var currentLooks = []
 				objData.looks.forEach(function (look) {
 					var lookName = look['lookName']
 					var lookID = look['lookID']
-					self.currentState.internal.pro7Looks.push({ id: lookID, label: lookName })
+					currentLooks.push({ id: lookID, label: lookName })
 				})
+
 				// Update dyn var for current look name
 				self.updateVariable('current_pro7_look_name', objData.activeLook.lookName)
+				// Keep track of ID for current look
+				self.currentState.internal.current_pro7_look_id = objData.activeLook.lookID
 
-				self.log('info', objData.activeLook.lookName)
-				self.log('info', 'Got Pro7 Looks List')
-				self.actions() // Update dropdown lists for Looks
+				self.log('debug', 'Got Pro7 Looks List, Active Look = ' + objData.activeLook.lookName)
+
+				// Compare currentLooks with self.currentState.internal.pro7Looks If it is different then update list and UI
+				var looksChanged = false
+				if (self.currentState.internal.pro7Looks.length == currentLooks.length) {
+					for (var index=0; index < self.currentState.internal.pro7Looks.length; index++) {
+						var internalLook = self.currentState.internal.pro7Looks[index]
+						if (internalLook.lookName != currentLooks[index].lookName || internalLook.lookID != currentLooks[index].lookID) {
+							looksChanged = true
+							break
+						}
+					}
+				} else {
+					looksChanged = true
+				}
+
+				if (looksChanged) {
+					self.log('debug', 'Looks changed. Updated internal list ')
+					self.currentState.internal.pro7Looks = currentLooks.slice() // Update .internal.pro7Looks to same as currentLooks
+					self.actions() // Update dropdown lists for Looks
+					self.init_feedbacks() // Update dropdown lists for look feedback.
+				}
+
+				self.checkFeedbacks('active_look')
 			}
 			break
 
@@ -2476,6 +2883,27 @@ instance.prototype.onWebSocketMessage = function (message) {
 				self.log('info', 'Got Pro7 Macros List')
 				self.actions() // Update dropdown lists for Looks
 			}
+			break
+		
+		case 'playlistRequestAll':
+			self.log('debug', 'Received All PlayLists')
+			// Check if there is an awaiting SlideByLabelRequest...
+			// ..If so, cAll recursivelyScanPlaylistsObjToTriggerSlideByLabel() to find presentation path
+			//  Update self.currentState.internal.awaitingSlideByLabelRequest with the matching path and then send a presentationRequest.
+			//  presentationRequest will return a presetationCurrent response, and because there is an waiting SlideByLabelRequest, the response will be searched for matching slide so the request can finally be completed.
+			var awaitingSlideByLabelRequest = self.currentState.internal.awaitingSlideByLabelRequest
+			if (awaitingSlideByLabelRequest.hasOwnProperty('playlistName') && awaitingSlideByLabelRequest.hasOwnProperty('presentationName') && awaitingSlideByLabelRequest.hasOwnProperty('slideLabel')) {
+				self.log('debug', 'Scanning playlists for: [' + awaitingSlideByLabelRequest.playlistName + ', ' + awaitingSlideByLabelRequest.presentationName  + ', ' + awaitingSlideByLabelRequest.slideLabel + ']')
+				
+				// Prepare for recursive search (using self.currentState.internal.matchingPlaylistItemFound as a flag between recursive calls to recursivelyScanPlaylistsObjToTriggerSlideByLabel)
+				try {
+					self.currentState.internal.matchingPlaylistItemFound = false
+					self.recursivelyScanPlaylistsObjToTriggerSlideByLabel(JSON.parse(message), awaitingSlideByLabelRequest.playlistName, awaitingSlideByLabelRequest.presentationName, awaitingSlideByLabelRequest.slideLabel)
+				} catch (err) {
+					self.log('debug', err.message)
+				}				
+			}
+			break
 	}
 
 	if (
@@ -2764,6 +3192,45 @@ instance.prototype.convertToTotalSeconds = function (clockTimeString) {
 	}
 	
 	return totalSeconds
+}
+
+/*
+* Recursively Scan PlaylistsObject to find first presentation that matches given name, in the first playlist that matches given name.
+* Calls presentationRequest (whose response handler will complete the request)
+*/
+
+instance.prototype.recursivelyScanPlaylistsObjToTriggerSlideByLabel = function (playlistObj, playlistName, presentationName, slideLabel) {
+	var self = this
+
+	Object.keys(playlistObj).forEach(key => {
+		if (self.currentState.internal.matchingPlaylistItemFound) {
+			return
+		}
+		if (playlistObj.hasOwnProperty('playlistName') && playlistObj.hasOwnProperty('playlist') && playlistObj.playlistName == playlistName) {
+			var matchingPlaylistItem = playlistObj.playlist.find(playlistItem => playlistItem.hasOwnProperty('playlistItemName') && playlistItem.playlistItemName == presentationName) // TODO: Consider Using Regex to enable optional matching with any - [ arrangement ] suffix
+			self.currentState.internal.matchingPlaylistItemFound=true
+			self.log('debug', 'Found match: ' + JSON.stringify(matchingPlaylistItem))
+			// Update self.currentState.internal.awaitingSlideByLabelRequest with the matching path (so response to presentationRequest can check)
+			self.currentState.internal.awaitingSlideByLabelRequest.presentationPath = matchingPlaylistItem.playlistItemLocation
+			// send presentationRequest
+			cmd = {
+				action: "presentationRequest",
+				presentationPath: self.currentState.internal.awaitingSlideByLabelRequest.presentationPath,
+				presentationSlideQuality: 0
+			}
+			try {
+				if (self.socket.readyState == 1 /*OPEN*/) {
+					self.socket.send(JSON.stringify(cmd))
+				}
+			} catch (e) {
+				self.log('debug','Socket Send Error: ' + e.message)
+			}
+		}
+	
+		if (typeof playlistObj[key] === 'object' && playlistObj[key] !== null) {
+			self.recursivelyScanPlaylistsObjToTriggerSlideByLabel(playlistObj[key],playlistName, presentationName, slideLabel)
+			}
+		})
 }
 
 instance_skel.extendedBy(instance)
