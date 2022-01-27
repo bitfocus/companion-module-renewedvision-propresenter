@@ -5,51 +5,43 @@ This Companion module allows you to remotely control ProPresenter 6 or 7 with th
 Using this Companion module, each LCD button on your Stream Deck can be setup with custom text (or images) and ProPresenter actions. 
 
 ![StreamDeck1.png](documentation/images/StreamDeck1.png)<br>
-_An Example - You can also use Companion without a Stream Deck through it's web buttons/emulator._
+_Example. (You can also use Companion without a Stream Deck through it's web buttons/emulator)_
 
-## Setup Guide.
-
+## Configure ProPresenter To Be Controlled By Companion:
 This Companion module will connect to ProPresenter via a network connection (using the same connection that the official mobile remote app uses).
-You can run Companion on the same computer or on a different computer on the same network.
+You can run Companion on the same computer as ProPresenter itself or on different computer(s) on the same network.
 
-## Enable networking in ProPresenter if you haven't already done so...
-## Also enable Network Link to use new beta actions
-1. Open ProPresenter and then open the "ProPresenter (6)" Menu.
+1. Open ProPresenter and then open the "ProPresenter" Menu.
 2. Select "Preferences..." to open the ProPresenter Preferences window.
 3. Select the Network tab to configure ProPresenter network preferences.
 4. Check the "Enable Network" option (if it is not already enabled).
 5. Check the "Enable ProPresenter Remote" option (if it is not already enabled).
 6. Check the "Controller" option (if it is not already enabled).
 7. Enter a controller password (or take note of the existing controller password).
-8. Take a note of the Port number (to the right of the Network Name) - this is typically 4-5 digits.
-9. If you would like your StreamDeck to be able to display "Video CountDown" timers, then you will also need to check the option for "Enable Stage Display App" and enter a new password (or take note of the existing password).
-9. Close ProPresenter preferences window.
+8. Take a note of the Port number and IP Address.
+    > Tip: If you want to connect to ProPresenter on the *same* computer that you are running Companion on, you can use the special loopback IP address of 127.0.0.1 *Older versions of ProPresenter do not show the IP address. Use your knowledge of networking (or Google how) to get the IP address (or hostname) of the computer running ProPresenter*.
+9. If you would like your Stream Deck to be able to display "Video CountDown" timers, then you will also need to check the option for "Enable Stage Display App" and enter a new password (or take note of the existing password).
+10. Some of the newer actions in this module require the new network "Link" (Pro7.8+) to also be enabled (you don't need to join any group - just enable Network Link)
+    > The items in red are bare minimum to get Companion working with ProPresenter 6/7.  The items in orange are optional extra settings that enable more features and actions in this module:
+    ![Settings.png](documentation/images/Settings.png)
 
-## Get the IP address (or hostname) of the computer running ProPresenter
-You can control ProPresenter on any computer within the same network, you just need to know the ProPresenter computer IP address (or hostname). Use your knowledge of networking (or Google how) to get the IP address (or hostname) of the *computer running ProPresenter*.
 
-### Networking Tips:
-
-If you want to connect to ProPresenter on the *same* computer that you are running Companion on, you can use the special loopback IP address of 127.0.0.1 (which is the default setting)
-
+### Performance Tip
 If the computers running ProPresenter and Companion are separate computers and they have the option of using either a wireless or a wired network connection, then it is recommended to use a wired network connection whenever possible. This is because a wired network connection is *typically* more reliable and has better latency - which is nice for remote control.
 
 ## Configure the ProPresenter module in Companion
 Now you have all the info you need to go to the ProPresenter Companion module configuration and enter the IP address of the computer running ProPresenter as well as the ProPresenter port number and controller password that you took note of from ProPresenter network preferences.
+![ModuleRequiredSettings.png](documentation/images/ModuleRequiredSettings.png)
 
 If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
-
-N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
-
-*Optionally, you can also configure a connection to the Stage Display App port if you want to track the Video CountDown Timer for any video that is playing.*
+![ModuleStageSettings.png](documentation/images/ModuleStageSettings.png)<br>
+> N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
 _**⚠️ Pro7/Windows users ⚠️**  
-Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons. In addition there is another option to configure the **type** of the presentation request.  Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
+Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons.<br>
+However, there is also another option to configure the **type** of the presentation request.  Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
 
-## Optional (Beta) Leader-Follower Feature
-You can optionally configure a second connection to a "Follower" ProPresenter 7 computer to have the module automatically forward slide trigger and clears actions to the Follower as you click on slides (or use clear actions) on the main ProPresenter computer (The Leader).  This emulates the old Pro6 Master-Control module.  It's not complete as some actions cannot be captured by the module to forward to the Follower (the remote protocol does not send notifications for every action - but as it improves, this module will be updated).  For now basic slide triggers and some clear actions do work. - This won't really be updated any further as there is now a much better "Network Link" feature in Pro7.8+
-
-# Commands
+# Actions (Commands) - What can you do with ProPresenter?
 ## Slides
 Command | Description
 ------- | -----------
@@ -208,3 +200,5 @@ Trigger Audio (Network Link - Beta) | Trigger a specific Audio Item by Playlist 
 Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by name
 Custom Action (Network Link - Beta) | Send custom JSON to custom endpoint (Advanced use only)
 
+## Optional (Beta) Leader-Follower Feature
+You can optionally configure a second connection to a "Follower" ProPresenter 7 computer to have the module automatically forward slide trigger and clears actions to the Follower as you click on slides (or use clear actions) on the main ProPresenter computer (The Leader).  This emulates the old Pro6 Master-Control module.  It's not complete as some actions cannot be captured by the module to forward to the Follower (the remote protocol does not send notifications for every action - but as it improves, this module will be updated).  For now basic slide triggers and some clear actions do work. - This won't really be updated any further as there is now a much better "Network Link" feature in Pro7.8+
