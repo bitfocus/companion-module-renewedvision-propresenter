@@ -1,8 +1,8 @@
-# Companion Module for [ProPresenter](https://renewedvision.com/propresenter/) By Renewed Vision
+# Companion Module for Renewed Vision's [ProPresenter](https://renewedvision.com/propresenter/)
 
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
-## Reporting An Issue/Bug:
+## ⚠️ Reporting An Issue:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
 - First, read the "Change Log" below to see if any new (Beta Builds) have been released after the version you are currently running that addresses your issue.
 - If you cannot see your issue as a fix in a later version the click the link to visit the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues)
@@ -10,9 +10,10 @@ All issues/bugs are reported in tracked in the [Issues List](https://github.com/
 - Create a new issue and please include lots of information with screenshots and instructions/steps for how to reproduce the issue.
 Please make sure to include the debug log at the time of the issue and version details for Companion, ProPresenter and your Operating System.
 
-## Change Log:
+<br><br>
 
-### v2.5.0 (Beta Build)
+## 📝 Change Log:
+### v2.5.0 (Beta Build TBA)
 - Added this README.md
 - (New) Updated config UI to make more user friendly.
 - (New) Added config option to poll Looks to enable feedback of active look from Pro 7 on Windows - (Feedback already works for Pro7 on Mac without polling)
