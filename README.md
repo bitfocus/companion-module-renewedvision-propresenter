@@ -1,5 +1,7 @@
 # Companion Module for [ProPresenter](https://renewedvision.com/propresenter/) By Renewed Vision
 
+See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
+
 ## Reporting An Issue/Bug:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
 - First, read the "Change Log" below to see if any new (Beta Builds) have been released after the version you are currently running that addresses your issue.
