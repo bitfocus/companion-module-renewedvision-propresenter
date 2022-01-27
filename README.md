@@ -12,31 +12,31 @@ Please make sure to include the debug log at the time of the issue and version d
 
 ## Change Log:
 
-### v2.5.0 (Beta)
+### v2.5.0 (Beta Build)
 - Added this README.md
 - TODO: List new features/bugfixes since v2.4.6
 - Etc
 
-### v2.4.6
+### v2.4.6 (Beta Build 3804)
 - (New) Module variables to correctly track presentations that target announcement layer: 'Current Announcement slide number' & 'Current Announcement Presentation Path'
 - (New) Config option to configure "Manual" Type of Presentation Info Requests that Pro7/Windows users can turn on to avoid performance issues when the option to "Send Presentation Info Requests To ProPresenter" is enabled.
 - (New/Bugfix) New config option to configure "Manual" Type of Presentation Info Requests that Pro7/Windows users can turn on to avoid performance issues when the option to "Send Presentation Info Requests To ProPresenter" is enabled.
 - (Bugfix) Incorrect values for current presentation path/slide/remaining slide when an annoucement presentation was running in background.
 - (Bugfix) Pro6/Windows failed to update vars for (watched/all) clock
 
-### v2.4.5
+### v2.4.5 (Beta Build 3803)
 - (New) Added new variable for clock total seconds: 'pro7_clock_n_totalseconds' (where n = clock index) _This is good for feedback - eg change colour when countdown timer value is <0_
 - (New) Allow + or - prefix to increment/decrement clockTimes (based on current value) in Update Clock action.
 - (Bugfix) Fixed bug with hourless clock variables (was dropping negative sign for negative times)
 
-### v2.4.4
+### v2.4.4 (Beta Build 3791)
 - (Bugfix) Minor bugfix for two new beta actions (Clear Prop, Clear Message)
 
-### v2.4.3
+### v2.4.3 (Beta Build 3785)
 - (New) You can now use module or custom variables in the Message TokenValues Field in a send Message action
 - (Bugfix) Fixed major bug in 2.4.2 where previous NetworkLink actions were being re-sent with subsquent normal actions (and visa-versa)
 
-### v2.4.2
+### v2.4.2 (Beta Build 3766)
 - (New) Allow hostname in config for ProPresenter
 - (New) Add module var "current_presentation_path"
 - (New) Full support for dynamically added module vars for all stage screens and clocks (now show in Ui and can be used in triggers etc).
@@ -52,21 +52,21 @@ Please make sure to include the debug log at the time of the issue and version d
     - Custom Action (Network Link - Beta) - Send custom JSON to custom Endpoint Path
 - (Bugfix) Fixed issue with follower beta feature not properly tracking when disconnected and causing issues.
 
-### v2.4.1
+### v2.4.1 (Beta Build 3693)
 - (New) This version dynamically adds vars for all timers/clocks:
     - $(propresenter:pro7_clock_n) = hh:mm:ss for clock with index n
     - $(propresenter:pro7_clock_n_hourless) = mm:ss for clock with index n
     - (Still keeping old single var $(propresenter:watched_clock_current_time) for backwards compatibility in users setups)
 
-### v2.4.0
+### v2.4.0 (Beta Build ????)
 - (New) Pro7.6+ supports triggering macros and setting looks via the remote protocol. Added actions for triggering Looks/Macros!
 - (New) Added module var for current_pro7_look_name
 
-### v2.3.7
+### v2.3.7 (Companion 2.1.4 Release Build)
 - (New) Added a customAction - where you can type JSON message to send to ProPresenter (allows user to create new action before this mofule is updated - advanced use only - as ProPresenter is easy to crash with invalid messsages!)
 - (Bugfix) Pro7.4.2 requires changes to API. Version must be at least 701 - or else connection is refused. Also: "presenationTriggerNext" (and Previous) must now include presentationDestination (which works fine with older versions of ProPresenter)
 
-### v2.3.6
+### v2.3.6 (Beta Build ????)
 - (New) Leader-Follower beta config option to mimic Pro6 Master-Slave setup. 
 
 
