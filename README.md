@@ -17,11 +17,12 @@ Please make sure to include the debug log at the time of the issue and version d
 - (New) Updated config UI to make more user friendly.
 - (New) Added config option to poll Looks to enable feedback of active look from Pro 7 on Windows - (Feedback already works for Pro7 on Mac without polling)
 - (New) New action "Specific Slide With Label" - Trigger a slide by specifiying the playlist name, presentation name and the custom slide label that has been applied to the slide. Matches first playlist, presentation and slide label found. Finally you can trigger a slide in a presentation - no matter where it is moved to! (Also works with variables)
+- (New) Added feedback for active Look
 - (New) New action "Specific Slide In A Group" - Trigger a slide in a specified group name by index (eg 1st slide of "Chorus", 1st slide of "Bridge"). Can target the current presentation or a even specific presentation using a presentationPath. (Also works with variables!)
 - (New) Added option for using either Name OR Index with many of the new Network link actions. If you you supply both an index and a name, the index will be used.
 - (Update) Removed "- beta" label from Network link actions.
 - (Bugfix) Minor bugfix with integer action parameters
-- Added feedback for active Look
+
 
 ### v2.4.6 (Beta Build 3804)
 - (New) Module variables to correctly track presentations that target announcement layer: 'Current Announcement slide number' & 'Current Announcement Presentation Path'
