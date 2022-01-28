@@ -30,10 +30,10 @@ You can run Companion on the same computer as ProPresenter itself or on differen
 If the computers running ProPresenter and Companion are separate computers and they have the option of using either a wireless or a wired network connection, then it is recommended to use a wired network connection whenever possible. This is because a wired network connection is *typically* more reliable and has better latency - which is nice for remote control.
 
 ## Configure the ProPresenter module in Companion
-Now you have all the info you need to go to the ProPresenter Companion module configuration and enter the IP address of the computer running ProPresenter as well as the ProPresenter port number and controller password that you took note of from ProPresenter network preferences.
-![ModuleRequiredSettings.png](documentation/images/ModuleRequiredSettings.png)
+Now you have all the info you need to go to the ProPresenter Companion module configuration and enter the IP address of the computer running ProPresenter as well as the ProPresenter port number and controller password that you took note of from ProPresenter network preferences.<br>
+![ModuleRequiredSettings.png](documentation/images/ModuleRequiredSettings.png)<br>
 
-If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.
+If you chose to also enable the stage display app option in ProPresenter preferences (so your StreamDeck can display "Video Countdown" timers) then you can also select "Yes" for the configuration field "Connect to StageDisplay (Only required for video countdown timer)" and enter the stage display password.<br>
 ![ModuleStageSettings.png](documentation/images/ModuleStageSettings.png)<br>
 > N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
@@ -47,60 +47,65 @@ Command | Description
 ------- | -----------
 Next&nbsp;Slide | Advances to the next slide in the current document. If at the end of a document, will advance to the start of the next document in the playlist.
 Previous&nbsp;Slide | Moves to the previous slide in the current document. If at the start of a document, will move to the start of the previous document in the playlist.
-Specific&nbsp;Slide | Moves to that presentation/slide number. See the `Specific Slide` section below.
+Specific&nbsp;Slide | Moves to that presentation/slide number. Supports variables as inputs. See the `Notes About Specific Slide` section below.
+Specific Slide With Label | Trigger a specific slide by Playlist name, Presentation name and Slide Label. _Give a custom label to any slide and you can trigger it!_
+Specific Slide In A Group | Trigger a specific slide of a given Group Name (eg Slide 1 of the group "Chorus"). Defaults to the current presentation - but you can specify a specific presentation if you want. _You need to click a slide in a presenation to make that presentation "Current" - Simply selecting a presentation without clicking any of its slides will NOT make it current._ 
+Specific Slide (Network Link) | Trigger a specific slide by Playlist name, Presentation name and Slide Index. (Requires Pro7.8+ with Network Link enabled)
 
-### Specific Slide
-This action has two parameters:
 
-**Slide Number**: Moves to the slide number specified.
-
-A whole number greater than 0 will move the presentation to that slide number.
-
-A slide number of `0` will trigger the current slide, which can be used to bring back a slide that was cleared using `Clear All` or `Clear Slide`.
-
-A relative number (prefixed with `+` or `-`) will move the presentation +/- that many slides. `+3` will jump ahead three slides, and `-2` will jump back two slides. Try to avoid using `-1` or `+1` relative numbers; use the `Next Slide` and `Previous Slide` actions instead, as they perform better.
-
-**Presentation Path**: Lets you trigger a slide in a different presentation, even from a different playlist.
-
-*Important: Presentation path numbering starts at 0, meaning `0` will trigger a slide in the first presentation in the playlist.*
-
-A single number, like `3`, will let you trigger a slide in the *fourth* presentation in the **current playlist**.
-
-A path like `1:3` will trigger presentation #4 in playlist #2.
-
-Note that you can use Companion custom or module variables in the Slide Number and Presentation Path fields.
-
-Playlists in groups (or nested groups) are identified using periods. `1.1.0:2` means "The second playlist is a group. The second item in that group is another group. Select the first playlist in that group. Choose the third presentation in the playlist."
-
-The below image may make this more clear:
-
-![specific-slide-playlist-indexing](documentation/images/specific-slide-playlist-indexing.png)
-
-Note: When indexing presentations in a playlist to determine the presentation path value, you must also include/count any headers. 
-
-Example Playlist:
-
-* Header A (index=0)
-  * Presentation A (index=1)
-* Header B (index=2)
-  * Presentation B (index=3)
-  * Presentation C (index=4)
+> ### Notes About Specific Slide
+> This action has two parameters:
+> 
+> **Slide Number**: Moves to the slide number specified.
+> 
+> A whole number greater than 0 will move the presentation to that slide number.
+> 
+> A slide number of `0` will trigger the current slide, which can be used to bring back a slide that was cleared using `Clear All` or `Clear Slide`.
+> 
+> A relative number (prefixed with `+` or `-`) will move the presentation +/- that many slides. `+3` will jump ahead three slides, and `-2` will jump back two slides. Try to avoid using `-1` or `+1` relative numbers; use the `Next Slide` and `Previous Slide` actions instead, as they perform better.
+> 
+> **Presentation Path**: Lets you trigger a slide in a different presentation, even from a different playlist.
+> 
+> *Important: Presentation path numbering starts at 0, meaning `0` will trigger a slide in the first presentation in the playlist.*
+> 
+> A single number, like `3`, will let you trigger a slide in the *fourth* presentation in the **current playlist**.
+> 
+> A path like `1:3` will trigger presentation #4 in playlist #2.
+> 
+> Note that you can use Companion custom or module variables in the Slide Number and Presentation Path fields.
+> 
+> Playlists in groups (or nested groups) are identified using periods. `1.1.0:2` means "The second playlist is a group. The second item in that group is another group. Select the first playlist in that group. Choose the third presentation in the playlist."
+> 
+> The below image may make this more clear:
+> 
+> ![specific-slide-playlist-indexing](documentation/images/specific-slide-playlist-indexing.png)
+> 
+> Note: When indexing presentations in a playlist to determine the presentation path value, you must also include/count any headers. 
+> 
+> Example Playlist:
+> 
+> * Header A (index=0)
+>   * Presentation A (index=1)
+> * Header B (index=2)
+>   * Presentation B (index=3)
+>   * Presentation C (index=4)
 
 ## Pro7 Looks
 Command | Description
 ------- | -----------
-Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7
+Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7.  Feedback available to change button colors when Look is live. _The list of Looks is updated after you have connected to Pro7._ 
 
 ## Pro7 Macros
 Command | Description
 ------- | -----------
-Pro7&nbsp;Trigger&nbsp;Macro | Choose a Macro to trigger in Pro7
+Pro7&nbsp;Trigger&nbsp;Macro | Choose a Macro to trigger in Pro7. _The list of Macros is updated after you have connected to Pro7._
 
 ## Audio Cues
 Command | Description
 ------- | -----------
 Audio&nbsp;Start&nbsp;Cue | Start a specific audio cue in an audio-bin playlist.  Uses the same numerical format to specify the path of the audio item (see Presentation Path explanation above)
 Audio&nbsp;Play/Pause | Pause (or resume playing) the currently playing (or paused) audio.
+Trigger Audio (Network Link) | Trigger any audio in the audio bin using audio Playlist Name, and _either_ the Index or Name of the audio file. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
 
 
 ## Clear/Logo
@@ -112,15 +117,17 @@ Clear&nbsp;Background | Clears only the background layer
 Clear&nbsp;Slide | Clears the current slide (foreground and background)
 Clear&nbsp;Telestrator | Clears all annotations drawn with the telestrator
 Clear&nbsp;to&nbsp;Logo | Clears all the layers and shows the logo image set in ProPresenter
+Prop Clear (Network Link) | Clear a Prop, specified by _either_ the Index or Name of the Prop. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+Message Clear (Network Link) | Clear a Message, specified by _either_ the Index or Name of the Message. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
 
-### Clear All
-Note: When the `Clear All` action is triggered against ProPresenter for Windows, the current slide will be lost but on Mac it's preserved.
-
-For example, if you're on slide #5, trigger `Clear All`, and then trigger `Next Slide`:
-- On Mac you'll be on slide #6
-- On Windows, you'll be on slide #1
-
-You can work around this PC limitation by using the `Specific Slide` action with a relative slide number of `+1` to move to the next slide. This would move you to slide #6 after the `Clear All` action.
+> ### Clear All Notes
+> Note: For some versions of ProPresenter, when the `Clear All` action is triggered against ProPresenter for Windows, the current slide will be lost but on Mac it's preserved.
+> 
+> For example, if you're on slide #5, trigger `Clear All`, and then trigger `Next Slide`:
+> - On Mac you'll be on slide #6
+> - On Windows, you'll be on slide #1
+> 
+> You can work around this PC limitation by using the `Specific Slide` action with a relative slide number of `+1` to move to the next slide. This would move you to slide #6 after the `Clear All` action.
 
 ## Messages (On Output screen)
 Command | Description
@@ -147,15 +154,15 @@ Command | Description
 Start&nbsp;Clock | Starts clock (timer) - identified by index (0 based)
 Stop&nbsp;Clock | Stops clock (timer) - identified by index (0 based)
 Reset&nbsp;Clock | Resets clock (timer) - identified by index (0 based)
-Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the type of clock as either Countdown Timer, Countdown To Time or Elapsed Time. (Note that any clock you update will be changed to the the selected type.)  "Duration" is the new duration value for the count-down timer in the format HH:MM:SS. You can optionally add a + or - prefix to update the clock with a relative value based on it's current time. (It is also the starting time for Elapsed Time clocks. You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Countdown To Time clocks.
+Update&nbsp;Clock | Update clock/timer with a new duration - identified by index (0 based). You must specify the Name and Type of clock in an update action - as they always update the clock. Countdown durations etc are entered in format HH:MM:SS. You can optionally add a + or - prefix to add or subtract time to/from the current time of the clock.  You may also use a shorthand format if you like. You can, if you want, leave out the HH and/or the MM values and they will default to zero - you can also leave out one or both of the ":" to enter just mins and/or seconds.  You can control overrun for all clock types.  AM/PM is only needed for Countdown To Time clocks.
 
-**Tip: One-Touch Preset CountDown Timers.**
-If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
-1. *Update CountDown Clock* - Set new duration value of the count-down timer. This new value will be used when the timer is next reset.
-2. *Reset Clock* - Stop the count-down timer if running and reset current value back to duration. You  might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
-3. *Start Clock* - Start the count-down timer running. You might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
-
-Use *relative delays*, to ensure these three action arrive in the correct order (or if you prefer absolute delays, make sure the second action has less delay than the third)
+> **Tip: One-Touch Preset CountDown Timers.**
+> If you use a lot of timers with commonly used values for duration, you might like to setup a few buttons that automatically reset and restart a count-down timer for your most commonly used durations. To make a single button do that for you, you can chain together the following three actions:
+> 1. *Update CountDown Clock* - Set new duration value of the count-down timer. This new value will be used when the timer is next reset.
+> 2. *Reset Clock* - Stop the count-down timer if running and reset current value back to duration. You  might like to add a little delay (say 100-300ms) to ensure > ProPresenter has time to process previous action.
+> 3. *Start Clock* - Start the count-down timer running. You might like to add a little delay (say 100-300ms) to ensure ProPresenter has time to process previous action.
+> 
+> Use increasing delay amounts (or relative delays) to ensure these three actions arrive in the correct order.
 
 ## Timeline
 Command | Description
@@ -185,13 +192,15 @@ $(propresenter:pro7_clock_n) | hh:mm:ss for clock with index n
 $(propresenter:pro7_clock_n_hourless) | mm:ss for clock with index n
 $(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n (can use this for feeback - eg update button colour when clock time <0)
 
+> You can click the $ symbol in the module list to see the current values of the module variables.
+> ![ModuleVariables.png](documentation/images/ModuleVariables.png)
+
 ## 👀 New actions using Network Link 👀
 Turning on the Network Link feature in the Network Preferences of ProPresenter 7.8+ enabls a new API that is not yet public (but is planned to be released earl 2022).  Once released, a new Companion module will be made using that instead of the reversed engineered remote protocol.
 Until then, you can _optionally_ decide to try out some of the new actions through this new API.  Please note that since the API is not yet public/final - it may undergo breaking changes until then. They are unlikely to cause any issue - they just may stop working with a future Pro7 update (until this module is updated again). Many of these actions were not possible using the old remote API. (including specifying names instead of indexes!)
 
 Command | Description
 ------- | -----------
-Specific Slide (Network Link - Beta) | Trigger a specific slide by Playlist name, Presentation name and Slide index.
 Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using (by name)
 Prop Clear (Network Link - Beta) | Clear a specific Prop using (by name)
 Message Clear (Network Link - Beta) | Clear a specific Message (by name)
