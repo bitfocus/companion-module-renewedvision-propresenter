@@ -94,7 +94,7 @@ Specific Slide (Network Link) | Trigger a specific slide by Playlist name, Prese
 ## Pro7 Looks
 Command | Description
 ------- | -----------
-Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7. _The list of Looks is updated after you have connected to Pro7._ <br>👀 Feedback is available to change button colors whena specifc Look is live.
+Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7. _The list of Looks is updated after you have connected to Pro7._ <br>👀 Feedback is available to change button colors when a specific Look is live.
 
 ## Pro7 Macros
 Command | Description
@@ -106,7 +106,7 @@ Command | Description
 ------- | -----------
 Audio&nbsp;Start&nbsp;Cue | Start a specific audio cue in an audio-bin playlist.  Uses the same numerical format to specify the path of the audio item (see Presentation Path explanation above)
 Audio&nbsp;Play/Pause | Pause (or resume playing) the currently playing (or paused) audio.
-Trigger Audio (Network Link) | Trigger any audio in the audio bin using audio Playlist Name, and _either_ the Index or Name of the audio file. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+Trigger Audio (Network Link) | Trigger any audio in the audio bin using audio Playlist Name, and _either_ the Index or Name of the audio file. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
 
 
 ## Clear/Logo
@@ -118,8 +118,8 @@ Clear&nbsp;Background | Clears only the background layer
 Clear&nbsp;Slide | Clears the current slide (foreground and background)
 Clear&nbsp;Telestrator | Clears all annotations drawn with the telestrator
 Clear&nbsp;to&nbsp;Logo | Clears all the layers and shows the logo image set in ProPresenter
-Prop Clear (Network Link) | Clear a Prop, specified by _either_ the Index or Name of the Prop. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
-Message Clear (Network Link) | Clear a Message, specified by _either_ the Index or Name of the Message. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+Prop Clear (Network Link) | Clear a Prop, specified by _either_ the Index or Name of the Prop. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+Message Clear (Network Link) | Clear a Message, specified by _either_ the Index or Name of the Message. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
 
 > ### Clear All Notes
 > Note: For some versions of ProPresenter, when the `Clear All` action is triggered against ProPresenter for Windows, the current slide will be lost but on Mac it's preserved.
@@ -143,7 +143,7 @@ Command | Description
 ------- | -----------
 Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
-Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout for a selected stage screen.<br>👀 Feedback is availble for the active stage display on each stage screen (and the watched stage screen if configured).
+Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout for a selected stage screen.<br>👀 Feedback is available for the active stage display on each stage screen (and the watched stage screen if configured).
 
 > In Pro6 Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
 > In Pro7 you can choose which screen and which stage display layout you want to set by name. (The dropdown list of name is NOT refreshed until after you have connected to PRo7).
@@ -168,9 +168,9 @@ Update&nbsp;Clock | Update clock/timer with a new duration - identified by index
 ## Props, Media Bin and Audio Bin
 Command | Description
 ------- | -----------
-Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using _either_ the Index or Name of the Prop. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled) 
-Trigger Media (Network Link - Beta) | Trigger a specific Media Item by Playlist name and _either_ the Index or Name of the Media. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled).
-Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by _either_ the Index or Name of the Video Input. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using _either_ the Index or Name of the Prop. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled) 
+Trigger Media (Network Link - Beta) | Trigger a specific Media Item by Playlist name and _either_ the Index or Name of the Media. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled).
+Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by _either_ the Index or Name of the Video Input. If you specify both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
 
 > The name of an item in the Video Input Bin is the name under the thumbnail in the bin. (Right-click to rename)<br>
 > ![VideoInputName.png](documentation/images/VideoInputName.png)<br>
