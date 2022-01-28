@@ -93,7 +93,7 @@ Specific Slide (Network Link) | Trigger a specific slide by Playlist name, Prese
 ## Pro7 Looks
 Command | Description
 ------- | -----------
-Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7.  Feedback available to change button colors when Look is live. _The list of Looks is updated after you have connected to Pro7._ 
+Pro7&nbsp;Set&nbsp;Look | Choose a Look to set live in Pro7. _The list of Looks is updated after you have connected to Pro7._ <br>👀 Feedback is available to change button colors whena specifc Look is live.
 
 ## Pro7 Macros
 Command | Description
@@ -142,7 +142,7 @@ Command | Description
 ------- | -----------
 Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
-Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. Feedback is availble for the active stage display on each stage screen (and the watched stage screen if configured).
+Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout for a selected stage screen.<br>👀 Feedback is availble for the active stage display on each stage screen (and the watched stage screen if configured).
 
 > In Pro6 Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
 > In Pro7 you can choose which screen and which stage display layout you want to set by name. (The dropdown list of name is NOT refreshed until after you have connected to PRo7).
@@ -164,6 +164,20 @@ Update&nbsp;Clock | Update clock/timer with a new duration - identified by index
 > 
 > Use increasing delay amounts (or relative delays) to ensure these three actions arrive in the correct order.
 
+## Props, Media Bin and Audio Bin
+Command | Description
+------- | -----------
+Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using _either_ the Index or Name of the Prop. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled) 
+Trigger Media (Network Link - Beta) | Trigger a specific Media Item by Playlist name and _either_ the Index or Name of the Media. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled).
+Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by _either_ the Index or Name of the Video Input. If you specifiy both, Index will be used. (Requires Pro7.8+ with Network Link enabled)
+
+> The name of an item in the Video Input Bin is the name under the thumbnail in the bin. (Right-click to rename)<br>
+> ![VideoInputName.png](documentation/images/VideoInputName.png)<br>
+> 
+> The name of an item in Media Bin is the name under the thumbnail in the bin. (Right-click to rename)<br>
+> ![MediaBinName.png](documentation/images/MediaBinName.png)<br>
+> The playlist name is on left.
+
 ## Timeline
 Command | Description
 ------- | -----------
@@ -173,8 +187,10 @@ Timeline&nbsp;Rewind  | Rewind timeline for a specific presentation (See Present
 > Please Note: There is NO direct feedback from ProPresenter for when a timeline is playing or paused - so this cannot be shown to users on the StreamDeck!
 
 ## Custom Actions (Support Use Only)
+Command | Description
+------- | -----------
 Custom Action | Send custom JSON to remote websocket (Support use only)
-Custom Action (Network Link - Beta) | Send custom JSON to custom endpoint (Support use only)
+Custom Action (Network Link - Beta) | Send custom JSON to custom endpoint (Pro7.8+ with Network Link enabled. Support use only)
 
 # Dynamic Variables
 Variable | Description
@@ -200,14 +216,8 @@ $(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n
 > ![ModuleVariables.png](documentation/images/ModuleVariables.png)
 
 ## Tips:
-You can use variables in button feebacks. For example, turning a button red when a timer eg. $(propresenter:pro7_clock_0_totalseconds) drops below 0.
-There are internal actions that you can use set custom variables to modules variables - eg. You could create a "Store Current Slide" button to set custom variables to the current values of $(propresenter:current_presentation_path) and $(propresenter:current_slide) and then create a "Restore Previous Slide" buttons that uses those custom variables as parameters in a "Specific Slide" action to "go back" to the stored slide.
-
-Command | Description
-------- | -----------
-Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using (by name)
-Trigger Media (Network Link - Beta) | Trigger a specific Media Item by Playlist name and Media name.
-Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by name
+- You can use variables in button feebacks. For example, turning a button red when a timer eg. $(propresenter:pro7_clock_0_totalseconds) drops below 0.
+- There are internal actions that you can use set custom variables to modules variables - eg. You could create a "Store Current Slide" button to set custom variables to the current values of $(propresenter:current_presentation_path) and $(propresenter:current_slide) and then create a "Restore Previous Slide" buttons that uses those custom variables as parameters in a "Specific Slide" action to "go back" to the stored slide.
 
 
 ## Optional (Beta) Leader-Follower Feature
