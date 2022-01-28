@@ -135,17 +135,17 @@ Command | Description
 Show&nbsp;Message | Shows the message on the stage display output. You can pass values for message tokens, but you must do so very carefully - a typo here can crash ProPresenter.  Crashes can cause data loss, and ruin your setup. Learn how to correctly enter message tokens by reading below. Always type carefully and double-check. Get it right on a test machine first! The correct way to pass values for message tokens is as two lists. The two lists work together to form token NAME and token VALUE pairs.  The first list is a comma-separated list of token NAMES and the second is a comma-separated list of token VALUES. The number of items in each list should match - e.g. if you supply two token NAMES, then you should supply two token VALUES to make matching pairs. All token names in your list *MUST* match the token names defined in the message within ProPresenter (or else Pro6 will likely crash).  The token values can be any text. You don't have to pass *all* the token names/values pairs - any name/values that you don't include will be treated as and displayed as blank. You don't have to pass any token names/values if you don't need to. Static messages without any tokens are safe - you can't make a typo if you leave the token names and token values list blank! If one of your token names or token values needs to have a comma in it, you can type a double comma (,,) to insert a literal comma - this works in either a token name or a token value. Again, make certain that your list of token NAMES perfectly match the names of the tokens defined in the message within Pro6 - Pro6 won't crash if they match perfectly - so be careful! Note that you can use a single Companion custom or module variables in the Token values field.
 Hide&nbsp;Message | Removes a message from output screen.
 
-Messages are identified by Index. Index is a 0-based, where the first message is 0, and then count up through the messages in the order shown in the list of ProPresenter messages.
+> Messages are identified by Index. Index is a 0-based, where the first message is 0, and then count up through the messages in the order shown in the list of ProPresenter messages.
 
 ## Stage Display
 Command | Description
 ------- | -----------
 Stage&nbsp;Display&nbsp;Message | Shows the message on the stage display output
 Stage&nbsp;Display&nbsp;Hide&nbsp;Message | Removes the stage display message
-Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout.
+Stage&nbsp;Display&nbsp;Layout | Sets the stage display layout. Feedback is availble for the active stage display on each stage screen (and the watched stage screen if configured).
 
-In Pro6 Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
-In Pro7 you can choose which screen and which stage display layout you want to set by name. (The dropdown list of name is NOT refreshed until after you have connected to PRo7).
+> In Pro6 Stage Displays are identified by index. Index is a 0-based number, where the first layout is 0 and then count up through the stage display layouts in the order shown in ProPresenters list of stage display layouts.
+> In Pro7 you can choose which screen and which stage display layout you want to set by name. (The dropdown list of name is NOT refreshed until after you have connected to PRo7).
 
 
 ## Clocks (Timers)
@@ -170,7 +170,11 @@ Command | Description
 Timeline&nbsp;Play/Pause | Toggle play/paused state of timeline for a specific presentation (See PresentationPath explanation above)
 Timeline&nbsp;Rewind  | Rewind timeline for a specific presentation (See PresentationPath explanation above)
 
-Please Note: There is NO direct feedback from ProPresenter for when a timeline is playing or paused - so this cannot be shown to users on the StreamDeck!
+> Please Note: There is NO direct feedback from ProPresenter for when a timeline is playing or paused - so this cannot be shown to users on the StreamDeck!
+
+## Custom Actions (Support Use Only)
+Custom Action | Send custom JSON to remote websocket (Support use only)
+Custom Action (Network Link - Beta) | Send custom JSON to custom endpoint (Support use only)
 
 # Dynamic Variables
 Variable | Description
@@ -195,19 +199,16 @@ $(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n
 > You can click the $ symbol in the module list to see the current values of the module variables.
 > ![ModuleVariables.png](documentation/images/ModuleVariables.png)
 
-## 👀 New actions using Network Link 👀
-Turning on the Network Link feature in the Network Preferences of ProPresenter 7.8+ enabls a new API that is not yet public (but is planned to be released earl 2022).  Once released, a new Companion module will be made using that instead of the reversed engineered remote protocol.
-Until then, you can _optionally_ decide to try out some of the new actions through this new API.  Please note that since the API is not yet public/final - it may undergo breaking changes until then. They are unlikely to cause any issue - they just may stop working with a future Pro7 update (until this module is updated again). Many of these actions were not possible using the old remote API. (including specifying names instead of indexes!)
+## Tips:
+You can use variables in button feebacks. For example, turning a button red when a timer eg. $(propresenter:pro7_clock_0_totalseconds) drops below 0.
+There are internal actions that you can use set custom variables to modules variables - eg. You could create a "Store Current Slide" button to set custom variables to the current values of $(propresenter:current_presentation_path) and $(propresenter:current_slide) and then create a "Restore Previous Slide" buttons that uses those custom variables as parameters in a "Specific Slide" action to "go back" to the stored slide.
 
 Command | Description
 ------- | -----------
 Prop Trigger (Network Link - Beta)  | Trigger a specifc Prop using (by name)
-Prop Clear (Network Link - Beta) | Clear a specific Prop using (by name)
-Message Clear (Network Link - Beta) | Clear a specific Message (by name)
 Trigger Media (Network Link - Beta) | Trigger a specific Media Item by Playlist name and Media name.
-Trigger Audio (Network Link - Beta) | Trigger a specific Audio Item by Playlist name and Audio name.
 Trigger Video Input (Network Link - Beta) | Trigger a specific Video Input by name
-Custom Action (Network Link - Beta) | Send custom JSON to custom endpoint (Advanced use only)
+
 
 ## Optional (Beta) Leader-Follower Feature
 You can optionally configure a second connection to a "Follower" ProPresenter 7 computer to have the module automatically forward slide trigger and clears actions to the Follower as you click on slides (or use clear actions) on the main ProPresenter computer (The Leader).  This emulates the old Pro6 Master-Control module.  It's not complete as some actions cannot be captured by the module to forward to the Follower (the remote protocol does not send notifications for every action - but as it improves, this module will be updated).  For now basic slide triggers and some clear actions do work. - This won't really be updated any further as there is now a much better "Network Link" feature in Pro7.8+
