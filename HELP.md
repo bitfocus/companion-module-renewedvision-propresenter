@@ -2,7 +2,8 @@
 
 
 This Companion module allows you to remotely control ProPresenter 6 or 7 with the Elgato Stream Deck.
-Using this Companion module, each LCD button on your Stream Deck can be setup with custom text (or images) and ProPresenter actions. 
+Using this Companion module, each LCD button on your Stream Deck can be setup with custom text (or images) and ProPresenter actions.<br>
+> See <a href="https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/README.md" target="_blank">README.md</a> for latest version history and instructions to report issues.
 
 ![StreamDeck1.png](documentation/images/StreamDeck1.png)<br>
 _Example. (You can also use Companion without a Stream Deck through it's web buttons/emulator)_
