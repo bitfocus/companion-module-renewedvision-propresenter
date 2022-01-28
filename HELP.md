@@ -185,7 +185,7 @@ $(propresenter:pro7_clock_n) | hh:mm:ss for clock with index n
 $(propresenter:pro7_clock_n_hourless) | mm:ss for clock with index n
 $(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n (can use this for feeback - eg update button colour when clock time <0)
 
-## ⚠️⚠️⚠️ New BETA actions using Network Link ⚠️⚠️⚠️
+## 👀 New actions using Network Link 👀
 Turning on the Network Link feature in the Network Preferences of ProPresenter 7.8+ enabls a new API that is not yet public (but is planned to be released earl 2022).  Once released, a new Companion module will be made using that instead of the reversed engineered remote protocol.
 Until then, you can _optionally_ decide to try out some of the new actions through this new API.  Please note that since the API is not yet public/final - it may undergo breaking changes until then. They are unlikely to cause any issue - they just may stop working with a future Pro7 update (until this module is updated again). Many of these actions were not possible using the old remote API. (including specifying names instead of indexes!)
 
