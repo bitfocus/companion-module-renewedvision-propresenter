@@ -2,6 +2,9 @@
 
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
+## ⚠️ Known Issues (v2.5.0):
+- None (Yet ;)
+
 ## ⚠️ Reporting An Issue:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
 - First, read the "Change Log" below to see if any new (Beta Builds) have been released after the version you are currently running that addresses your issue. Don't be afraid to download and test a Beta build as many people use the beta builds in production. However Do NOT run a live show without testing ALL your buttons/actions for ALL Companion modules you have installed.
