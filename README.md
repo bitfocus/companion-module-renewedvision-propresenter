@@ -13,7 +13,7 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
-### v2.5.0 (Companion Beta Build TBA)
+### v2.5.0 (Companion Beta Build 3822)
 - Added this README.md
 - (New) Updated config UI to make more user friendly.
 - (New) Added config option to poll Looks to enable feedback of active look from Pro 7 on Windows - (Feedback already works for Pro7 on Mac without polling)
