@@ -2,6 +2,9 @@
 
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
+## ⚠️ Known Issues (v2.5.0):
+- None (Yet ;)
+
 ## ⚠️ Reporting An Issue:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
 - First, read the "Change Log" below to see if any new (Beta Builds) have been released after the version you are currently running that addresses your issue. Don't be afraid to download and test a Beta build as many people use the beta builds in production. However Do NOT run a live show without testing ALL your buttons/actions for ALL Companion modules you have installed.
@@ -13,7 +16,7 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
-### v2.5.0 (Companion Beta Build TBA)
+### v2.5.0 (Companion Beta Build 3822)
 - Added this README.md
 - (New) Updated config UI to make more user friendly.
 - (New) Added config option to poll Looks to enable feedback of active look from Pro 7 on Windows - (Feedback already works for Pro7 on Mac without polling)
