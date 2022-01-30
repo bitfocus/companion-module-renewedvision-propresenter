@@ -3,7 +3,7 @@
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
 ## ⚠️ Known Issues (v2.5.0):
-- None (Yet ;)
+- Loosing current_presentation_path - not sure why/how. suspect it may be diconnecting/reconnecting. Have updated code to refresh upon new authenticated connections.
 
 ## ⚠️ Reporting An Issue:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
