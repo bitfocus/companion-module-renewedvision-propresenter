@@ -535,6 +535,7 @@ instance.prototype.emptyCurrentState = function () {
 		current_stage_display_index: 'N/A',
 		current_pro7_stage_layout_name: 'N/A',
 		current_pro7_look_name: 'N/A',
+		current_random_number: Math.floor(Math.random() * 10)+1,
 	}
 
 	self.currentState.dynamicVariablesDefs = [
@@ -597,6 +598,10 @@ instance.prototype.emptyCurrentState = function () {
 		{
 			label: 'Follower Connection Status',
 			name: 'follower_connection_status',
+		},
+		{
+			label: 'Current Random Number',
+			name: 'current_random_number',
 		},
 	]
 
@@ -1073,6 +1078,7 @@ instance.prototype.actions = function (system) {
 					label: 'Slide Number',
 					id: 'slide',
 					default: 1,
+					tooltip: '(Supports variables)',
 					regex: self.REGEX_SIGNED_NUMBER,
 				},
 				{
@@ -1080,7 +1086,7 @@ instance.prototype.actions = function (system) {
 					label: 'Presentation Path',
 					id: 'path',
 					default: '',
-					tooltip: 'See the README for more information',
+					tooltip: 'See the README for more information (Supports variables)',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},
 			],
@@ -1091,19 +1097,19 @@ instance.prototype.actions = function (system) {
 				{
 					type: 'textwithvariables',
 					label: 'Playlist Name',
-					tooltip: 'Find the first playlist with that matches this playlist name',
+					tooltip: 'Find the first playlist with that matches this playlist name (Supports variables)',
 					id: 'playlistName',
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Presentation Name',
-					tooltip: 'Find the first presentation (in above playlist) that matches this presentation name',
+					tooltip: 'Find the first presentation (in above playlist) that matches this presentation name (Supports variables)',
 					id: 'presentationName',
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Slide With Label',
-					tooltip: 'Find the first slide (in above presentation) with matching *Slide Label* and trigger that slide',
+					tooltip: 'Find the first slide (in above presentation) with matching *Slide Label* and trigger that slide (Supports variables)',
 					id: 'slideLabel',
 				},
 				
@@ -1115,14 +1121,14 @@ instance.prototype.actions = function (system) {
 				{
 					type: 'textwithvariables',
 					label: 'Group Name',
-					tooltip: 'Specify the Name of the Group with the slide you want to trigger',
+					tooltip: 'Specify the Name of the Group with the slide you want to trigger (Supports variables)',
 					id: 'groupName',
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Slide Number (Within Group)',
 					default: 1,
-					tooltip: 'Which slide in the group?',
+					tooltip: 'Which slide in the group? (Supports variables)',
 					id: 'slideNumber',
 					regex: self.REGEX_NUMBER,
 				},
@@ -1131,7 +1137,7 @@ instance.prototype.actions = function (system) {
 					label: 'Presentation Path (Leave Blank for Current)',
 					id: 'presentationPath',
 					default: '',
-					tooltip: 'Leave this blank to target the current presenation',
+					tooltip: 'Leave this blank to target the current presenation (Supports variables)',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},				
 			],
@@ -1332,11 +1338,11 @@ instance.prototype.actions = function (system) {
 			label: 'Show Message',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Message Index',
 					id: 'messageIndex',
 					default: '0',
-					tooltip: 'Zero based index of message to show - first one is 0, second one is 1 and so on...',
+					tooltip: 'Zero based index of message to show - first one is 0, second one is 1 and so on...(Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1353,7 +1359,7 @@ instance.prototype.actions = function (system) {
 					id: 'messageValues',
 					default: '',
 					tooltip:
-						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (WARNING! - A simple typo here could crash and burn ProPresenter)',
+						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (Supports variables. WARNING! - A simple typo here could crash and burn ProPresenter)',
 				},
 			],
 		},
@@ -1361,11 +1367,11 @@ instance.prototype.actions = function (system) {
 			label: 'Hide Message',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Message Index',
 					id: 'messageIndex',
 					default: '0',
-					tooltip: 'Zero based index of message to hide - first one is 0, second one is 1 and so on...',
+					tooltip: 'Zero based index of message to hide - first one is 0, second one is 1 and so on...(Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 			],
@@ -1441,10 +1447,10 @@ instance.prototype.actions = function (system) {
 					tooltip: 'Name of the presentation with the slide you want to trigger (Case Sensitive)',
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Slide Index',
 					id: 'slideIndex',
-					tooltip: 'Index of the slide you want to trigger (1-based)',
+					tooltip: 'Index of the slide you want to trigger (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				/* Does not seem to do anything (yet)
@@ -1460,10 +1466,10 @@ instance.prototype.actions = function (system) {
 			label: 'Prop Trigger (Network Link)',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Prop Index',
 					id: 'propIndex',
-					tooltip: 'Index of the Prop you want to trigger (1-based)',
+					tooltip: 'Index of the Prop you want to trigger (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1478,10 +1484,10 @@ instance.prototype.actions = function (system) {
 			label: 'Prop Clear (Network Link)',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Prop Index',
 					id: 'propIndex',
-					tooltip: 'Index of the Prop you want to clear (1-based)',
+					tooltip: 'Index of the Prop you want to clear (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1496,10 +1502,10 @@ instance.prototype.actions = function (system) {
 			label: 'Message Clear (Network Link)',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Message Index',
 					id: 'messageIndex',
-					tooltip: 'Index of the Message you want to clear (1-based)',
+					tooltip: 'Index of the Message you want to clear (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1520,10 +1526,10 @@ instance.prototype.actions = function (system) {
 					tooltip: 'Name of the Media PlayList that contains the media file you want to trigger (Case Sensitive)',
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Media Index',
 					id: 'mediaIndex',
-					tooltip: 'Index of the media file you want to trigger (1-based)',
+					tooltip: 'Index of the media file you want to trigger (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1544,10 +1550,10 @@ instance.prototype.actions = function (system) {
 					tooltip: 'Name of the Audio PlayList that contains the audio file you want to trigger (Case Sensitive)',
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Audio Index',
 					id: 'audioIndex',
-					tooltip: 'Index of the audio file you want to trigger (1-based)',
+					tooltip: 'Index of the audio file you want to trigger (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1562,10 +1568,10 @@ instance.prototype.actions = function (system) {
 			label: 'Trigger Video Input (Network Link)',
 			options: [
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Video Index',
 					id: 'videoInputIndex',
-					tooltip: 'Index of the video input you want to trigger (1-based)',
+					tooltip: 'Index of the video input you want to trigger (1-based. Supports variables)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1573,6 +1579,19 @@ instance.prototype.actions = function (system) {
 					label: 'Video Input Name',
 					id: 'videoInputName',
 					tooltip: 'Name of the video input you want to trigger (Case Sensitive)',
+				},
+			],
+		},
+		newRandomNumber: {
+			label: 'New Random Number',
+			options: [
+				{
+					type: 'textinput',
+					label: 'New Random Number Between 1 And:',
+					id: 'randomLimit',
+					default: 10,
+					tooltip: 'Updates the module variable current_random_number with a new random number up to the limit your enter. (Supports variables)',
+					regex: self.REGEX_NUMBER,
 				},
 			],
 		},
@@ -1927,19 +1946,29 @@ instance.prototype.action = function (action) {
 			break
 
 		case 'messageHide':
+			var messageIndex
+			self.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				messageIndex = value
+			})
+
 			cmd = {
 				action: 'messageHide',
-				messageIndex: String(opt.messageIndex),
+				messageIndex: messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >= 0 ? String(messageIndex): '0',
 			}
 			break
 
 		case 'messageSend':
+			var messageIndex
+			self.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				messageIndex = value
+			})
+
 			// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
 			// It works by first replacing any double commas with a character 29 (ascii group seperator char), and then replacing any single commas with a character 28 (ascii file seperator char).  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
 			// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
 			cmd = {
 				action: 'messageSend',
-				messageIndex: String(opt.messageIndex),
+				messageIndex: messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >= 0 ? String(messageIndex): '0',
 				messageKeys: opt.messageKeys
 					.replace(/,,/g, String.fromCharCode(29))
 					.replace(/,/g, String.fromCharCode(28))
@@ -1992,6 +2021,11 @@ instance.prototype.action = function (action) {
 			}
 			break
 		case 'nwSpecificSlide':
+			var slideIndex
+			self.system.emit('variable_parse', String(opt.slideIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				slideIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/trigger/playlist',
 				data: { path:
@@ -2003,47 +2037,67 @@ instance.prototype.action = function (action) {
 							name: opt.presentationName
 						},
 						{
-							index: opt.slideIndex !== undefined && parseInt(opt.slideIndex) >0 ? opt.slideIndex - 1 : null,
-							//name: opt.slideName !== undefined && String(opt.slideName).length > 0 ? opt.slideName : null
+							index: slideIndex !== 'undefined' && slideIndex !== undefined && parseInt(slideIndex) >0 ? slideIndex - 1 : null,
 						}
+						//name: opt.slideName !== undefined && String(opt.slideName).length > 0 ? opt.slideName : null // Slide name does nothing - maybe one day it will.
 					]
 				}
 			}
 			break
 		case 'nwPropTrigger':
+			var propIndex
+			self.system.emit('variable_parse', String(opt.propIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				propIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/prop/trigger',
 				data: { id:
 					{
-						index: opt.propIndex !== undefined && parseInt(opt.propIndex) >0 ? opt.propIndex - 1 : null,
+						index: propIndex !== 'undefined' &&  propIndex !== undefined && parseInt(propIndex) >0 ? propIndex - 1 : null,
 						name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null
 					}
 				}
 			}
 			break
 		case 'nwPropClear':
+			var propIndex
+			self.system.emit('variable_parse', String(opt.propIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				propIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/prop/clear',
 				data: { id:
 					{
-						index: opt.propIndex !== undefined && parseInt(opt.propIndex) >0 ? opt.propIndex - 1 : null,
+						index: propIndex !== 'undefined' &&  propIndex !== undefined && parseInt(propIndex) >0 ? propIndex - 1 : null,
 						name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null
 					}
 				}
 			}
 			break
 		case 'nwMessageClear':
+			var messageIndex
+			self.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				messageIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/message/clear',
 				data: { id:
 					{
-						index: opt.messageIndex !== undefined && parseInt(opt.messageIndex) >0 ? opt.messageIndex - 1 : null,
+						index: messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >0 ? messageIndex - 1 : null,
 						name: opt.messageName !== undefined && String(opt.messageName).length > 0 ? opt.messageName : null
 					}
 				}
 			}
 			break
 		case 'nwTriggerMedia':
+			var mediaIndex
+			self.system.emit('variable_parse', String(opt.mediaIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				mediaIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/trigger/media',
 				data: { path:
@@ -2052,7 +2106,7 @@ instance.prototype.action = function (action) {
 							name: opt.playlistName
 						},
 						{
-							index: opt.mediaIndex !== undefined && parseInt(opt.mediaIndex) >0 ? opt.mediaIndex - 1 : null,
+							index: mediaIndex !== 'undefined' && mediaIndex !== undefined && parseInt(mediaIndex) >0 ? mediaIndex - 1 : null,
 							name: opt.mediaName !== undefined && String(opt.mediaName).length > 0 ? opt.mediaName : null
 						}
 					]
@@ -2060,6 +2114,11 @@ instance.prototype.action = function (action) {
 			}
 			break
 		case 'nwTriggerAudio':
+			var audioIndex
+			self.system.emit('variable_parse', String(opt.audioIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				audioIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/trigger/audio',
 				data: { path:
@@ -2068,7 +2127,7 @@ instance.prototype.action = function (action) {
 							name: opt.playlistName
 						},
 						{
-							index: opt.audioIndex !== undefined && parseInt(opt.audioIndex) >0 ? opt.audioIndex - 1 : null,
+							index: audioIndex !== 'undefined' &&  audioIndex !== undefined && parseInt(audioIndex) >0 ? audioIndex - 1 : null,
 							name: opt.audioName !== undefined && String(opt.audioName).length > 0 ? opt.audioName : null
 						}
 					]
@@ -2076,15 +2135,28 @@ instance.prototype.action = function (action) {
 			}
 			break
 		case 'nwVideoInput':
+			var videoInputIndex
+			self.system.emit('variable_parse', String(opt.videoInputIndex).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				videoInputIndex = value
+			})
+
 			nwCmd = {
 				endpointPath: '/trigger/video_input',
 				data: { id:
 					{
-						index: opt.videoInputIndex !== undefined && parseInt(opt.videoInputIndex) >0 ? opt.videoInputIndex - 1 : null,
+						index: videoInputIndex !== 'undefined' &&  videoInputIndex !== undefined && parseInt(videoInputIndex) >0 ? videoInputIndex - 1 : null,
 						name: opt.videoInputName !== undefined && String(opt.videoInputName).length > 0 ? opt.videoInputName : null
 					}
 				}
 			}
+			break
+		case 'newRandomNumber':
+			var randomLimit
+			self.system.emit('variable_parse', String(opt.randomLimit).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				randomLimit = value
+			})
+
+			self.updateVariable('current_random_number', Math.floor(Math.random()*parseInt(randomLimit))+1)
 			break
 		case 'nwCustom':
 			nwCmd = {
