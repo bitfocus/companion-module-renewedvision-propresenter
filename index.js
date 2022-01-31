@@ -1078,7 +1078,7 @@ instance.prototype.actions = function (system) {
 					label: 'Slide Number',
 					id: 'slide',
 					default: 1,
-					tooltip: '(Supports variables)',
+					tooltip: '(Supports variable)',
 					regex: self.REGEX_SIGNED_NUMBER,
 				},
 				{
@@ -1086,7 +1086,7 @@ instance.prototype.actions = function (system) {
 					label: 'Presentation Path',
 					id: 'path',
 					default: '',
-					tooltip: 'See the README for more information (Supports variables)',
+					tooltip: 'See the README for more information (Supports variable)',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},
 			],
@@ -1097,19 +1097,19 @@ instance.prototype.actions = function (system) {
 				{
 					type: 'textwithvariables',
 					label: 'Playlist Name',
-					tooltip: 'Find the first playlist with that matches this playlist name (Supports variables)',
+					tooltip: 'Find the first playlist with that matches this playlist name (Supports variable)',
 					id: 'playlistName',
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Presentation Name',
-					tooltip: 'Find the first presentation (in above playlist) that matches this presentation name (Supports variables)',
+					tooltip: 'Find the first presentation (in above playlist) that matches this presentation name (Supports variable or text with wildcard char *)',
 					id: 'presentationName',
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Slide With Label',
-					tooltip: 'Find the first slide (in above presentation) with matching *Slide Label* and trigger that slide (Supports variables)',
+					tooltip: 'Find the first slide (in above presentation) with matching *Slide Label* and trigger that slide (Supports variable)',
 					id: 'slideLabel',
 				},
 				
@@ -1120,15 +1120,15 @@ instance.prototype.actions = function (system) {
 			options: [
 				{
 					type: 'textwithvariables',
-					label: 'Group Name',
-					tooltip: 'Specify the Name of the Group with the slide you want to trigger (Supports variables)',
-					id: 'groupName',
+					label: 'Group(s) Name',
+					tooltip: 'Specify the Name of the Group with the slide you want to trigger (Supports variable or multiple group names separated by |)',
+					id: 'groupName', // Supports multiple group names with | separator
 				},
 				{
 					type: 'textwithvariables',
 					label: 'Slide Number (Within Group)',
 					default: 1,
-					tooltip: 'Which slide in the group? (Supports variables)',
+					tooltip: 'Which slide in the group? (Supports variable)',
 					id: 'slideNumber',
 					regex: self.REGEX_NUMBER,
 				},
@@ -1137,7 +1137,7 @@ instance.prototype.actions = function (system) {
 					label: 'Presentation Path (Leave Blank for Current)',
 					id: 'presentationPath',
 					default: '',
-					tooltip: 'Leave this blank to target the current presenation (Supports variables)',
+					tooltip: 'Leave this blank to target the current presenation (Supports variable)',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},				
 			],
@@ -1342,7 +1342,7 @@ instance.prototype.actions = function (system) {
 					label: 'Message Index',
 					id: 'messageIndex',
 					default: '0',
-					tooltip: 'Zero based index of message to show - first one is 0, second one is 1 and so on...(Supports variables)',
+					tooltip: 'Zero based index of message to show - first one is 0, second one is 1 and so on...(Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1359,7 +1359,7 @@ instance.prototype.actions = function (system) {
 					id: 'messageValues',
 					default: '',
 					tooltip:
-						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (Supports variables. WARNING! - A simple typo here could crash and burn ProPresenter)',
+						'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (Supports variable. WARNING! - A simple typo here could crash and burn ProPresenter)',
 				},
 			],
 		},
@@ -1371,7 +1371,7 @@ instance.prototype.actions = function (system) {
 					label: 'Message Index',
 					id: 'messageIndex',
 					default: '0',
-					tooltip: 'Zero based index of message to hide - first one is 0, second one is 1 and so on...(Supports variables)',
+					tooltip: 'Zero based index of message to hide - first one is 0, second one is 1 and so on...(Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 			],
@@ -1450,7 +1450,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Slide Index',
 					id: 'slideIndex',
-					tooltip: 'Index of the slide you want to trigger (1-based. Supports variables)',
+					tooltip: 'Index of the slide you want to trigger (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				/* Does not seem to do anything (yet)
@@ -1469,7 +1469,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Prop Index',
 					id: 'propIndex',
-					tooltip: 'Index of the Prop you want to trigger (1-based. Supports variables)',
+					tooltip: 'Index of the Prop you want to trigger (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1487,7 +1487,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Prop Index',
 					id: 'propIndex',
-					tooltip: 'Index of the Prop you want to clear (1-based. Supports variables)',
+					tooltip: 'Index of the Prop you want to clear (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1505,7 +1505,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Message Index',
 					id: 'messageIndex',
-					tooltip: 'Index of the Message you want to clear (1-based. Supports variables)',
+					tooltip: 'Index of the Message you want to clear (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1529,7 +1529,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Media Index',
 					id: 'mediaIndex',
-					tooltip: 'Index of the media file you want to trigger (1-based. Supports variables)',
+					tooltip: 'Index of the media file you want to trigger (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1553,7 +1553,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Audio Index',
 					id: 'audioIndex',
-					tooltip: 'Index of the audio file you want to trigger (1-based. Supports variables)',
+					tooltip: 'Index of the audio file you want to trigger (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1571,7 +1571,7 @@ instance.prototype.actions = function (system) {
 					type: 'textwithvariables',
 					label: 'Video Index',
 					id: 'videoInputIndex',
-					tooltip: 'Index of the video input you want to trigger (1-based. Supports variables)',
+					tooltip: 'Index of the video input you want to trigger (1-based. Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 				{
@@ -1590,7 +1590,7 @@ instance.prototype.actions = function (system) {
 					label: 'New Random Number Between 1 And:',
 					id: 'randomLimit',
 					default: 10,
-					tooltip: 'Updates the module variable current_random_number with a new random number up to the limit your enter. (Supports variables)',
+					tooltip: 'Updates the module variable current_random_number with a new random number up to the limit your enter. (Supports variable)',
 					regex: self.REGEX_NUMBER,
 				},
 			],
@@ -1733,7 +1733,6 @@ instance.prototype.action = function (action) {
 			break
 		
 		case 'groupSlide':
-			self.log('debug', 'action.options.presentationPath=' + action.options.presentationPath) // TODO: remove
 			// Allow parsing of optional variables in all input fields for this action
 			var groupName
 			self.system.emit('variable_parse', String(action.options.groupName).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -2457,7 +2456,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 				self.currentState.internal.wsConnected = true
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true)
-				self.getProPresenterState()
+				self.getProPresenterState(true) // Force refresh with 'presentationCurrent' after first connection is authenticated (to ensure we alway have presenationPath)
 				self.init_feedbacks()
 				// Get current Stage Display (index and Name)
 				self.getStageDisplaysInfo()
@@ -2486,6 +2485,8 @@ instance.prototype.onWebSocketMessage = function (message) {
 			break
 
 		case 'presentationTriggerIndex':
+			self.updateVariable('current_presentation_path', String(objData.presentationPath)) // this is included in presentationTriggerIndex - but not presentationTriggerIndex
+			// Do not break - processing there two mesages is basically the same (except presentationPath)
 		case 'presentationSlideIndex':
 			// Update the current slide index.
 			var slideIndex = parseInt(objData.slideIndex, 10)
@@ -2498,7 +2499,6 @@ instance.prototype.onWebSocketMessage = function (message) {
 				// Track Presentation layer presenationPath, Slide Index )and optionally remaining slides)
 				self.currentState.internal.slideIndex = slideIndex
 				self.updateVariable('current_slide', slideIndex + 1)
-				self.updateVariable('current_presentation_path', String(objData.presentationPath))
 				if (objData.presentationPath == self.currentState.internal.presentationPath) {
 					// If the triggered slide is part of the current presentation (for which we have stored the total slides) then update the 'remaining_slides' dynamic variable
 					// Note that, if the triggered slide is NOT part of the current presentation, the 'remaining_slides' dynamic variable will be updated later when we call the presentationCurrent action to refresh current presentation info.
@@ -2654,25 +2654,29 @@ instance.prototype.onWebSocketMessage = function (message) {
 			// ...then we will have slideIndex to use in the {"action":"presentationTriggerIndex","slideIndex":[SLIDE INDEX],"presentationPath":"[PRESENTATION PATH]"} 
 			if (self.currentState.internal.awaitingGroupSlideRequest.hasOwnProperty('presentationPath') && self.currentState.internal.awaitingGroupSlideRequest.presentationPath == objData.presentationPath) {
 				self.log('debug', 'Found matching awaitingGroupSlideRequest: ' + JSON.stringify(self.currentState.internal.awaitingGroupSlideRequest))
-				var slideIndex = 0
-				var foundSlide = false
-				for (var presentationSlideGroupsIndex = 0; presentationSlideGroupsIndex < objPresentation.presentationSlideGroups.length; presentationSlideGroupsIndex++) {
-					for (var groupSlidesIndex = 0; groupSlidesIndex < objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides.length; groupSlidesIndex++) {
-						self.log('debug', 'groupname: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName + ' groupSlidesIndex: ' + groupSlidesIndex + ' total slideIndex: ' + slideIndex) //TODO: remove
-						if (objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName == self.currentState.internal.awaitingGroupSlideRequest.groupName && groupSlidesIndex == self.currentState.internal.awaitingGroupSlideRequest.slideNumber - 1 ) {
-							self.log('debug','Found Group Slide: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName  + '=' + self.currentState.internal.awaitingGroupSlideRequest.groupName + ' at index: ' + slideIndex) 
-							foundSlide = true
+				
+				var groupNames = self.currentState.internal.awaitingGroupSlideRequest.groupName.split('|')  // Search each group given (separated by |)
+				for (var groupNameIndex = 0; groupNameIndex < groupNames.length; groupNameIndex ++) {
+					var slideIndex = 0
+					var foundSlide = false
+					for (var presentationSlideGroupsIndex = 0; presentationSlideGroupsIndex < objPresentation.presentationSlideGroups.length; presentationSlideGroupsIndex++) {
+						for (var groupSlidesIndex = 0; groupSlidesIndex < objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupSlides.length; groupSlidesIndex++) {
+							if (objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName == groupNames[groupNameIndex] && groupSlidesIndex == self.currentState.internal.awaitingGroupSlideRequest.slideNumber - 1 ) {
+								self.log('debug','Found Group Slide: ' + objPresentation.presentationSlideGroups[presentationSlideGroupsIndex].groupName  + '=' + groupNames[groupNameIndex] + ' at index: ' + slideIndex) 
+								foundSlide = true
+							}
+							if (foundSlide) {
+								break
+							} else {
+								slideIndex++
+							}
 						}
 						if (foundSlide) {
 							break
-						} else {
-							slideIndex++
 						}
 					}
-					if (foundSlide) {
-						break
-					}
 				}
+
 				if (foundSlide) {
 					// we have finally found the slide, within it's presentation & playlist - send presentationTriggerIndex to trigger it
 					cmd = {
@@ -2689,7 +2693,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 						self.log('debug','Socket Send Error: ' + e.message)
 					}
 				} else {
-					self.log('debug','Could not find slide ' + self.currentState.internal.awaitingGroupSlideRequest.slideNumber + ' in group: ' + self.currentState.internal.awaitingGroupSlideRequest.groupName)
+					self.log('debug','Could not find slide ' + self.currentState.internal.awaitingGroupSlideRequest.slideNumber + ' in group(s): ' + self.currentState.internal.awaitingGroupSlideRequest.groupName)
 				}
 				self.currentState.internal.awaitingGroupSlideRequest = {} // All done, reset awaitingGroupSlideRequest
 			}
@@ -2702,6 +2706,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 			//  filename.
 			// These two values need to match or we'll re-request 'presentationCurrent' on every
 			//  slide change. Strip off everything before and including the final '/'.
+			// TODO: revisit this logic for Pro7 (consider updating to suit Pro7 instead of Pro6)
 			objData.presentationPath = objData.presentationPath.replace(/.*\//, '')
 
 			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
@@ -2712,6 +2717,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 			//	the same on Pro6 Mac, but '.presentation.presentationCurrentLocation' is the
 			//	wrong value on Pro6 PC (tested 6.1.6.2). Use '.presentationPath' instead.
 			self.currentState.internal.presentationPath = objData.presentationPath
+			self.updateVariable('current_presentation_path', objData.presentationPath)
 
 			// Get the total number of slides in this presentation
 			var totalSlides = 0
@@ -3079,31 +3085,42 @@ instance.prototype.onSDWebSocketMessage = function (message) {
 /**
  * Requests the current state from ProPresenter.
  */
-instance.prototype.getProPresenterState = function () {
+instance.prototype.getProPresenterState = function (refreshCurrentPresentation = false) {
 	var self = this
 
 	if (self.currentState.internal.wsConnected === false) {
 		return
 	}
 
-	if (self.config.sendPresentationCurrentMsgs !== 'no') { // User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with ProPresenter on Windows)
-		if (self.config.typeOfPresenationRequest == 'auto') {  // Decide which type of request to get current presentation info
-			// Just send presentationCurrent with presentationSlideQuality = '0' (string) (25-Jan-2022 This was the default way "always". It Performs well for Pro7 and Pro6 on MacOS - very slow for Pro6/7 on Windows)
-			self.socket.send(
-				JSON.stringify({
-					action: 'presentationCurrent',
-					presentationSlideQuality: '0', // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
-				})
-			)
-		} else {
-			// Send presentationRequest with presenatationSlideQuality = 0 (int) (At time of adding this option, this was only method that performs well for Pro7.8+ on Mac/Win and Pro6 on Mac)
-			self.socket.send(
-				JSON.stringify({
-					action: 'presentationRequest',
-					presentationSlideQuality: 0, // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
-					presentationPath: self.currentState.dynamicVariables['current_presentation_path'],
-				})
-			)
+	if (refreshCurrentPresentation) {
+		self.log('debug', 'presentationCurrent')
+		// Force send presentationCurrent with presentationSlideQuality = '0' (string) (25-Jan-2022 This was the default way "always". It Performs well for Pro7 and Pro6 on MacOS - very slow for Pro6/7 on Windows)
+		self.socket.send(
+			JSON.stringify({
+				action: 'presentationCurrent',
+				presentationSlideQuality: '0', // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+			})
+		)
+	} else {
+		if (self.config.sendPresentationCurrentMsgs !== 'no') { // User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with ProPresenter on Windows)
+			if (self.config.typeOfPresenationRequest == 'auto') {  // Decide which type of request to get current presentation info
+				// Just send presentationCurrent with presentationSlideQuality = '0' (string) (25-Jan-2022 This was the default way "always". It Performs well for Pro7 and Pro6 on MacOS - very slow for Pro6/7 on Windows)
+				self.socket.send(
+					JSON.stringify({
+						action: 'presentationCurrent',
+						presentationSlideQuality: '0', // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+					})
+				)
+			} else {
+				// Send presentationRequest with presenatationSlideQuality = 0 (int) (At time of adding this option, this was only method that performs well for Pro7.8+ on Mac/Win and Pro6 on Mac)
+				self.socket.send(
+					JSON.stringify({
+						action: 'presentationRequest',
+						presentationSlideQuality: 0, // Setting to 0 stops Pro from including the slide preview image data (which is a lot of data) - no need to get slide preview images since we are not using them!
+						presentationPath: self.currentState.dynamicVariables['current_presentation_path'],
+					})
+				)
+			}
 		}
 	}
 
@@ -3279,23 +3296,25 @@ instance.prototype.recursivelyScanPlaylistsObjToTriggerSlideByLabel = function (
 			return
 		}
 		if (playlistObj.hasOwnProperty('playlistName') && playlistObj.hasOwnProperty('playlist') && playlistObj.playlistName == playlistName) {
-			var matchingPlaylistItem = playlistObj.playlist.find(playlistItem => playlistItem.hasOwnProperty('playlistItemName') && playlistItem.playlistItemName == presentationName) // TODO: Consider Using Regex to enable optional matching with any - [ arrangement ] suffix
-			self.currentState.internal.matchingPlaylistItemFound=true
-			self.log('debug', 'Found match: ' + JSON.stringify(matchingPlaylistItem))
-			// Update self.currentState.internal.awaitingSlideByLabelRequest with the matching path (so response to presentationRequest can check)
-			self.currentState.internal.awaitingSlideByLabelRequest.presentationPath = matchingPlaylistItem.playlistItemLocation
-			// send presentationRequest
-			cmd = {
-				action: "presentationRequest",
-				presentationPath: self.currentState.internal.awaitingSlideByLabelRequest.presentationPath,
-				presentationSlideQuality: 0
-			}
-			try {
-				if (self.socket.readyState == 1 /*OPEN*/) {
-					self.socket.send(JSON.stringify(cmd))
+			var matchingPlaylistItem = playlistObj.playlist.find(playlistItem => playlistItem.hasOwnProperty('playlistItemName') &&  self.matchRuleShort(playlistItem.playlistItemName, presentationName)) // matchRuleShort allows use of wildcard * anywhere in presentationName parameter
+			if (matchingPlaylistItem !== undefined) {
+				self.log('debug', 'Found match: ' + JSON.stringify(matchingPlaylistItem))
+				self.currentState.internal.matchingPlaylistItemFound=true
+				// Update self.currentState.internal.awaitingSlideByLabelRequest with the matching path (so response to presentationRequest can check)
+				self.currentState.internal.awaitingSlideByLabelRequest.presentationPath = matchingPlaylistItem.playlistItemLocation
+				// send presentationRequest
+				cmd = {
+					action: "presentationRequest",
+					presentationPath: self.currentState.internal.awaitingSlideByLabelRequest.presentationPath,
+					presentationSlideQuality: 0
 				}
-			} catch (e) {
-				self.log('debug','Socket Send Error: ' + e.message)
+				try {
+					if (self.socket.readyState == 1 /*OPEN*/) {
+						self.socket.send(JSON.stringify(cmd))
+					}
+				} catch (e) {
+					self.log('debug','Socket Send Error: ' + e.message)
+				}
 			}
 		}
 	
@@ -3303,6 +3322,14 @@ instance.prototype.recursivelyScanPlaylistsObjToTriggerSlideByLabel = function (
 			self.recursivelyScanPlaylistsObjToTriggerSlideByLabel(playlistObj[key],playlistName, presentationName, slideLabel)
 			}
 		})
+}
+
+// Thanks to: https://stackoverflow.com/questions/26246601/wildcard-string-comparison-in-javascript/32402438#32402438
+instance.prototype.matchRuleShort = function (str, rule) {
+	var self = this
+
+	var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+	return new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$").test(str);
 }
 
 instance_skel.extendedBy(instance)
