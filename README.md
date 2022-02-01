@@ -3,7 +3,9 @@
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
 ## ⚠️ Known Issues (v2.5.0):
+- Missing extra foundSlide check in group slide action (easy fix to add)
 - Loosing current_presentation_path - not sure why/how. suspect it may be diconnecting/reconnecting. Have updated code to refresh upon new authenticated connections.
+- Pro7 Windows - currentPresenation gives library path instead of playlist path!!! (need to check and pull search playlist for first match)
 - Sometimes songs have groups with different names for the same group: eg "Chorus" "chorus" "Chorus 1" "chorus 1" - will have a think about how to best handle this.  Thinking about allowing mutliple entries in the group name field with a separattor character eg `Chorus|chorus|Chorus 1|chorus 1`
 
 ## ⚠️ Reporting An Issue:
