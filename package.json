@@ -23,5 +23,12 @@
 	"license": "MIT",
 	"dependencies": {
 		"websocket": "^1.0.26"
+	},
+	"bugs": {
+		"url": "https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/bitfocus/companion-module-renewedvision-propresenter.git"
 	}
 }
