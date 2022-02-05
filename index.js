@@ -178,7 +178,7 @@ instance.prototype.config_fields = function () {
 		},
 		{
 			type: 'dropdown',
-			id: 'typeOfPresenationRequest',
+			id: 'typeOfPresentationRequest',
 			label: 'Type of Presentation Info Requests',
 			default: 'auto',
 			tooltip:
@@ -1137,7 +1137,7 @@ instance.prototype.actions = function (system) {
 					label: 'Presentation Path (Leave Blank for Current)',
 					id: 'presentationPath',
 					default: '',
-					tooltip: 'Leave this blank to target the current presenation (Supports variable)',
+					tooltip: 'Leave this blank to target the current presentation (Supports variable)',
 					regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 				},				
 			],
@@ -1688,8 +1688,11 @@ instance.prototype.action = function (action) {
 				optPath = value
 			})
 
-			var presentationPath = self.currentState.internal.presentationPath
-			if (opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
+			var presentationPath = self.currentState.internal.presentationPath  // Default to current stored presentationPath
+            // TODO: Pro7 Win workaround: If current path is C:/*.pro then find matching path in all playlists and use that instead!
+			// This users cannot use specific slide with blank path to target presentations in the library (if a match can be found in a playlist we will always assume that is the intention)
+			//  Also, the first match will be win every time - (if the same presentation is in in mulitple playlists)
+            if (opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
 				// Is a relative presentation path. Refers to the current playlist, so extract it
 				//  from the current presentationPath and append the opt.path to it.
 				presentationPath = presentationPath.split(':')[0] + ':' + opt.path
@@ -1747,7 +1750,7 @@ instance.prototype.action = function (action) {
 				presentationPath = value
 			})
 
-			// If presentationPath was blank then auto set to current presenattion.
+			// If presentationPath was blank then auto set to current presentation.
 			if (presentationPath.length == 0) {
 				presentationPath = self.currentState.dynamicVariables['current_presentation_path']
 			}
@@ -1919,6 +1922,12 @@ instance.prototype.action = function (action) {
 			if (newClockTime.charAt(0) == '-'|| newClockTime.charAt(0) == '+') {
 				var deltaSeconds = self.convertToTotalSeconds(newClockTime)
 				newClockTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
+                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
+				if (newSeconds < 0) {
+					newClockTime = '-00:00:' + String(newSeconds)
+				} else {
+					newClockTime = '00:00:' + String(newSeconds)
+				}
 			}
 
 			// Allow +- prefix to update increment/decrement clockElapsedTime
@@ -1926,6 +1935,12 @@ instance.prototype.action = function (action) {
 			if (newclockElapsedTime.charAt(0) == '-'|| newclockElapsedTime.charAt(0) == '+') {
 				var deltaSeconds = self.convertToTotalSeconds(newclockElapsedTime)
 				newclockElapsedTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
+                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
+				if (newSeconds < 0) {
+					newclockElapsedTime = '-00:00:' + String(newSeconds)
+				} else {
+					newclockElapsedTime = '00:00:' + String(newSeconds)
+				}
 			}
 
 			cmd = {
@@ -2456,7 +2471,7 @@ instance.prototype.onWebSocketMessage = function (message) {
 				self.currentState.internal.wsConnected = true
 				// Successfully authenticated. Request current state.
 				self.setConnectionVariable('Connected', true)
-				self.getProPresenterState(true) // Force refresh with 'presentationCurrent' after first connection is authenticated (to ensure we alway have presenationPath)
+				self.getProPresenterState(true) // Force refresh with 'presentationCurrent' after first connection is authenticated (to ensure we alway have presentationPath)
 				self.init_feedbacks()
 				// Get current Stage Display (index and Name)
 				self.getStageDisplaysInfo()
@@ -2492,11 +2507,11 @@ instance.prototype.onWebSocketMessage = function (message) {
 			var slideIndex = parseInt(objData.slideIndex, 10)
 
 			if (objData.hasOwnProperty('presentationDestination') && objData.presentationDestination == 1) {
-				// Track Announcement layer presenationPath and Slide Index
+				// Track Announcement layer presentationPath and Slide Index
 				self.updateVariable('current_announcement_slide', slideIndex + 1)
 				self.updateVariable('current_announcement_presentation_path', String(objData.presentationPath))
 			} else {
-				// Track Presentation layer presenationPath, Slide Index )and optionally remaining slides)
+				// Track Presentation layer presentationPath, Slide Index )and optionally remaining slides)
 				self.currentState.internal.slideIndex = slideIndex
 				self.updateVariable('current_slide', slideIndex + 1)
 				if (objData.presentationPath == self.currentState.internal.presentationPath) {
@@ -2675,6 +2690,9 @@ instance.prototype.onWebSocketMessage = function (message) {
 							break
 						}
 					}
+                    if (foundSlide) {
+						break
+					}
 				}
 
 				if (foundSlide) {
@@ -2709,8 +2727,8 @@ instance.prototype.onWebSocketMessage = function (message) {
 			// TODO: revisit this logic for Pro7 (consider updating to suit Pro7 instead of Pro6)
 			objData.presentationPath = objData.presentationPath.replace(/.*\//, '')
 
-			// Pro6 PC's 'presentationName' contains the raw file extension '.pro6'. Remove it.
-			var presentationName = objPresentation.presentationName.replace(/\.pro6$/i, '')
+			// Remove file extension (.pro or .pro6) to make module var friendly.
+			var presentationName = objPresentation.presentationName.replace(/\.pro.?$/i, '')
 			self.updateVariable('presentation_name', presentationName)
 
 			// '.presentationPath' and '.presentation.presentationCurrentLocation' look to be
@@ -3103,7 +3121,7 @@ instance.prototype.getProPresenterState = function (refreshCurrentPresentation =
 		)
 	} else {
 		if (self.config.sendPresentationCurrentMsgs !== 'no') { // User can optionally block sending these msgs to ProPresenter (as it can cause performance issues with ProPresenter on Windows)
-			if (self.config.typeOfPresenationRequest == 'auto') {  // Decide which type of request to get current presentation info
+			if (self.config.typeOfPresentationRequest == 'auto') {  // Decide which type of request to get current presentation info
 				// Just send presentationCurrent with presentationSlideQuality = '0' (string) (25-Jan-2022 This was the default way "always". It Performs well for Pro7 and Pro6 on MacOS - very slow for Pro6/7 on Windows)
 				self.socket.send(
 					JSON.stringify({
@@ -3112,7 +3130,7 @@ instance.prototype.getProPresenterState = function (refreshCurrentPresentation =
 					})
 				)
 			} else {
-				// Send presentationRequest with presenatationSlideQuality = 0 (int) (At time of adding this option, this was only method that performs well for Pro7.8+ on Mac/Win and Pro6 on Mac)
+				// Send presentationRequest with presentationSlideQuality = 0 (int) (At time of adding this option, this was only method that performs well for Pro7.8+ on Mac/Win and Pro6 on Mac)
 				self.socket.send(
 					JSON.stringify({
 						action: 'presentationRequest',
