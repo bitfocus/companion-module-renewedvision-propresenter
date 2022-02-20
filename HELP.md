@@ -214,6 +214,8 @@ $(propresenter:pro7_clock_n) | hh:mm:ss for clock with index n
 $(propresenter:pro7_clock_n_hourless) | mm:ss for clock with index n
 $(propresenter:pro7_clock_n_totalseconds) | total seconds for clock with index n (can use this for feeback - eg update button colour when clock time <0)
 $(propresenter:current_random_number) | Current random number (update to new random number with action "New Random Number")
+$(propresenter:time_since_last_clock_update) | Number of milliseconds since module last heard a clock update message from ProPresenter. Normally sent every 1000ms. If none are received for longer than say 3000 milliseconds, then the connection has probably failed.
+$(propresenter:connection_timer) | Number of seconds that module has been connected to ProPresenter
 
 > You can click the $ symbol in the module list to see the current values of the module variables.
 > ![ModuleVariables.png](documentation/images/ModuleVariables.png)
