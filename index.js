@@ -303,7 +303,7 @@ instance.prototype.init = function () {
 		self.startConnectionTimer()
 
 		// Enabled Looks polling timer (which will only send looksRequests if option is enabled)
-		self.startLooksPollingTimer()
+		self.startWatchDogTimer()
 
 		if (self.config.use_sd === 'yes') {
 			self.startSDConnectionTimer()
@@ -326,8 +326,9 @@ instance.prototype.destroy = function () {
 	self.disconnectFromProPresenterSD()
 	self.stopConnectionTimer()
 	self.stopSDConnectionTimer()
+	self.stopWatchDogTimer()
 
-	debug('destroy', self.id)
+	self.log('debug', 'destroy: ' + self.id)
 }
 
 /**
@@ -514,7 +515,9 @@ instance.prototype.emptyCurrentState = function () {
 		current_pro7_look_id: null,
 		awaitingSlideByLabelRequest: {}, // When user triggers action to find slide by label and trigger it, this module must first get and search the playlist.  So the request is stored here until response for playlistRequestAll is received and thee action can then be completed using the returned playlist data.
 		matchingPlaylistItemFound: false, // Flag used accross recursive calls to recursivelyScanPlaylistsObjToTriggerSlideByLabel()
-		awaitingGroupSlideRequest: {} // When user triggers a new GroupSlide request, this module must first get the presentation and then search for the group slide. So the request is stored here until response for presentationRequest is received and the action can then be completed using hte returned presentation data.
+		awaitingGroupSlideRequest: {}, // When user triggers a new GroupSlide request, this module must first get the presentation and then search for the group slide. So the request is stored here until response for presentationRequest is received and the action can then be completed using hte returned presentation data.
+		timeOfLastClockUpdate: 0, // Keep track since last 'clockCurrentTimes' message was received - there should be one every second.
+		timeOfLastConnection: 0, // Keep track of last connection time
 	}
 
 	// The dynamic variable exposed to Companion
@@ -536,6 +539,8 @@ instance.prototype.emptyCurrentState = function () {
 		current_pro7_stage_layout_name: 'N/A',
 		current_pro7_look_name: 'N/A',
 		current_random_number: Math.floor(Math.random() * 10)+1,
+		time_since_last_clock_update: 'N/A',
+		connection_timer: '0',
 	}
 
 	self.currentState.dynamicVariablesDefs = [
@@ -603,6 +608,14 @@ instance.prototype.emptyCurrentState = function () {
 			label: 'Current Random Number',
 			name: 'current_random_number',
 		},
+		{
+			label: 'Time Since Last Clock-Update',
+			name: 'time_since_last_clock_update',  // Allows user to monitor "health" of the websocket connection (since we expect timer updates every second, if we track time since last timer update, we can infer when "normal" communication has failed.)
+		},
+		{
+			label: 'Connection Timer',
+			name: 'connection_timer',
+		},
 	]
 
 	// Update Companion with the default state if each dynamic variable.
@@ -630,8 +643,8 @@ instance.prototype.initVariables = function () {
 instance.prototype.updateVariable = function (name, value) {
 	var self = this
 
-	if (!name.includes('_clock_')) {
-		// Avoid flooding log with timer updates by filtering out the regular clock variable updates
+	if (!name.includes('_clock_') && !name.includes('time_since_last_clock_update') && !name.includes('_timer')) {
+		// Avoid flooding log with timer updates by filtering out variables that update every second
 		self.log('debug', 'updateVariable: ' + name + ' to ' + value)
 	}
 
@@ -648,12 +661,12 @@ instance.prototype.updateVariable = function (name, value) {
 	}
 }
 
-instance.prototype.startLooksPollingTimer = function () {
+instance.prototype.startWatchDogTimer = function () {
 	var self = this
-	self.log('debug', 'Starting Looks Polling Timer')
+	self.log('debug', 'Starting Watch Dog Timer')
 
-	// Create timer to poll looks each second (when option is enabled)
-	self.looksPollingTimer = setInterval(function () {
+	// Create watchdog timer to perform various checks/updates once per second.
+	self.watchDogTimer = setInterval(function () {
 
 		if (self.config.looksPolling == 'enabled' && self.socket.readyState == 1 /*OPEN*/) { // only send when option is enabled AND socket is OPEN
 			try {
@@ -663,6 +676,17 @@ instance.prototype.startLooksPollingTimer = function () {
 				self.status(self.STATUS_ERROR, e.message)
 			}
 		}
+
+		// Keep track of how long since last clock update was received.
+		if (self.currentState.internal.timeOfLastClockUpdate > 0) {
+			self.updateVariable('time_since_last_clock_update', Date.now() - self.currentState.internal.timeOfLastClockUpdate)
+		}
+
+		// Keep track for how long since last connected.
+		if (self.currentState.internal.timeOfLastConnection > 0) {
+			self.updateVariable('connection_timer', Math.floor((Date.now() - self.currentState.internal.timeOfLastConnection)/1000))
+		}
+
 	}, 1000)
 }
 
@@ -675,8 +699,8 @@ instance.prototype.startConnectionTimer = function () {
 	// Stop the timer if it was already running
 	self.stopConnectionTimer()
 
-	self.log('debug', 'Starting ConnectionTimer')
 	// Create a reconnect timer to watch the socket. If disconnected try to connect.
+	self.log('info', 'Starting ConnectionTimer')
 	self.reconTimer = setInterval(function () {
 		if (self.socket === undefined || self.socket.readyState === 3 /*CLOSED*/) {
 			// Not connected. Try to connect again.
@@ -697,6 +721,20 @@ instance.prototype.stopConnectionTimer = function () {
 	if (self.reconTimer !== undefined) {
 		clearInterval(self.reconTimer)
 		delete self.reconTimer
+	}
+}
+
+//stopWatchDogTimer
+/**
+ * Stops the Watch Dog Timer.
+ */
+ instance.prototype.stopWatchDogTimer = function () {
+	var self = this
+
+	self.log('debug', 'Stopping watchDogTimer')
+	if (self.watchDogTimer !== undefined) {
+		clearInterval(self.watchDogTimer)
+		delete self.watchDogTimer
 	}
 }
 
@@ -873,6 +911,8 @@ instance.prototype.connectToProPresenter = function () {
 
 	self.socket.on('open', function open() {
 		self.log('info', 'Opened websocket to ProPresenter remote control: ' + self.config.host + ':' + self.config.port)
+		self.currentState.internal.timeOfLastConnection = Date.now()
+		self.updateVariable('connection_timer', 0)
 		self.socket.send(
 			JSON.stringify({
 				password: self.config.pass,
@@ -883,19 +923,20 @@ instance.prototype.connectToProPresenter = function () {
 	})
 
 	self.socket.on('error', function (err) {
+		self.log('debug','Socket error: ' + err.message)
 		self.status(self.STATUS_ERROR, err.message)
 	})
 
-	//self.socket.on('connect', function () {
-	//	self.log('debug',"Connected to ProPresenter remote control");
-	//});
+	self.socket.on('connect', function () {
+		self.log('debug','Connected to ProPresenter remote control')
+	});
 
 	self.socket.on('close', function (code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
 		// Reset the current state then abort; don't flood logs with disconnected notices.
 		var wasConnected = self.currentState.internal.wsConnected
 
-		self.log('info', 'socket closed')
+		self.log('debug', 'socket closed')
 
 		if (wasConnected === false) {
 			return
@@ -965,6 +1006,7 @@ instance.prototype.connectToProPresenterSD = function () {
 		if (self.currentStatus !== self.STATUS_ERROR && self.config.use_sd === 'yes') {
 			self.status(self.STATUS_WARNING, 'OK - Stage Display not connected')
 		}
+		self.log('debug', 'SD socket error: ' + err.message)
 	})
 
 	self.sdsocket.on('connect', function () {
@@ -973,19 +1015,16 @@ instance.prototype.connectToProPresenterSD = function () {
 
 	self.sdsocket.on('close', function (code, reason) {
 		// Event is also triggered when a reconnect attempt fails.
-		// Reset the current state then abort; don't flood logs with disconnected notices.
-
-		var wasSDConnected = self.currentState.internal.wsSDConnected
-
-		if (wasSDConnected === false) {
+		// Reset the current state then return from this function and avoid flooding logs with disconnected notices.
+		if (self.currentState.internal.wsSDConnected === false) {
 			return
 		}
-
-		self.emptyCurrentState()
-
-		if (self.config.use_sd === 'yes') {
+		self.currentState.internal.wsSDConnected = false // Just set this var instead of emptyCurrentState (this is all SD connection is used for)
+		
+		if (self.config.use_sd === 'yes' && self.socket.readyState === 1 /* OPEN */) {
 			self.status(self.STATUS_WARNING, 'OK, But Stage Display closed')
 		}
+		self.log('debug', 'SD Disconnected')
 		self.setSDConnectionVariable('Disconnected', true)
 	})
 
@@ -2524,8 +2563,8 @@ instance.prototype.onWebSocketMessage = function (message) {
 			// Workaround for bug that occurs when a presentation with automatically triggered slides (eg go-to-next timer), fires one of it's slides while *another* presentation is selected and before any slides within the newly selected presentation are fired. This will lead to total_slides being wrong (and staying wrong) even after the user fires slides within the newly selected presentation.
 			setTimeout(function () {
 				self.getProPresenterState()
-			}, 800)
-			self.log('debug', 'Slide Triggered: ' + String(objData.presentationPath) + '.' + String(objData.slideIndex) + ' on layerid: ' + String(objData.presentationDestination))
+			}, 400)
+			self.log('info', 'Slide Triggered: ' + String(objData.presentationPath) + '.' + String(objData.slideIndex) + ' on layerid: ' + String(objData.presentationDestination))
 
 			// Trigger same slide in follower ProPresenter (If configured and connected)
 			if (self.config.control_follower === 'yes' && self.currentState.internal.wsFollowerConnected) {
@@ -2751,12 +2790,15 @@ instance.prototype.onWebSocketMessage = function (message) {
 				self.currentState.dynamicVariables['total_slides'] - self.currentState.dynamicVariables['current_slide']
 			)
 
-			self.log('info', 'presentationCurrent: ' + presentationName)
+			self.log('debug', 'presentationCurrent: ' + presentationName)
 			break
 
 		case 'clockCurrentTime':
 		case 'clockCurrentTimes':
 			var objClockTimes = objData.clockTimes
+
+			self.currentState.internal.timeOfLastClockUpdate = Date.now() // Keep track since last 'clockCurrentTimes' message was received - there should be one every second. 
+			self.updateVariable('time_since_last_clock_update', 0)
 
 			// Update dyn var for watched clock/timer
 			if (self.config.indexOfClockToWatch >= 0 && self.config.indexOfClockToWatch < objData.clockTimes.length) {
