@@ -2,8 +2,8 @@
 
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
-## ⚠️ Known Issues (v2.5.1):
-- Pro7 Windows - currentPresentation gives library path instead of playlist path!! This can affect some Pro7 Windows users when using new actions for slide by label and group slide. Need to determine best workaround/bufix.
+## ⚠️ Known Issues (v2.5.2):
+- Pro7 Windows - currentPresentation gives library path instead of playlist path!! This can affect some Pro7 Windows users when using new actions for slide by label and group slide. Need to determine a possible workaround as this will not be fixed upstream in Pro7 due to work on a new replacement API
 
 ## ⚠️ Reporting An Issue:
 All issues/bugs are reported in tracked in the [Issues List](https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues) on the Github repo.
@@ -16,7 +16,13 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
-### v2.5.1 (Companion Beta Build)
+### v2.5.2 (Companion Build 2.2 RC?)
+- (Update) Add module variables: time_since_last_clock_update and connection_timer (Can be used to monitor for connection issues)
+- (Update) Naming update for WatchDogTimer (improve code clarity)
+- (Update) Improved/extra debug logging (esp important for diagnosing user connection issues)
+- (Bugfix) Stop emptying all current state when stage display connection drops (it only manages one var!)
+
+### v2.5.1 (Companion Beta Build 3861)
 - (New) Supports targeting multiple groups in 'Specific Slide In A Group' action.
 - (New) New Action to generate a random number and store in module variable current_random_number.
 - (Update) minor update to tooltip text in some actions
