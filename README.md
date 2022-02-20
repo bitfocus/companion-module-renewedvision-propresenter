@@ -19,12 +19,11 @@ Please make sure to include the debug log at the time of the issue and version d
 ### v2.5.1 (Companion Beta Build)
 - (New) Supports targeting multiple groups in 'Specific Slide In A Group' action.
 - (New) New Action to generate a random number and store in module variable current_random_number.
-- (BugFix) Force refresh with 'presentationCurrent' after first connection is authenticated (to ensure we alway have presentationPath)
 - (Update) minor update to tooltip text in some actions
-- (Minor Fix) Move self.updateVariable('current_presentation_path', String(objData.presentationPath)) to case 'presentationTriggerIndex':
-- (BugFix) Added missing self.updateVariable('current_presentation_path', objData.presentationPath) in case 'presentationCurrent':
-- (New) Action to generate random numbers and store in new "current_random_number" variable.
 - (Update) Indexes in most actions support variable input.
+- (BugFix) Force refresh with 'presentationCurrent' after first connection is authenticated (to ensure we alway have presentationPath)
+- (Bugfix) Move self.updateVariable('current_presentation_path', String(objData.presentationPath)) to case 'presentationTriggerIndex':
+- (BugFix) Added missing self.updateVariable('current_presentation_path', objData.presentationPath) in case 'presentationCurrent':
 - (Bugfix) Bug fix for adding/subracting time to timer with negative value.
 - (Bugfix) Group Slide bugfix (added missing foundSlide Check)
 
