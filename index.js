@@ -533,6 +533,8 @@ instance.prototype.emptyCurrentState = function () {
 		sd_connection_status: 'Disconnected',
 		follower_connection_status: 'Disconnected',
 		video_countdown_timer: 'N/A',
+		video_countdown_timer_hourless: 'N/A',
+		video_countdown_timer_totalseconds: 'N/A',
 		watched_clock_current_time: 'N/A',
 		current_stage_display_name: 'N/A',
 		current_stage_display_index: 'N/A',
@@ -599,6 +601,14 @@ instance.prototype.emptyCurrentState = function () {
 		{
 			label: 'Video Countdown Timer',
 			name: 'video_countdown_timer',
+		},
+		{
+			label: 'Video Countdown Timer Hourless',
+			name: 'video_countdown_timer_hourless',
+		},
+		{
+			label: 'Video Countdown Timer Total Seconds',
+			name: 'video_countdown_timer_totalseconds',
 		},
 		{
 			label: 'Follower Connection Status',
@@ -3137,6 +3147,10 @@ instance.prototype.onSDWebSocketMessage = function (message) {
 			if (objData.hasOwnProperty('txt')) {
 				// Record new video countdown timer value in dynamic var
 				self.updateVariable('video_countdown_timer', objData.txt)
+				// Convert video countdown timer to hourless
+				self.updateVariable('video_countdown_timer_hourless',self.formatClockTime(objData.txt, false))
+				// Convert video countdown timer to total seconds
+				self.updateVariable('video_countdown_timer_totalseconds',self.convertToTotalSeconds(objData.txt))
 			}
 			break
 	}
