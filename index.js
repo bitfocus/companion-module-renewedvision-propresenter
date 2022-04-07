@@ -3125,7 +3125,15 @@ instance.prototype.onFollowerWebSocketMessage = function (message) {
  */
 instance.prototype.onSDWebSocketMessage = function (message) {
 	var self = this
-	var objData = JSON.parse(message)
+	var objData
+	// Try to parse websocket payload as JSON...
+	try {
+		objData = JSON.parse(message)
+	} catch (err) {
+		self.log('warn', err.message)
+		return
+	}
+	
 	switch (objData.acn) {
 		case 'ath':
 			if (objData.ath === true) {
