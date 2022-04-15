@@ -1330,7 +1330,7 @@ instance.prototype.actions = function (system) {
 					regex: self.REGEX_NUMBER,
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Countdown Duration, Elapsed Start Time or Countdown To Time',
 					id: 'clockTime',
 					default: '00:05:00',
