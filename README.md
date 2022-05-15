@@ -2,7 +2,7 @@
 
 See [HELP.md](https://github.com/greyshirtguy/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
-## ⚠️ Known Issues (v2.5.2):
+## ⚠️ Known Issues (v2.5.4):
 - Pro7 Windows - currentPresentation gives library path instead of playlist path!! This can affect some Pro7 Windows users when using new actions for slide by label and group slide. Need to determine a possible workaround as this will not be fixed upstream in Pro7 due to work on a new replacement API
 
 ## ⚠️ Reporting An Issue:
@@ -16,6 +16,11 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
+### v2.5.2 (Companion Beta Build ???)
+- Added MIDI listener to module enable Companion button press.
+By default it is disabled - you need to enabled in module config.
+It allows you to send MIDI (Note-On) messages from ProPresenter to Companipn (this module) and it will press a Companion button where the Note-On value => Index of Page and the Note-On Intensity => Index of Button to press
+
 ### v2.5.2 (Companion Build 2.2 RC?)
 - (Update) Add module variables: time_since_last_clock_update and connection_timer (Can be used to monitor for connection issues)
 - (Update) Naming update for WatchDogTimer (improve code clarity)
