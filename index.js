@@ -1,5 +1,7 @@
 var instance_skel = require('../../instance_skel')
 var WebSocket = require('ws')
+var easymidi = require('easymidi');
+var midi_input
 var debug
 var log
 
@@ -218,6 +220,39 @@ instance.prototype.config_fields = function () {
 			label: '',
 			value: "<br><br>", // Dummy space to separate settings into obvious sections
 		},
+		// ********** Pro7 Optional MIDI Listener Settings ************
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: 'MIDI Listener Settings (Optional)',
+			value: 'Optional *Beta* feature to allow ProPresenter to send MIDI note-on messages to this module to trigger button presses in Companion. (Value of Note=Page, Intensity of Note=Button) ',
+		}, 	 		
+		{
+			type: 'dropdown',
+			label: 'Enable MIDI Listener?',
+			id: 'enable_midi',
+			default: 'no',
+			width: 6,
+			choices: [
+				{ id: 'no', label: 'No' },
+				{ id: 'yes', label: 'Yes' },
+			],
+		},
+		{
+			type: 'textinput',
+			id: 'midi_port_name',
+			label: 'MIDI Port Name',
+			width: 6,
+			default: '',
+		},
+		{
+			type: 'text',
+			id: 'info',
+			width: 12,
+			label: '',
+			value: "<br><br>", // Dummy space to separate settings into obvious sections
+		},
 		// ********** Pro7 Follower Settings ************
 		{
 			type: 'text',
@@ -279,12 +314,52 @@ instance.prototype.updateConfig = function (config) {
 	} else {
 		self.stopSDConnectionTimer()
 	}
+
 	if (self.config.control_follower === 'yes') {
 		self.connectToFollowerProPresenter()
 		self.startFollowerConnectionTimer()
 	} else {
 		self.stopFollowerConnectionTimer()
 	}
+
+	if (self.config.enable_midi === 'yes') {
+		self.start_midi(self.config.midi_port_name)
+	} else {
+		self.stop_midi()
+	}
+}
+
+instance.prototype.start_midi = function(portName) {
+	var self = this
+	if (midi_input) {
+		midi_input.close()
+	}
+	midi_input = new easymidi.Input(portName)
+	midi_input.on('noteon', function (msg) {
+		self.log('debug', 'Received MIDI: ' + JSON.stringify(msg))
+		self.press_button(msg.note, msg.velocity)
+	})
+}
+
+instance.prototype.stop_midi = function(portName) {
+	var self = this
+	if (midi_input) {
+		midi_input.close()
+	}
+}
+
+instance.prototype.press_button = function (bank, button) {
+	var self = this
+	bank = parseInt(bank)
+	button = parseInt(button)
+
+	this.system.emit('log', 'ProPresenter-MIDI', 'info', `Push button ${bank}.${button}`)
+	this.system.emit('bank_pressed', bank, button, true)
+
+	setTimeout(() => {
+		this.system.emit('bank_pressed', bank, button, false)
+		this.system.emit('log', 'ProPresenter-MIDI', 'info', `Release button ${bank}.${button}`)
+	}, 20)
 }
 
 /**
@@ -297,6 +372,12 @@ instance.prototype.init = function () {
 	self.init_presets()
 
 	self.initVariables()
+
+	if (self.config.enable_midi === 'yes') {
+		self.start_midi(self.config.midi_port_name)
+	} else {
+		self.stop_midi()
+	}
 
 	if (self.config.host !== '' && self.config.port !== '') {
 		self.connectToProPresenter()
