@@ -16,7 +16,7 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
-### v2.5.2 (Companion Beta Build ???)
+### v2.5.4 (Companion Beta Build ???)
 - Added MIDI listener to module enable Companion button press.
 By default it is disabled - you need to enabled in module config.
 It allows you to send MIDI (Note-On) messages from ProPresenter to Companipn (this module) and it will press a Companion button where the Note-On value => Index of Page and the Note-On Intensity => Index of Button to press
