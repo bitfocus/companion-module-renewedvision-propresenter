@@ -39,6 +39,9 @@ If you chose to also enable the stage display app option in ProPresenter prefere
 ![ModuleStageSettings.png](documentation/images/ModuleStageSettings.png)<br>
 > N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
+_🎹 Optional MIDI Listener_  
+There is an optional MIDI listener to enable remote control of Companion through MIDI.  If you enable this option, you can send a Note-On message to Companion to cause a remote button press.  The numberical value of the note will specify the page of the button to press and the intensity of the note will specify the button to press on that page.
+
 _**⚠️ Pro7/Windows users ⚠️**  
 Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off.  Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name.  You will no longer be able to display them on buttons.<br>
 However, there is also another option to configure the **type** of the presentation request.  Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
