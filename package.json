@@ -22,6 +22,7 @@
 	"author": "Oliver Herrmann <oliver@monoxane.com>",
 	"license": "MIT",
 	"dependencies": {
+		"easymidi": "^2.1.0",
 		"websocket": "^1.0.26"
 	},
 	"bugs": {
