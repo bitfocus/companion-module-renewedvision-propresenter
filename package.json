@@ -19,7 +19,10 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"author": "Oliver Herrmann <oliver@monoxane.com>",
+	"author": "Daniel Owen <greyshirtguy@gmail.com>",
+	"contributors": [
+		"Oliver Herrmann <oliver@monoxane.com>"
+	],
 	"license": "MIT",
 	"dependencies": {
 		"easymidi": "^2.1.0",
