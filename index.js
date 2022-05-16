@@ -1968,7 +1968,7 @@ instance.prototype.action = function (action) {
 
 			// Allow +- prefix to update increment/decrement clockTime
 			var newClockTime
-			self.system.emit('variable_parse', String(opt.newClockTime).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+			self.system.emit('variable_parse', String(opt.clockTime).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 				newClockTime = value
 			})
 
