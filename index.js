@@ -1411,12 +1411,12 @@ instance.prototype.actions = function (system) {
 					regex: self.REGEX_NUMBER,
 				},
 				{
-					type: 'textinput',
+					type: 'textwithvariables',
 					label: 'Countdown Duration, Elapsed Start Time or Countdown To Time',
 					id: 'clockTime',
 					default: '00:05:00',
 					tooltip:
-						'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
+						'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information. (Supports variable)',
 					regex: '/^[-|+]?\\d*:?\\d*:?\\d*$/',
 				},
 				{
@@ -2048,11 +2048,15 @@ instance.prototype.action = function (action) {
 			}
 
 			// Allow +- prefix to update increment/decrement clockTime
-			var newClockTime = opt.clockTime
+			var newClockTime
+			self.system.emit('variable_parse', String(opt.clockTime).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+				newClockTime = value
+			})
+
 			if (newClockTime.charAt(0) == '-'|| newClockTime.charAt(0) == '+') {
 				var deltaSeconds = self.convertToTotalSeconds(newClockTime)
 				newClockTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
-                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
+		                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
 				if (newSeconds < 0) {
 					newClockTime = '-00:00:' + String(newSeconds)
 				} else {
