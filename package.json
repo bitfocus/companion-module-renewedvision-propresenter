@@ -4,7 +4,7 @@
 		"propresenter6",
 		"propresenter"
 	],
-	"version": "2.5.4",
+	"version": "2.5.5",
 	"api_version": "1.0.0",
 	"keywords": [
 		"Software",
@@ -25,7 +25,7 @@
 	],
 	"license": "MIT",
 	"dependencies": {
-		"easymidi": "^2.1.0",
+		"easymidi": "^3.0.1",
 		"websocket": "^1.0.26"
 	},
 	"bugs": {
