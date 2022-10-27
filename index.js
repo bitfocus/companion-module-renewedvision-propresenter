@@ -214,6 +214,19 @@ instance.prototype.config_fields = function () {
 			],
 		},
 		{
+			type: 'dropdown',
+			id: 'timerPolling', // Pro 7.92 onwards on MacOs no longer sends timer updates when clockStartSendingCurrentTime action is sent - instead, we must manually poll timers
+			label: 'Timer Polling',
+			default: 'disabled',
+			tooltip:
+				'Poll ProPresenter Timers values once per second to enable timer feedback. This workaround is only needed for some versions of Pro7 on MacOS - eg 7.9.2, 7.10, 7.10.2...',
+			width: 6,
+			choices: [
+				{ id: 'disabled', label: 'Disabled' },
+				{ id: 'enabled', label: 'Enabled' },
+			],
+		},
+		{
 			type: 'text',
 			id: 'info',
 			width: 12,
@@ -226,7 +239,7 @@ instance.prototype.config_fields = function () {
 			id: 'info',
 			width: 12,
 			label: 'MIDI Listener Settings (Optional)',
-			value: 'Optional *Beta* feature to allow ProPresenter to send MIDI note-on messages to this module to trigger button presses in Companion. (Value of Note=Page, Intensity of Note=Button) ',
+			value: 'Optional *Beta* feature to allow ProPresenter to send MIDI note-on messages to this module to trigger button presses in Companion. Value of MIDI Note=Button Page, Intensity of MIDI Note=Button Number.  Do NOT enable this option for multiple instances - you only need a SINGLE MIDI listener for Companion',
 		}, 	 		
 		{
 			type: 'dropdown',
@@ -334,11 +347,15 @@ instance.prototype.start_midi = function(portName) {
 	if (midi_input) {
 		midi_input.close()
 	}
-	midi_input = new easymidi.Input(portName)
-	midi_input.on('noteon', function (msg) {
-		self.log('debug', 'Received MIDI: ' + JSON.stringify(msg))
-		self.press_button(msg.note, msg.velocity)
+	try {
+		midi_input = new easymidi.Input(portName)
+		midi_input.on('noteon', function (msg) {
+			self.log('debug', 'Received MIDI: ' + JSON.stringify(msg))
+			self.press_button(msg.note, msg.velocity)
 	})
+	} catch (err) {
+		self.log('debug', 'midi port "' + portName + '" open failed: ' + err.message)
+	}
 }
 
 instance.prototype.stop_midi = function(portName) {
@@ -768,6 +785,15 @@ instance.prototype.startWatchDogTimer = function () {
 			}
 		}
 
+		if (self.config.timerPolling == 'enabled' && self.socket.readyState == 1 /*OPEN*/) { // only send when option is enabled AND socket is OPEN
+			try {
+				self.socket.send('{"action": "clockRequest"}')
+			} catch (e) {
+				self.log('debug','NETWORK ' + e)
+				self.status(self.STATUS_ERROR, e.message)
+			}
+		}
+
 		// Keep track of how long since last clock update was received.
 		if (self.currentState.internal.timeOfLastClockUpdate > 0) {
 			self.updateVariable('time_since_last_clock_update', Date.now() - self.currentState.internal.timeOfLastClockUpdate)
@@ -1112,7 +1138,7 @@ instance.prototype.connectToProPresenterSD = function () {
 		}
 		self.currentState.internal.wsSDConnected = false // Just set this var instead of emptyCurrentState (this is all SD connection is used for)
 		
-		if (self.config.use_sd === 'yes' && self.socket.readyState === 1 /* OPEN */) {
+		if (self.config.use_sd === 'yes' && self.socket  !== undefined && self.socket.readyState === 1 /* OPEN */) {
 			self.status(self.STATUS_WARNING, 'OK, But Stage Display closed')
 		}
 		self.log('debug', 'SD Disconnected')
@@ -1411,12 +1437,12 @@ instance.prototype.actions = function (system) {
 					regex: self.REGEX_NUMBER,
 				},
 				{
-					type: 'textwithvariables',
+					type: 'textinput',
 					label: 'Countdown Duration, Elapsed Start Time or Countdown To Time',
 					id: 'clockTime',
 					default: '00:05:00',
 					tooltip:
-						'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information. (Supports variable)',
+						'New duration (or time) for countdown clocks. Also used as optional starting time for elapsed time clocks. Formatted as HH:MM:SS - but you can also use other (shorthand) formats, see the README for more information',
 					regex: '/^[-|+]?\\d*:?\\d*:?\\d*$/',
 				},
 				{
@@ -2048,15 +2074,11 @@ instance.prototype.action = function (action) {
 			}
 
 			// Allow +- prefix to update increment/decrement clockTime
-			var newClockTime
-			self.system.emit('variable_parse', String(opt.clockTime).trim(), function (value) { // Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-				newClockTime = value
-			})
-
+			var newClockTime = opt.clockTime
 			if (newClockTime.charAt(0) == '-'|| newClockTime.charAt(0) == '+') {
 				var deltaSeconds = self.convertToTotalSeconds(newClockTime)
 				newClockTime = '00:00:' + String(parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds))
-		                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
+                var newSeconds = parseInt(self.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) + parseInt(deltaSeconds)
 				if (newSeconds < 0) {
 					newClockTime = '-00:00:' + String(newSeconds)
 				} else {
@@ -2888,6 +2910,10 @@ instance.prototype.onWebSocketMessage = function (message) {
 			self.log('debug', 'presentationCurrent: ' + presentationName)
 			break
 
+		case 'clockRequest':
+			// Using clockRequest for a workaround when clockCurrentTimes action is never recieved from some versions of Pro7 on MacOS
+			// The workaround is to manually poll with clockRequests - when a clockRequest response is recieved, just pre-load objData.clockTimes with the times array from the clockRequest clockInfo and keep using the normal processing below that processes the clockTimes array!
+			objData.clockTimes = objData.clockInfo.map(x => x.clockTime)
 		case 'clockCurrentTime':
 		case 'clockCurrentTimes':
 			var objClockTimes = objData.clockTimes
