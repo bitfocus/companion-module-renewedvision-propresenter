@@ -1,0 +1,42 @@
+{
+	"id": "renewedvision-propresenter",
+	"name": "renewedvision-propresenter",
+	"shortname": "propresenter",
+	"description": "A Companion Module for ProPresenter",
+	"version": "0.0.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/bitfocus/companion-module-renewedvision-propresenter.git",
+	"bugs": "https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues",
+	"maintainers": [
+		{
+			"name": "Daniel Owen",
+			"email": "greyshirtguy@gmail.com"
+		},
+		{
+			"name": "Oliver Herrmann",
+			"email": "oliver@monoxane.com"
+		},
+		{
+			"name": "Jeffrey Davidsz",
+			"email": "jeffrey.davidsz@vicreo.eu"
+		}
+	],
+	"legacyIds": [
+		"propresenter6",
+		"propresenter"
+	],
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../index.js"
+	},
+	"manufacturer": "Renewed Vision",
+	"products": [
+		"ProPresenter"
+	],
+	"keywords": [
+		"Software",
+		"Presentation"
+	]
+}
