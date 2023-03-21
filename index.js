@@ -1,8 +1,7 @@
-const WebSocket = require('ws')
-const easymidi = require('easymidi')
-const { InstanceBase, runEntrypoint, combineRgb } = require('@companion-module/base')
-const UpgradeScripts = require('./upgrades')
-const GetActions = require('./actions')
+const { WebSocket } = require('ws')
+const { easymidi } = require('easymidi')
+const { InstanceBase, runEntrypoint, combineRgb, InstanceStatus } = require('@companion-module/base')
+const { GetActions } = require('./actions')
 let midi_input
 
 class instance extends InstanceBase {
@@ -14,9 +13,9 @@ class instance extends InstanceBase {
 	 * Module is starting up.
 	 */
 	async init(config) {
-		await this.configUpdated(config)
-
 		this.initVariables()
+
+		await this.configUpdated(config)
 
 		if (this.config.enable_midi === 'yes') {
 			this.start_midi(this.config.midi_port_name)
@@ -43,7 +42,7 @@ class instance extends InstanceBase {
 		this.awaiting_reply = false
 		this.command_queue = []
 
-		this.setActionDefinitions(GetActions(this.currentState))
+		this.setActionDefinitions(GetActions(this.currentState, this.log))
 	}
 
 	/**
@@ -391,7 +390,7 @@ class instance extends InstanceBase {
 		}
 		try {
 			midi_input = new easymidi.Input(portName)
-			midi_input.on('noteon', function (msg) {
+			midi_input.on('noteon', (msg) => {
 				this.log('debug', 'Received MIDI: ' + JSON.stringify(msg))
 				this.press_button(msg.note, msg.velocity)
 			})
@@ -613,7 +612,7 @@ class instance extends InstanceBase {
 		this.log('debug', 'emptyCurrentState')
 
 		// Reinitialize the currentState variable, otherwise this variable (and the module's
-		//	state) will be shared between multiple instances of this module.
+		// state) will be shared between multiple instances of this module.
 		this.currentState = {}
 
 		// The internal state of the connection to ProPresenter
@@ -744,20 +743,16 @@ class instance extends InstanceBase {
 				variableId: 'connection_timer',
 			},
 		]
-
-		// Update Companion with the default state if each dynamic variable.
-		Object.keys(this.currentState.dynamicVariables).forEach(function (key) {
-			this.updateVariable(key, this.currentState.dynamicVariables[key])
-		})
 	}
 
 	/**
 	 * Initialize the available variables. (These are listed in the module config UI)
 	 */
-	initVariables = function () {
+	initVariables() {
 		// Initialize the current state and update Companion with the variables.
 		this.emptyCurrentState()
 		this.setVariableDefinitions(this.currentState.dynamicVariablesDefs) // Make sure to call this after this.emptyCurrentState() as it intializes this.currentState.dynamicVariablesDefs
+		this.setVariableValues(this.currentState.dynamicVariables)
 	}
 
 	/**
@@ -777,7 +772,8 @@ class instance extends InstanceBase {
 		}
 
 		this.currentState.dynamicVariables[name] = value
-		this.setVariableValues(name, value)
+
+		this.setVariableValues({ [name]: value })
 
 		if (name === 'connection_status') {
 			this.checkFeedbacks('propresenter_module_connected')
@@ -788,14 +784,14 @@ class instance extends InstanceBase {
 		this.log('debug', 'Starting Watch Dog Timer')
 
 		// Create watchdog timer to perform various checks/updates once per second.
-		this.watchDogTimer = setInterval(function () {
+		this.watchDogTimer = setInterval(() => {
 			if (this.config.looksPolling == 'enabled' && this.socket.readyState == 1 /*OPEN*/) {
 				// only send when option is enabled AND socket is OPEN
 				try {
 					this.socket.send('{"action": "looksRequest"}')
 				} catch (e) {
 					this.log('debug', 'NETWORK ' + e)
-					this.status(this.STATUS_ERROR, e.message)
+					this.updateStatus(InstanceStatus.UnknownError, e.message)
 				}
 			}
 
@@ -805,7 +801,7 @@ class instance extends InstanceBase {
 					this.socket.send('{"action": "clockRequest"}')
 				} catch (e) {
 					this.log('debug', 'NETWORK ' + e)
-					this.status(this.STATUS_ERROR, e.message)
+					this.updateStatus(InstanceStatus.UnknownError, e.message)
 				}
 			}
 
@@ -836,7 +832,7 @@ class instance extends InstanceBase {
 
 		// Create a reconnect timer to watch the socket. If disconnected try to connect.
 		this.log('info', 'Starting ConnectionTimer')
-		this.reconTimer = setInterval(function () {
+		this.reconTimer = setInterval(() => {
 			if (this.socket === undefined || this.socket.readyState === 3 /*CLOSED*/) {
 				// Not connected. Try to connect again.
 				this.connectToProPresenter()
@@ -877,7 +873,7 @@ class instance extends InstanceBase {
 
 		// Create a reconnect timer to watch the socket. If disconnected try to connect
 		this.log('debug', 'Starting SDConnectionTimer')
-		this.reconSDTimer = setInterval(function () {
+		this.reconSDTimer = setInterval(() => {
 			if (this.sdsocket === undefined || this.sdsocket.readyState === 3 /*CLOSED*/) {
 				// Not connected. Try to connect again.
 				this.connectToProPresenterSD()
@@ -907,7 +903,7 @@ class instance extends InstanceBase {
 
 		this.log('debug', 'Starting Follower ConnectionTimer')
 		// Create a reconnect timer to watch the socket. If disconnected try to connect.
-		this.reconFollowerTimer = setInterval(function () {
+		this.reconFollowerTimer = setInterval(() => {
 			if (
 				this.followersocket === undefined ||
 				this.followersocket.readyState === 3 /*CLOSED*/ ||
@@ -1020,6 +1016,7 @@ class instance extends InstanceBase {
 		// Disconnect if already connected
 		this.disconnectFromProPresenter()
 
+		this.log('debug', 'OPENING: ' + this.config.host + ':' + this.config.port)
 		// Connect to remote control websocket of ProPresenter
 		this.socket = new WebSocket('ws://' + this.config.host + ':' + this.config.port + '/remote')
 
@@ -1038,7 +1035,7 @@ class instance extends InstanceBase {
 
 		this.socket.on('error', (err) => {
 			this.log('debug', 'Socket error: ' + err.message)
-			this.status(this.STATUS_ERROR, err.message)
+			this.updateStatus(InstanceStatus.UnknownError, err.message)
 		})
 
 		this.socket.on('connect', () => {
@@ -1058,7 +1055,7 @@ class instance extends InstanceBase {
 
 			this.emptyCurrentState() // This is also sets this.currentState.internal.wsConnected to false
 
-			this.status(this.STATUS_ERROR, 'Not connected to ProPresenter')
+			this.updateStatus(InstanceStatus.UnknownError, 'Not connected to ProPresenter')
 			this.setConnectionVariable('Disconnected', true)
 		})
 
@@ -1115,8 +1112,8 @@ class instance extends InstanceBase {
 			// If stage display can't connect - it's not really a "code red" error - since *most* of the core functionally does not require it.
 			// Therefore, a failure to connect stage display is more of a warning state.
 			// However, if the module is already in error, then we should not lower that to warning!
-			if (this.currentStatus !== this.STATUS_ERROR && this.config.use_sd === 'yes') {
-				this.status(this.STATUS_WARNING, 'OK - Stage Display not connected')
+			if (this.currentStatus !== InstanceStatus.UnknownError && this.config.use_sd === 'yes') {
+				this.updateStatus(InstanceStatus.UnknownWarning, 'OK - Stage Display not connected')
 			}
 			this.log('debug', 'SD socket error: ' + err.message)
 		})
@@ -1134,7 +1131,7 @@ class instance extends InstanceBase {
 			this.currentState.internal.wsSDConnected = false // Just set this var instead of emptyCurrentState (this is all SD connection is used for)
 
 			if (this.config.use_sd === 'yes' && this.socket !== undefined && this.socket.readyState === 1 /* OPEN */) {
-				this.status(this.STATUS_WARNING, 'OK, But Stage Display closed')
+				this.updateStatus(InstanceStatus.UnknownWarning, 'OK, But Stage Display closed')
 			}
 			this.log('debug', 'SD Disconnected')
 			this.setSDConnectionVariable('Disconnected', true)
@@ -1210,7 +1207,7 @@ class instance extends InstanceBase {
 		})
 	}
 
-	init_feedbacks = function () {
+	init_feedbacks = () => {
 		var feedbacks = {}
 		feedbacks['stagedisplay_active'] = {
 			label: 'Change colors based on active stage display',
@@ -1374,7 +1371,7 @@ class instance extends InstanceBase {
 		this.setFeedbackDefinitions(feedbacks)
 	}
 
-	feedback = function (feedback, bank) {
+	feedback = (feedback, bank) => {
 		this.log('debug', 'feedback type: ' + feedback.type)
 
 		if (feedback.type == 'stagedisplay_active') {
@@ -1441,7 +1438,7 @@ class instance extends InstanceBase {
 	/**
 	 * Received a message from ProPresenter.
 	 */
-	onWebSocketMessage = function (message) {
+	onWebSocketMessage = (message) => {
 		var objData
 
 		// Try to parse websocket payload as JSON...
@@ -1470,7 +1467,7 @@ class instance extends InstanceBase {
 						'info',
 						'Authenticated to ProPresenter (Version: ' + this.currentState.internal.proMajorVersion + ')'
 					)
-					this.status(this.STATE_OK)
+					this.updateStatus(InstanceStatus.Ok)
 					this.currentState.internal.wsConnected = true
 					// Successfully authenticated. Request current state.
 					this.setConnectionVariable('Connected', true)
@@ -1491,7 +1488,7 @@ class instance extends InstanceBase {
 						})
 					)
 				} else {
-					this.status(this.STATUS_ERROR)
+					this.updateStatus(InstanceStatus.UnknownError)
 					// Bad password
 					this.log('warn', 'Failed to authenticate to ProPresenter. ' + objData.error)
 					this.disconnectFromProPresenter()
@@ -1525,7 +1522,7 @@ class instance extends InstanceBase {
 				}
 
 				// Workaround for bug that occurs when a presentation with automatically triggered slides (eg go-to-next timer), fires one of it's slides while *another* presentation is selected and before any slides within the newly selected presentation are fired. This will lead to total_slides being wrong (and staying wrong) even after the user fires slides within the newly selected presentation.
-				setTimeout(function () {
+				setTimeout(() => {
 					this.getProPresenterState()
 				}, 400)
 				this.log(
@@ -1943,7 +1940,7 @@ class instance extends InstanceBase {
 						this.currentState.internal.pro7StageLayouts = []
 
 						// Refresh list from new data
-						objData.stageLayouts.forEach(function (stageLayout) {
+						objData.stageLayouts.forEach((stageLayout) => {
 							this.currentState.internal.pro7StageLayouts.push({
 								id: stageLayout['stageLayoutUUID'],
 								label: stageLayout['stageLayoutName'],
@@ -1961,7 +1958,7 @@ class instance extends InstanceBase {
 
 						// Refresh list from new data
 						var updateModuleVars = false
-						objData.stageScreens.forEach(function (stageScreen) {
+						objData.stageScreens.forEach((stageScreen) => {
 							var stageScreenName = stageScreen['stageScreenName']
 							var stageScreenUUID = stageScreen['stageScreenUUID']
 							var stageLayoutSelectedLayoutUUID = stageScreen['stageLayoutSelectedLayoutUUID']
@@ -2001,7 +1998,7 @@ class instance extends InstanceBase {
 							if (stageScreenUUID === this.config.GUIDOfStageDisplayScreenToWatch) {
 								watchScreen_StageLayoutSelectedLayoutUUID = stageLayoutSelectedLayoutUUID
 								this.currentState.internal.stageDisplayIndex = this.currentState.internal.pro7StageLayouts
-									.map(function (x) {
+									.map((x) => {
 										return x.id
 									})
 									.indexOf(watchScreen_StageLayoutSelectedLayoutUUID)
@@ -2017,7 +2014,7 @@ class instance extends InstanceBase {
 
 					// Update current_pro7_stage_layout_name
 					if (objData.hasOwnProperty('stageLayouts')) {
-						objData.stageLayouts.forEach(function (stageLayout) {
+						objData.stageLayouts.forEach((stageLayout) => {
 							if (stageLayout['stageLayoutUUID'] === watchScreen_StageLayoutSelectedLayoutUUID) {
 								this.updateVariable('current_pro7_stage_layout_name', stageLayout['stageLayoutName'])
 							}
@@ -2036,7 +2033,7 @@ class instance extends InstanceBase {
 			case 'looksRequest': // Response from sending looksRequest
 				if (objData.hasOwnProperty('looks')) {
 					var currentLooks = []
-					objData.looks.forEach(function (look) {
+					objData.looks.forEach((look) => {
 						var lookName = look['lookName']
 						var lookID = look['lookID']
 						currentLooks.push({ id: lookID, label: lookName })
@@ -2080,7 +2077,7 @@ class instance extends InstanceBase {
 			case 'macrosRequest': // Response from sending macrosRequest
 				if (objData.hasOwnProperty('macros')) {
 					this.currentState.internal.pro7Macros = []
-					objData.macros.forEach(function (look) {
+					objData.macros.forEach((look) => {
 						var macroName = look['macroName']
 						var macroID = look['macroID']
 						this.currentState.internal.pro7Macros.push({ id: macroID, label: macroName })
@@ -2142,7 +2139,7 @@ class instance extends InstanceBase {
 	/**
 	 * Received a message from Follower ProPresenter.
 	 */
-	onFollowerWebSocketMessage = function (message) {
+	onFollowerWebSocketMessage = (message) => {
 		var objData
 		// Try to parse websocket payload as JSON...
 		try {
@@ -2166,7 +2163,7 @@ class instance extends InstanceBase {
 
 					this.checkFeedbacks('propresenter_follower_connected')
 				} else {
-					this.status(this.STATUS_WARNING)
+					this.updateStatus(InstanceStatus.UnknownWarning)
 					this.log('warn', 'Failed to authenticate to Follower ProPresenter' + objData.error)
 					this.disconnectFromFollowerProPresenter()
 
@@ -2198,7 +2195,7 @@ class instance extends InstanceBase {
 	/**
 	 * Received a stage display message from ProPresenter.
 	 */
-	onSDWebSocketMessage = function (message) {
+	onSDWebSocketMessage = (message) => {
 		var objData
 		// Try to parse websocket payload as JSON...
 		try {
@@ -2214,11 +2211,11 @@ class instance extends InstanceBase {
 					this.currentState.internal.wsSDConnected = true
 					// Successfully authenticated.
 					this.setSDConnectionVariable('Connected', true)
-					this.status(this.STATE_OK)
+					this.updateStatus(InstanceStatus.Ok)
 				} else {
 					// Bad password
 					if (this.config.use_sd === 'yes') {
-						this.status(this.STATUS_WARNING, 'OK, But Stage Display failed auth')
+						this.updateStatus(InstanceStatus.UnknownWarning, 'OK, But Stage Display failed auth')
 						this.log('warn', 'Stage Display auth error: ' + String(objData.err))
 					}
 					this.stopSDConnectionTimer()
@@ -2241,7 +2238,7 @@ class instance extends InstanceBase {
 	/**
 	 * Requests the current state from ProPresenter.
 	 */
-	getProPresenterState = function (refreshCurrentPresentation = false) {
+	getProPresenterState = (refreshCurrentPresentation = false) => {
 		if (this.currentState.internal.wsConnected === false) {
 			return
 		}
@@ -2293,7 +2290,7 @@ class instance extends InstanceBase {
 	/*
 	 * Requests the list of configured stage displays (includes names)
 	 */
-	getStageDisplaysInfo = function () {
+	getStageDisplaysInfo = () => {
 		if (this.currentState.internal.wsConnected === false) {
 			return
 		}
@@ -2308,7 +2305,7 @@ class instance extends InstanceBase {
 	/*
 	 * Request Looks List
 	 */
-	getLooksList = function () {
+	getLooksList = () => {
 		if (this.currentState.internal.wsConnected === false) {
 			return
 		}
@@ -2323,7 +2320,7 @@ class instance extends InstanceBase {
 	/*
 	 * Request Macros List
 	 */
-	getMacrosList = function () {
+	getMacrosList = () => {
 		if (this.currentState.internal.wsConnected === false) {
 			return
 		}
@@ -2338,7 +2335,7 @@ class instance extends InstanceBase {
 	/*
 	 * Format Time string
 	 */
-	formatClockTime = function (clockTimeString, includeHours = true) {
+	formatClockTime = (clockTimeString, includeHours = true) => {
 		// Record if time is negative
 		var timeIsNegative = false
 		if (clockTimeString.length > 0) {
@@ -2381,7 +2378,7 @@ class instance extends InstanceBase {
 	/*
 	 * Conver Time string to total seconds
 	 */
-	convertToTotalSeconds = function (clockTimeString) {
+	convertToTotalSeconds = (clockTimeString) => {
 		var totalSeconds = 0
 
 		// Record if time is negative
@@ -2438,12 +2435,7 @@ class instance extends InstanceBase {
 	 * Calls presentationRequest (whose response handler will complete the request)
 	 */
 
-	recursivelyScanPlaylistsObjToTriggerSlideByLabel = function (
-		playlistObj,
-		playlistName,
-		presentationName,
-		slideLabel
-	) {
+	recursivelyScanPlaylistsObjToTriggerSlideByLabel = (playlistObj, playlistName, presentationName, slideLabel) => {
 		Object.keys(playlistObj).forEach((key) => {
 			if (this.currentState.internal.matchingPlaylistItemFound) {
 				return
@@ -2492,9 +2484,9 @@ class instance extends InstanceBase {
 	}
 
 	// Thanks to: https://stackoverflow.com/questions/26246601/wildcard-string-comparison-in-javascript/32402438#32402438
-	matchRuleShort = function (str, rule) {
+	matchRuleShort = (str, rule) => {
 		var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, '\\$1')
 		return new RegExp('^' + rule.split('*').map(escapeRegex).join('.*') + '$').test(str)
 	}
 }
-runEntrypoint(instance, UpgradeScripts)
+runEntrypoint(instance, [])
