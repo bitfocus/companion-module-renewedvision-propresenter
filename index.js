@@ -42,7 +42,7 @@ class instance extends InstanceBase {
 		this.awaiting_reply = false
 		this.command_queue = []
 
-		this.setActionDefinitions(GetActions(this.currentState, this.log))
+		this.setActionDefinitions(GetActions(this))
 	}
 
 	/**
@@ -2024,7 +2024,7 @@ class instance extends InstanceBase {
 					this.checkFeedbacks('pro7_stagelayout_active')
 
 					this.log('info', 'Got Pro7 Stage Display Sets')
-					this.setActionDefinitions(GetActions(this.currentState))
+					this.setActionDefinitions(GetActions(this))
 
 					this.init_feedbacks() // Update dropdown lists for pro7 stage layout feedback.
 				}
@@ -2066,7 +2066,7 @@ class instance extends InstanceBase {
 					if (looksChanged) {
 						this.log('debug', 'Looks changed. Updated internal list ')
 						this.currentState.internal.pro7Looks = currentLooks.slice() // Update .internal.pro7Looks to same as currentLooks
-						this.setActionDefinitions(GetActions(this.currentState))
+						this.setActionDefinitions(GetActions(this))
 						this.init_feedbacks() // Update dropdown lists for look feedback.
 					}
 
@@ -2084,7 +2084,7 @@ class instance extends InstanceBase {
 					})
 
 					this.log('info', 'Got Pro7 Macros List')
-					this.setActionDefinitions(GetActions(this.currentState))
+					this.setActionDefinitions(GetActions(this))
 				}
 				break
 
