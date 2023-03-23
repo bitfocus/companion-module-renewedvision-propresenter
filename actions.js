@@ -146,7 +146,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					var index = this.currentState.internal.slideIndex // Start with current slide (allows relative jumps using+-)
+					var index = this.instance.currentState.internal.slideIndex // Start with current slide (allows relative jumps using+-)
 
 					// Allow parsing of optional variable in the slide textfield as int
 					var optSlideIndex
@@ -169,7 +169,7 @@ module.exports = {
 						// This allows the "Specific Slide", when set to 0 (thus the index is -1), to
 						//  trigger the current slide again. Can be used to bring back a slide after using
 						//  an action like 'clearAll' or 'clearText'.
-						index = this.currentState.internal.slideIndex
+						index = this.instance.currentState.internal.slideIndex
 					}
 
 					// Allow parsing of optional variable in the presentationPath textfield as string
@@ -179,7 +179,7 @@ module.exports = {
 						optPath = value
 					})
 
-					var presentationPath = this.currentState.internal.presentationPath // Default to current stored presentationPath
+					var presentationPath = this.instance.currentState.internal.presentationPath // Default to current stored presentationPath
 					// TODO: Pro7 Win workaround: If current path is C:/*.pro then find matching path in all playlists and use that instead!
 					// This users cannot use specific slide with blank path to target presentations in the library (if a match can be found in a playlist we will always assume that is the intention)
 					//  Also, the first match will be win every time - (if the same presentation is in in mulitple playlists)
@@ -251,7 +251,7 @@ module.exports = {
 					newSlideByLabelRequest.playlistName = playlistName
 					newSlideByLabelRequest.presentationName = presentationName
 					newSlideByLabelRequest.slideLabel = slideLabel
-					this.currentState.internal.awaitingSlideByLabelRequest = newSlideByLabelRequest
+					this.instance.currentState.internal.awaitingSlideByLabelRequest = newSlideByLabelRequest
 					cmd = {
 						action: 'playlistRequestAll',
 					}
@@ -317,7 +317,7 @@ module.exports = {
 						newGroupSlideRequest.groupName = groupName
 						newGroupSlideRequest.slideNumber = slideNumber
 						newGroupSlideRequest.presentationPath = presentationPath
-						this.currentState.internal.awaitingGroupSlideRequest = newGroupSlideRequest
+						this.instance.currentState.internal.awaitingGroupSlideRequest = newGroupSlideRequest
 						cmd = {
 							action: 'presentationRequest',
 							presentationPath: presentationPath,
@@ -445,7 +445,7 @@ module.exports = {
 						id: 'pro7StageScreenUUID',
 						tooltip: 'Choose which stage display screen you want to update layout',
 						default: '',
-						choices: this.currentState.internal.pro7StageScreens,
+						choices: this.instance.currentState.internal.pro7StageScreens,
 					},
 					{
 						type: 'dropdown',
@@ -453,7 +453,7 @@ module.exports = {
 						id: 'pro7StageLayoutUUID',
 						tooltip: 'Choose the new stage display layout to apply',
 						default: '',
-						choices: this.currentState.internal.pro7StageLayouts,
+						choices: this.instance.currentState.internal.pro7StageLayouts,
 					},
 				],
 				callback: (action) => {
@@ -462,10 +462,10 @@ module.exports = {
 						action: 'stageDisplayChangeLayout',
 						stageScreenUUID: opt.pro7StageScreenUUID
 							? opt.pro7StageScreenUUID
-							: this.currentState.internal.pro7StageScreens[0].id,
+							: this.instance.currentState.internal.pro7StageScreens[0].id,
 						stageLayoutUUID: opt.pro7StageLayoutUUID
 							? opt.pro7StageLayoutUUID
-							: this.currentState.internal.pro7StageLayouts[0].id,
+							: this.instance.currentState.internal.pro7StageLayouts[0].id,
 					}
 					sendCommand(cmd)
 				},
@@ -479,14 +479,14 @@ module.exports = {
 						id: 'pro7LookUUID',
 						tooltip: 'Choose which Look to make live',
 						default: '',
-						choices: this.currentState.internal.pro7Looks,
+						choices: this.instance.currentState.internal.pro7Looks,
 					},
 				],
 				callback: (action) => {
 					// If selected Look is null, then default to using first Look from list kept in internal state
 					cmd = {
 						action: 'looksTrigger',
-						lookID: opt.pro7LookUUID ? opt.pro7LookUUID : this.currentState.internal.pro7Looks[0].id,
+						lookID: opt.pro7LookUUID ? opt.pro7LookUUID : this.instance.currentState.internal.pro7Looks[0].id,
 					}
 					sendCommand(cmd)
 				},
@@ -500,14 +500,14 @@ module.exports = {
 						id: 'pro7MacroUUID',
 						tooltip: 'Choose which Macro to trigger',
 						default: '',
-						choices: this.currentState.internal.pro7Macros,
+						choices: this.instance.currentState.internal.pro7Macros,
 					},
 				],
 				callback: (action) => {
 					// If selected Macro is null, then default to using first Macro from list kept in internal state
 					cmd = {
 						action: 'macrosTrigger',
-						macroID: opt.pro7MacroUUID ? opt.pro7MacroUUID : this.currentState.internal.pro7Macros[0].id,
+						macroID: opt.pro7MacroUUID ? opt.pro7MacroUUID : this.instance.currentState.internal.pro7Macros[0].id,
 					}
 					sendCommand(cmd)
 				},
@@ -744,7 +744,7 @@ module.exports = {
 						clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
 						clockTimePeriodFormat: String(opt.clockTimePeriodFormat),
 						clockElapsedTime:
-							opt.clockType === '1' && this.currentState.internal.proMajorVersion === 7
+							opt.clockType === '1' && this.instance.currentState.internal.proMajorVersion === 7
 								? newClockTime
 								: newclockElapsedTime, // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
 						clockName: opt.clockName,
