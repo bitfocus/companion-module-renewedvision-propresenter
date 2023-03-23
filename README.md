@@ -17,6 +17,9 @@ Please make sure to include the debug log at the time of the issue and version d
 <br><br>
 
 ## 📝 Change Log:
+### v2.6.0 (Companion v3)
+Changed syntaxt to Companion v3. Removed midi listening option.
+
 ### v2.5.5 (Companion Beta Build ???)
 - Added "Timer Polling" option to workaround issue for later versions (>=Pro7.9.2) on MacOS that stopped sending timer feedback - enable this to keep geeting timer feedback in those later versions.
 - Re-Added MIDI listener to module enable Companion button press (thanks to an updated easymidi 3.0.1 module).

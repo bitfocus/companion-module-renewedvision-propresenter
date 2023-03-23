@@ -1,8 +1,6 @@
 const { WebSocket } = require('ws')
-const { easymidi } = require('easymidi')
 const { InstanceBase, runEntrypoint, combineRgb, InstanceStatus } = require('@companion-module/base')
 const { GetActions } = require('./actions')
-let midi_input
 
 class instance extends InstanceBase {
 	constructor(internal) {
@@ -16,12 +14,6 @@ class instance extends InstanceBase {
 		this.initVariables()
 
 		await this.configUpdated(config)
-
-		if (this.config.enable_midi === 'yes') {
-			this.start_midi(this.config.midi_port_name)
-		} else {
-			this.stop_midi()
-		}
 
 		if (this.config.host !== '' && this.config.port !== '') {
 			this.connectToProPresenter()
@@ -275,40 +267,6 @@ class instance extends InstanceBase {
 				label: '',
 				value: '<br><br>', // Dummy space to separate settings into obvious sections
 			},
-			// ********** Pro7 Optional MIDI Listener Settings ************
-			{
-				type: 'static-text',
-				id: 'info',
-				width: 12,
-				label: 'MIDI Listener Settings (Optional)',
-				value:
-					'Optional *Beta* feature to allow ProPresenter to send MIDI note-on messages to this module to trigger button presses in Companion. Value of MIDI Note=Button Page, Intensity of MIDI Note=Button Number.  Do NOT enable this option for multiple instances - you only need a SINGLE MIDI listener for Companion',
-			},
-			{
-				type: 'dropdown',
-				label: 'Enable MIDI Listener?',
-				id: 'enable_midi',
-				default: 'no',
-				width: 6,
-				choices: [
-					{ id: 'no', label: 'No' },
-					{ id: 'yes', label: 'Yes' },
-				],
-			},
-			{
-				type: 'textinput',
-				id: 'midi_port_name',
-				label: 'MIDI Port Name',
-				width: 6,
-				default: '',
-			},
-			{
-				type: 'static-text',
-				id: 'info',
-				width: 12,
-				label: '',
-				value: '<br><br>', // Dummy space to separate settings into obvious sections
-			},
 			// ********** Pro7 Follower Settings ************
 			{
 				type: 'static-text',
@@ -376,46 +334,6 @@ class instance extends InstanceBase {
 		} else {
 			this.stopFollowerConnectionTimer()
 		}
-
-		if (this.config.enable_midi === 'yes') {
-			this.start_midi(this.config.midi_port_name)
-		} else {
-			this.stop_midi()
-		}
-	}
-
-	start_midi(portName) {
-		if (midi_input) {
-			midi_input.close()
-		}
-		try {
-			midi_input = new easymidi.Input(portName)
-			midi_input.on('noteon', (msg) => {
-				this.log('debug', 'Received MIDI: ' + JSON.stringify(msg))
-				this.press_button(msg.note, msg.velocity)
-			})
-		} catch (err) {
-			this.log('debug', 'midi port "' + portName + '" open failed: ' + err.message)
-		}
-	}
-
-	stop_midi(portName) {
-		if (midi_input) {
-			midi_input.close()
-		}
-	}
-
-	press_button(bank, button) {
-		bank = parseInt(bank)
-		button = parseInt(button)
-
-		this.system.emit('log', 'ProPresenter-MIDI', 'info', `Push button ${bank}.${button}`)
-		this.system.emit('bank_pressed', bank, button, true)
-
-		setTimeout(() => {
-			this.system.emit('bank_pressed', bank, button, false)
-			this.system.emit('log', 'ProPresenter-MIDI', 'info', `Release button ${bank}.${button}`)
-		}, 20)
 	}
 
 	/**
