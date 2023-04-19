@@ -3,7 +3,6 @@
  */
 
 const { Regex, InstanceStatus } = require('@companion-module/base')
-
 const ActionId = {
 	enableFollowerControl: 'enableFollowerControl',
 	next: 'next',
@@ -48,7 +47,7 @@ const ActionId = {
 	nwCustom: 'nwCustom',
 }
 
-async function sendCommand(cmd, nwCmd) {
+const sendCommand = async (cmd, nwCmd) => {
 	if (nwCmd) {
 		nwCmd.data.connection = { rejectUnauthorized: false } // Add this header now, in case of a change to https with invalid certs in future.
 		this.instance.log(
@@ -98,7 +97,7 @@ async function sendCommand(cmd, nwCmd) {
 module.exports = {
 	GetActions: (instance) => {
 		this.instance = instance
-		const cmd = null
+		let cmd = null
 
 		const actions = {
 			[ActionId.next]: {
@@ -155,9 +154,9 @@ module.exports = {
 						optSlideIndex = value
 					})
 
-					if (opt.slide[0] === '-' || opt.slide[0] === '+') {
+					if (action.options.slide[0] === '-' || action.options.slide[0] === '+') {
 						// Move back/forward a relative number of slides.
-						index += parseInt(opt.slide.substring(1), 10) * (opt.slide[0] === '+' ? 1 : -1)
+						index += parseInt(action.options.slide.substring(1), 10) * (action.options.slide[0] === '+' ? 1 : -1)
 						index = Math.max(0, index)
 					} else {
 						// Absolute slide number. Convert to an index.
@@ -183,11 +182,11 @@ module.exports = {
 					// TODO: Pro7 Win workaround: If current path is C:/*.pro then find matching path in all playlists and use that instead!
 					// This users cannot use specific slide with blank path to target presentations in the library (if a match can be found in a playlist we will always assume that is the intention)
 					//  Also, the first match will be win every time - (if the same presentation is in in mulitple playlists)
-					if (opt.path !== undefined && opt.path.match(/^\d+$/) !== null) {
+					if (action.options.path !== undefined && action.options.path.match(/^\d+$/) !== null) {
 						// Is a relative presentation path. Refers to the current playlist, so extract it
-						//  from the current presentationPath and append the opt.path to it.
-						presentationPath = presentationPath.split(':')[0] + ':' + opt.path
-					} else if (opt.path !== '') {
+						//  from the current presentationPath and append the action.options.path to it.
+						presentationPath = presentationPath.split(':')[0] + ':' + action.options.path
+					} else if (action.options.path !== '') {
 						// Use the path provided. The option's regex validated the format.
 						presentationPath = optPath
 					}
@@ -431,7 +430,7 @@ module.exports = {
 				callback: (action) => {
 					cmd = {
 						action: 'stageDisplaySetIndex',
-						stageDisplayIndex: String(opt.index),
+						stageDisplayIndex: String(action.options.index),
 					}
 					sendCommand(cmd)
 				},
@@ -460,11 +459,11 @@ module.exports = {
 					// If either option is null, then default to using first items from each list kept in internal state.
 					cmd = {
 						action: 'stageDisplayChangeLayout',
-						stageScreenUUID: opt.pro7StageScreenUUID
-							? opt.pro7StageScreenUUID
+						stageScreenUUID: action.options.pro7StageScreenUUID
+							? action.options.pro7StageScreenUUID
 							: this.instance.currentState.internal.pro7StageScreens[0].id,
-						stageLayoutUUID: opt.pro7StageLayoutUUID
-							? opt.pro7StageLayoutUUID
+						stageLayoutUUID: action.options.pro7StageLayoutUUID
+							? action.options.pro7StageLayoutUUID
 							: this.instance.currentState.internal.pro7StageLayouts[0].id,
 					}
 					sendCommand(cmd)
@@ -486,7 +485,7 @@ module.exports = {
 					// If selected Look is null, then default to using first Look from list kept in internal state
 					cmd = {
 						action: 'looksTrigger',
-						lookID: opt.pro7LookUUID ? opt.pro7LookUUID : this.instance.currentState.internal.pro7Looks[0].id,
+						lookID: action.options.pro7LookUUID ? action.options.pro7LookUUID : this.instance.currentState.internal.pro7Looks[0].id,
 					}
 					sendCommand(cmd)
 				},
@@ -507,7 +506,7 @@ module.exports = {
 					// If selected Macro is null, then default to using first Macro from list kept in internal state
 					cmd = {
 						action: 'macrosTrigger',
-						macroID: opt.pro7MacroUUID ? opt.pro7MacroUUID : this.instance.currentState.internal.pro7Macros[0].id,
+						macroID: action.options.pro7MacroUUID ? action.options.pro7MacroUUID : this.instance.currentState.internal.pro7Macros[0].id,
 					}
 					sendCommand(cmd)
 				},
@@ -523,11 +522,11 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					//var message = JSON.stringify(opt.message);
+					//var message = JSON.stringify(action.options.message);
 					//cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
 					cmd = {
 						action: 'stageDisplaySendMessage',
-						stageDisplayMessage: opt.message,
+						stageDisplayMessage: action.options.message,
 					}
 					sendCommand(cmd)
 				},
@@ -555,7 +554,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					var clockIndex = String(opt.clockIndex)
+					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockStart',
 						clockIndex: clockIndex,
@@ -576,7 +575,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					var clockIndex = String(opt.clockIndex)
+					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockStop',
 						clockIndex: clockIndex,
@@ -597,7 +596,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					var clockIndex = String(opt.clockIndex)
+					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockReset',
 						clockIndex: clockIndex,
@@ -678,25 +677,25 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					var clockIndex = String(opt.clockIndex)
+					var clockIndex = String(action.options.clockIndex)
 
 					// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
 					// If they are missing, then apply default values that result in the oringial bahaviour when it was only updating a countdown timers clockTime and clockOverRun.
-					if (!opt.hasOwnProperty('clockType')) {
-						opt.clockType = '0'
+					if (!action.options.hasOwnProperty('clockType')) {
+						action.options.clockType = '0'
 					}
-					if (!opt.hasOwnProperty('clockIsPM')) {
-						opt.clockIsPM = '0'
+					if (!action.options.hasOwnProperty('clockIsPM')) {
+						action.options.clockIsPM = '0'
 					}
-					if (!opt.hasOwnProperty('clockElapsedTime')) {
-						opt.clockElapsedTime = '00:10:00'
+					if (!action.options.hasOwnProperty('clockElapsedTime')) {
+						action.options.clockElapsedTime = '00:10:00'
 					}
-					if (!opt.hasOwnProperty('clockName')) {
-						opt.clockName = ''
+					if (!action.options.hasOwnProperty('clockName')) {
+						action.options.clockName = ''
 					}
 
 					// Allow +- prefix to update increment/decrement clockTime
-					var newClockTime = opt.clockTime
+					var newClockTime = action.options.clockTime
 					if (newClockTime.charAt(0) == '-' || newClockTime.charAt(0) == '+') {
 						var deltaSeconds = this.convertToTotalSeconds(newClockTime)
 						newClockTime =
@@ -716,7 +715,7 @@ module.exports = {
 					}
 
 					// Allow +- prefix to update increment/decrement clockElapsedTime
-					var newclockElapsedTime = opt.clockElapsedTime
+					var newclockElapsedTime = action.options.clockElapsedTime
 					if (newclockElapsedTime.charAt(0) == '-' || newclockElapsedTime.charAt(0) == '+') {
 						var deltaSeconds = this.convertToTotalSeconds(newclockElapsedTime)
 						newclockElapsedTime =
@@ -739,15 +738,15 @@ module.exports = {
 						action: 'clockUpdate',
 						clockIndex: clockIndex,
 						clockTime: newClockTime,
-						clockOverrun: opt.clockOverRun,
-						clockType: opt.clockType,
-						clockIsPM: String(opt.clockTimePeriodFormat) < 2 ? String(opt.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
-						clockTimePeriodFormat: String(opt.clockTimePeriodFormat),
+						clockOverrun: action.options.clockOverRun,
+						clockType: action.options.clockType,
+						clockIsPM: String(action.options.clockTimePeriodFormat) < 2 ? String(action.options.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
+						clockTimePeriodFormat: String(action.options.clockTimePeriodFormat),
 						clockElapsedTime:
-							opt.clockType === '1' && this.instance.currentState.internal.proMajorVersion === 7
+							action.options.clockType === '1' && this.instance.currentState.internal.proMajorVersion === 7
 								? newClockTime
 								: newclockElapsedTime, // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
-						clockName: opt.clockName,
+						clockName: action.options.clockName,
 					}
 					sendCommand(cmd)
 				},
@@ -785,7 +784,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var messageIndex
-					this.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						messageIndex = value
 					})
@@ -799,12 +798,12 @@ module.exports = {
 							messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >= 0
 								? String(messageIndex)
 								: '0',
-						messageKeys: opt.messageKeys
+						messageKeys: action.options.messageKeys
 							.replace(/,,/g, String.fromCharCode(29))
 							.replace(/,/g, String.fromCharCode(28))
 							.replace(/\u001D/g, ',')
 							.split(String.fromCharCode(28)),
-						messageValues: opt.messageValues
+						messageValues: action.options.messageValues
 							.replace(/,,/g, String.fromCharCode(29))
 							.replace(/,/g, String.fromCharCode(28))
 							.replace(/\u001D/g, ',')
@@ -837,7 +836,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var messageIndex
-					this.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						messageIndex = value
 					})
@@ -867,7 +866,7 @@ module.exports = {
 				callback: (action) => {
 					cmd = {
 						action: 'audioStartCue',
-						audioChildPath: opt.audioChildPath,
+						audioChildPath: action.options.audioChildPath,
 					}
 					sendCommand(cmd)
 				},
@@ -897,7 +896,7 @@ module.exports = {
 				callback: (action) => {
 					cmd = {
 						action: 'timelinePlayPause',
-						presentationPath: opt.presentationPath,
+						presentationPath: action.options.presentationPath,
 					}
 					sendCommand(cmd)
 				},
@@ -917,7 +916,7 @@ module.exports = {
 				callback: (action) => {
 					cmd = {
 						action: 'timelineRewind',
-						presentationPath: opt.presentationPath,
+						presentationPath: action.options.presentationPath,
 					}
 					sendCommand(cmd)
 				},
@@ -937,7 +936,7 @@ module.exports = {
 					},
 				],
 				callback: (action) => {
-					this.config.control_follower = opt.enableFollowerControl
+					this.config.control_follower = action.options.enableFollowerControl
 					this.checkFeedbacks('propresenter_follower_connected')
 					cmd = undefined // No need to send any command to Pro7 - this is an internal only action
 					sendCommand(cmd)
@@ -977,7 +976,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var slideIndex
-					this.system.emit('variable_parse', String(opt.slideIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.slideIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						slideIndex = value
 					})
@@ -987,10 +986,10 @@ module.exports = {
 						data: {
 							path: [
 								{
-									name: opt.playlistName,
+									name: action.options.playlistName,
 								},
 								{
-									name: opt.presentationName,
+									name: action.options.presentationName,
 								},
 								{
 									index:
@@ -998,7 +997,7 @@ module.exports = {
 											? slideIndex - 1
 											: null,
 								},
-								//name: opt.slideName !== undefined && String(opt.slideName).length > 0 ? opt.slideName : null // Slide name does nothing - maybe one day it will.
+								//name: action.options.slideName !== undefined && String(action.options.slideName).length > 0 ? action.options.slideName : null // Slide name does nothing - maybe one day it will.
 							],
 						},
 					}
@@ -1025,7 +1024,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var propIndex
-					this.system.emit('variable_parse', String(opt.propIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						propIndex = value
 					})
@@ -1038,7 +1037,7 @@ module.exports = {
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
 										? propIndex - 1
 										: null,
-								name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null,
+								name: action.options.propName !== undefined && String(action.options.propName).length > 0 ? action.options.propName : null,
 							},
 						},
 					}
@@ -1065,7 +1064,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var propIndex
-					this.system.emit('variable_parse', String(opt.propIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						propIndex = value
 					})
@@ -1078,7 +1077,7 @@ module.exports = {
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
 										? propIndex - 1
 										: null,
-								name: opt.propName !== undefined && String(opt.propName).length > 0 ? opt.propName : null,
+								name: action.options.propName !== undefined && String(action.options.propName).length > 0 ? action.options.propName : null,
 							},
 						},
 					}
@@ -1105,7 +1104,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var messageIndex
-					this.system.emit('variable_parse', String(opt.messageIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						messageIndex = value
 					})
@@ -1118,7 +1117,7 @@ module.exports = {
 									messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) > 0
 										? messageIndex - 1
 										: null,
-								name: opt.messageName !== undefined && String(opt.messageName).length > 0 ? opt.messageName : null,
+								name: action.options.messageName !== undefined && String(action.options.messageName).length > 0 ? action.options.messageName : null,
 							},
 						},
 					}
@@ -1151,7 +1150,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var mediaIndex
-					this.system.emit('variable_parse', String(opt.mediaIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.mediaIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						mediaIndex = value
 					})
@@ -1161,14 +1160,14 @@ module.exports = {
 						data: {
 							path: [
 								{
-									name: opt.playlistName,
+									name: action.options.playlistName,
 								},
 								{
 									index:
 										mediaIndex !== 'undefined' && mediaIndex !== undefined && parseInt(mediaIndex) > 0
 											? mediaIndex - 1
 											: null,
-									name: opt.mediaName !== undefined && String(opt.mediaName).length > 0 ? opt.mediaName : null,
+									name: action.options.mediaName !== undefined && String(action.options.mediaName).length > 0 ? action.options.mediaName : null,
 								},
 							],
 						},
@@ -1202,7 +1201,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var audioIndex
-					this.system.emit('variable_parse', String(opt.audioIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.audioIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						audioIndex = value
 					})
@@ -1212,14 +1211,14 @@ module.exports = {
 						data: {
 							path: [
 								{
-									name: opt.playlistName,
+									name: action.options.playlistName,
 								},
 								{
 									index:
 										audioIndex !== 'undefined' && audioIndex !== undefined && parseInt(audioIndex) > 0
 											? audioIndex - 1
 											: null,
-									name: opt.audioName !== undefined && String(opt.audioName).length > 0 ? opt.audioName : null,
+									name: action.options.audioName !== undefined && String(action.options.audioName).length > 0 ? action.options.audioName : null,
 								},
 							],
 						},
@@ -1247,7 +1246,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var videoInputIndex
-					this.system.emit('variable_parse', String(opt.videoInputIndex).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.videoInputIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						videoInputIndex = value
 					})
@@ -1261,7 +1260,7 @@ module.exports = {
 										? videoInputIndex - 1
 										: null,
 								name:
-									opt.videoInputName !== undefined && String(opt.videoInputName).length > 0 ? opt.videoInputName : null,
+									action.options.videoInputName !== undefined && String(action.options.videoInputName).length > 0 ? action.options.videoInputName : null,
 							},
 						},
 					}
@@ -1283,7 +1282,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					var randomLimit
-					this.system.emit('variable_parse', String(opt.randomLimit).trim(), function (value) {
+					this.system.emit('variable_parse', String(action.options.randomLimit).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
 						randomLimit = value
 					})
@@ -1309,8 +1308,8 @@ module.exports = {
 				],
 				callback: (action) => {
 					nwCmd = {
-						endpointPath: opt.endpointPath,
-						data: JSON.parse(opt.jsonData),
+						endpointPath: action.options.endpointPath,
+						data: JSON.parse(action.options.jsonData),
 					}
 					sendCommand(cmd, true)
 				},
@@ -1329,7 +1328,7 @@ module.exports = {
 				],
 				callback: (action) => {
 					try {
-						cmd = JSON.parse(opt.customAction)
+						cmd = JSON.parse(action.options.customAction)
 					} catch (err) {
 						this.instance.log(
 							'debug',
