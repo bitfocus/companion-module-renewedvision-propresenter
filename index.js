@@ -1782,8 +1782,8 @@ class ProPresenterInstance extends InstanceBase {
 						this.currentState.dynamicVariables['pro7_clock_' + clockIndex]
 					)
 					// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
-					var varDef = { label: 'Pro7 Clock ' + clockIndex, name: 'pro7_clock_' + clockIndex }
-					if (!this.currentState.dynamicVariablesDefs.some(({ name }) => name === varDef.name)) {
+					var varDef = { name: 'Pro7 Clock ' + clockIndex, variableId: 'pro7_clock_' + clockIndex }
+					if (!this.currentState.dynamicVariablesDefs.some(({ variableId }) => variableId === varDef.variableId)) {
 						this.currentState.dynamicVariablesDefs.push(varDef)
 						updateModuleVars = true
 					}
@@ -1799,10 +1799,10 @@ class ProPresenterInstance extends InstanceBase {
 					)
 					// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
 					var varDef = {
-						label: 'Pro7 Clock ' + clockIndex + ' Hourless',
-						name: 'pro7_clock_' + clockIndex + '_hourless',
+						name: 'Pro7 Clock ' + clockIndex + ' Hourless',
+						variableId: 'pro7_clock_' + clockIndex + '_hourless',
 					}
-					if (!this.currentState.dynamicVariablesDefs.some(({ name }) => name === varDef.name)) {
+					if (!this.currentState.dynamicVariablesDefs.some(({ variableId }) => variableId === varDef.variableId)) {
 						this.currentState.dynamicVariablesDefs.push(varDef)
 						updateModuleVars = true
 					}
@@ -1817,10 +1817,10 @@ class ProPresenterInstance extends InstanceBase {
 					)
 					// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
 					var varDef = {
-						label: 'Pro7 Clock ' + clockIndex + ' Total Seconds',
-						name: 'pro7_clock_' + clockIndex + '_totalseconds',
+						name: 'Pro7 Clock ' + clockIndex + ' Total Seconds',
+						variableId: 'pro7_clock_' + clockIndex + '_totalseconds',
 					}
-					if (!this.currentState.dynamicVariablesDefs.some(({ name }) => name === varDef.name)) {
+					if (!this.currentState.dynamicVariablesDefs.some(({ variableId }) => variableId === varDef.variableId)) {
 						this.currentState.dynamicVariablesDefs.push(varDef)
 						updateModuleVars = true
 					}
@@ -1908,10 +1908,12 @@ class ProPresenterInstance extends InstanceBase {
 								)
 								// If we don't already have this dynamic var defined then add a definition for it (we'll update Companion once loop is done)
 								var varDef = {
-									label: stageScreenName + '_pro7_stagelayoutname',
 									name: stageScreenName + '_pro7_stagelayoutname',
+									variableId: stageScreenName + '_pro7_stagelayoutname',
 								}
-								if (!this.currentState.dynamicVariablesDefs.some(({ name }) => name === varDef.name)) {
+								if (
+									!this.currentState.dynamicVariablesDefs.some(({ variableId }) => variableId === varDef.variableId)
+								) {
 									this.currentState.dynamicVariablesDefs.push(varDef)
 									updateModuleVars = true
 								}
