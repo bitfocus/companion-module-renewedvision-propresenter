@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * Register the available actions with Companion.
  */
@@ -54,10 +56,9 @@ const sendNwCommand = async (nwCmd) => {
 		`Sending: http://${this.config.host}:${this.config.port}${nwCmd.endpointPath} ${JSON.stringify(nwCmd.data)}`
 	)
 	// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
-	const res = await fetch(
-		`http://${this.config.host}:${this.config.port}${nwCmd.endpointPath}`,
-		JSON.stringify(nwCmd.data)
-	)
+	const res = await fetch(`http://${this.config.host}:${this.config.port}${nwCmd.endpointPath}`, {
+		body: JSON.stringify(nwCmd.data),
+	})
 	if (res.ok) {
 		const data = await res.json()
 		this.instance.log('debug', JSON.stringify(data))
@@ -98,6 +99,9 @@ module.exports = {
 	GetActions: (instance) => {
 		this.instance = instance
 
+		/**
+		 * @type{import('@companion-module/base').CompanionActionDefinitions}
+		 */
 		const actions = {
 			[ActionId.next]: {
 				name: 'Next Slide',
@@ -129,7 +133,7 @@ module.exports = {
 						useVariables: true,
 						label: 'Slide Number',
 						id: 'slide',
-						default: 1,
+						default: '1',
 						tooltip: '(Supports variable)',
 						regex: Regex.SIGNED_NUMBER,
 					},
@@ -143,15 +147,12 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: async (action) => {
-					var index = this.instance.currentState.internal.slideIndex // Start with current slide (allows relative jumps using+-)
+				callback: async (action, context) => {
+					let index = this.instance.currentState.internal.slideIndex // Start with current slide (allows relative jumps using+-)
 
 					// Allow parsing of optional variable in the slide textfield as int
-					var optSlideIndex
-					this.system.emit('variable_parse', String(action.options.slide).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						optSlideIndex = value
-					})
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const optSlideIndex = await context.parseVariablesInString(String(action.options.slide).trim())
 
 					if (action.options.slide[0] === '-' || action.options.slide[0] === '+') {
 						// Move back/forward a relative number of slides.
@@ -171,17 +172,14 @@ module.exports = {
 					}
 
 					// Allow parsing of optional variable in the presentationPath textfield as string
-					var optPath
-					this.system.emit('variable_parse', String(action.options.path).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						optPath = value
-					})
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const optPath = await context.parseVariablesInString(String(action.options.path).trim())
 
-					var presentationPath = this.instance.currentState.internal.presentationPath // Default to current stored presentationPath
+					let presentationPath = this.instance.currentState.internal.presentationPath // Default to current stored presentationPath
 					// TODO: Pro7 Win workaround: If current path is C:/*.pro then find matching path in all playlists and use that instead!
 					// This users cannot use specific slide with blank path to target presentations in the library (if a match can be found in a playlist we will always assume that is the intention)
 					//  Also, the first match will be win every time - (if the same presentation is in in mulitple playlists)
-					if (action.options.path !== undefined && action.options.path.match(/^\d+$/) !== null) {
+					if (action.options.path !== undefined && String(action.options.path).match(/^\d+$/) !== null) {
 						// Is a relative presentation path. Refers to the current playlist, so extract it
 						//  from the current presentationPath and append the action.options.path to it.
 						presentationPath = presentationPath.split(':')[0] + ':' + action.options.path
@@ -226,29 +224,18 @@ module.exports = {
 						id: 'slideLabel',
 					},
 				],
-				callback: async (action) => {
+				callback: async (action, context) => {
 					// Allow parsing of optional variables in all input fields for this action
-					var playlistName
-					this.system.emit('variable_parse', String(action.options.playlistName).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						playlistName = value
-					})
-					var presentationName
-					this.system.emit('variable_parse', String(action.options.presentationName).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						presentationName = value
-					})
-					var slideLabel
-					this.system.emit('variable_parse', String(action.options.slideLabel).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						slideLabel = value
-					})
+					const playlistName = await context.parseVariablesInString(String(action.options.playlistName).trim())
+					const presentationName = await context.parseVariablesInString(String(action.options.presentationName).trim())
+					const slideLabel = await context.parseVariablesInString(String(action.options.slideLabel).trim())
 
 					// Add new request to internal state and issue request for all playlists (later, code the handles response will see the request stored in internal state and perform the work to complete it)
-					var newSlideByLabelRequest = {}
-					newSlideByLabelRequest.playlistName = playlistName
-					newSlideByLabelRequest.presentationName = presentationName
-					newSlideByLabelRequest.slideLabel = slideLabel
+					const newSlideByLabelRequest = {
+						playlistName: playlistName,
+						presentationName: presentationName,
+						slideLabel: slideLabel,
+					}
 					this.instance.currentState.internal.awaitingSlideByLabelRequest = newSlideByLabelRequest
 
 					const cmd = {
@@ -272,7 +259,7 @@ module.exports = {
 						type: 'textinput',
 						useVariables: true,
 						label: 'Slide Number (Within Group)',
-						default: 1,
+						default: '1',
 						tooltip: 'Which slide in the group? (Supports variable)',
 						id: 'slideNumber',
 						regex: Regex.NUMBER,
@@ -287,23 +274,11 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: async (action) => {
+				callback: async (action, context) => {
 					// Allow parsing of optional variables in all input fields for this action
-					var groupName
-					this.system.emit('variable_parse', String(action.options.groupName).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						groupName = value
-					})
-					var slideNumber
-					this.system.emit('variable_parse', String(action.options.slideNumber).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						slideNumber = value
-					})
-					var presentationPath = ''
-					this.system.emit('variable_parse', String(action.options.presentationPath).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						presentationPath = value
-					})
+					const groupName = await context.parseVariablesInString(String(action.options.groupName).trim())
+					const slideNumber = await context.parseVariablesInString(String(action.options.slideNumber).trim())
+					let presentationPath = await context.parseVariablesInString(String(action.options.presentationPath).trim())
 
 					// If presentationPath was blank then auto set to current presentation.
 					if (presentationPath.length == 0) {
@@ -312,10 +287,11 @@ module.exports = {
 
 					if (presentationPath !== undefined && presentationPath !== 'undefined' && presentationPath.length > 0) {
 						// Add new request to internal state and issue presentationRequest (later, code the handles the "presentationCurrent" response will see the request stored in internal state and perform the work to complete it)
-						var newGroupSlideRequest = {}
-						newGroupSlideRequest.groupName = groupName
-						newGroupSlideRequest.slideNumber = slideNumber
-						newGroupSlideRequest.presentationPath = presentationPath
+						const newGroupSlideRequest = {
+							groupName: groupName,
+							slideNumber: slideNumber,
+							presentationPath: presentationPath,
+						}
 						this.instance.currentState.internal.awaitingGroupSlideRequest = newGroupSlideRequest
 
 						const cmd = {
@@ -323,8 +299,8 @@ module.exports = {
 							presentationPath: presentationPath,
 							presentationSlideQuality: 0,
 						}
+						await sendCommand(cmd)
 					}
-					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearall]: {
@@ -424,7 +400,7 @@ module.exports = {
 						type: 'textinput',
 						label: 'Pro6 Stage Display Index',
 						id: 'index',
-						default: 0,
+						default: '0',
 						regex: Regex.NUMBER,
 					},
 				],
@@ -553,7 +529,7 @@ module.exports = {
 						type: 'textinput',
 						label: 'Clock Number',
 						id: 'clockIndex',
-						default: 0,
+						default: '0',
 						tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 						regex: Regex.NUMBER,
 					},
@@ -574,7 +550,7 @@ module.exports = {
 						type: 'textinput',
 						label: 'Clock Number',
 						id: 'clockIndex',
-						default: 0,
+						default: '0',
 						tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 						regex: Regex.NUMBER,
 					},
@@ -595,7 +571,7 @@ module.exports = {
 						type: 'textinput',
 						label: 'Clock Number',
 						id: 'clockIndex',
-						default: 0,
+						default: '0',
 						tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 						regex: Regex.NUMBER,
 					},
@@ -624,7 +600,7 @@ module.exports = {
 						type: 'textinput',
 						label: 'Clock Number',
 						id: 'clockIndex',
-						default: 0,
+						default: '0',
 						tooltip: 'Zero based index of countdown clock - first one is 0, second one is 1 and so on...',
 						regex: Regex.NUMBER,
 					},
@@ -788,12 +764,9 @@ module.exports = {
 							'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (Supports variable. WARNING! - A simple typo here could crash and burn ProPresenter)',
 					},
 				],
-				callback: async (action) => {
-					var messageIndex
-					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						messageIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const messageIndex = await context.parseVariablesInString(String(action.options.messageIndex).trim())
 
 					// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
 					// It works by first replacing any double commas with a character 29 (ascii group seperator char), and then replacing any single commas with a character 28 (ascii file seperator char).  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
@@ -818,10 +791,8 @@ module.exports = {
 					// If there is only one message value - then allow parsing of optional variables...
 					if (cmd.messageValues.length == 1) {
 						// Allow parsing of optional variable in the Message values textfield
-						this.system.emit('variable_parse', String(cmd.messageValues[0]).trim(), function (value) {
-							// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-							cmd.messageValues[0] = String(value)
-						})
+						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+						cmd.messageValues[0] = await context.parseVariablesInString(String(cmd.messageValues[0]).trim())
 					}
 					await sendCommand(cmd)
 				},
@@ -840,12 +811,9 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: async (action) => {
-					var messageIndex
-					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						messageIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const messageIndex = await context.parseVariablesInString(String(action.options.messageIndex).trim())
 
 					const cmd = {
 						action: 'messageHide',
@@ -978,12 +946,9 @@ module.exports = {
                 tooltip: 'Name of the slide you want to trigger',
             }, */
 				],
-				callback: async (action) => {
-					var slideIndex
-					this.system.emit('variable_parse', String(action.options.slideIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						slideIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const slideIndex = await context.parseVariablesInString(String(action.options.slideIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/trigger/playlist',
@@ -998,7 +963,7 @@ module.exports = {
 								{
 									index:
 										slideIndex !== 'undefined' && slideIndex !== undefined && parseInt(slideIndex) > 0
-											? slideIndex - 1
+											? Number(slideIndex) - 1
 											: null,
 								},
 								//name: action.options.slideName !== undefined && String(action.options.slideName).length > 0 ? action.options.slideName : null // Slide name does nothing - maybe one day it will.
@@ -1026,12 +991,9 @@ module.exports = {
 						tooltip: 'Name of the Prop you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var propIndex
-					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						propIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const propIndex = await context.parseVariablesInString(String(action.options.propIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/prop/trigger',
@@ -1039,7 +1001,7 @@ module.exports = {
 							id: {
 								index:
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
-										? propIndex - 1
+										? Number(propIndex) - 1
 										: null,
 								name:
 									action.options.propName !== undefined && String(action.options.propName).length > 0
@@ -1069,12 +1031,9 @@ module.exports = {
 						tooltip: 'Name of the Prop you want to clear (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var propIndex
-					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						propIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const propIndex = await context.parseVariablesInString(String(action.options.propIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/prop/clear',
@@ -1082,7 +1041,7 @@ module.exports = {
 							id: {
 								index:
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
-										? propIndex - 1
+										? Number(propIndex) - 1
 										: null,
 								name:
 									action.options.propName !== undefined && String(action.options.propName).length > 0
@@ -1112,12 +1071,9 @@ module.exports = {
 						tooltip: 'Name of the Message you want to clear (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var messageIndex
-					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						messageIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const messageIndex = await context.parseVariablesInString(String(action.options.messageIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/message/clear',
@@ -1125,7 +1081,7 @@ module.exports = {
 							id: {
 								index:
 									messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) > 0
-										? messageIndex - 1
+										? Number(messageIndex) - 1
 										: null,
 								name:
 									action.options.messageName !== undefined && String(action.options.messageName).length > 0
@@ -1161,12 +1117,9 @@ module.exports = {
 						tooltip: 'Name of the media file you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var mediaIndex
-					this.system.emit('variable_parse', String(action.options.mediaIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						mediaIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const mediaIndex = await context.parseVariablesInString(String(action.options.mediaIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/trigger/media',
@@ -1178,7 +1131,7 @@ module.exports = {
 								{
 									index:
 										mediaIndex !== 'undefined' && mediaIndex !== undefined && parseInt(mediaIndex) > 0
-											? mediaIndex - 1
+											? Number(mediaIndex) - 1
 											: null,
 									name:
 										action.options.mediaName !== undefined && String(action.options.mediaName).length > 0
@@ -1215,12 +1168,9 @@ module.exports = {
 						tooltip: 'Name of the audio file you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var audioIndex
-					this.system.emit('variable_parse', String(action.options.audioIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						audioIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const audioIndex = await context.parseVariablesInString(String(action.options.audioIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/trigger/audio',
@@ -1232,7 +1182,7 @@ module.exports = {
 								{
 									index:
 										audioIndex !== 'undefined' && audioIndex !== undefined && parseInt(audioIndex) > 0
-											? audioIndex - 1
+											? Number(audioIndex) - 1
 											: null,
 									name:
 										action.options.audioName !== undefined && String(action.options.audioName).length > 0
@@ -1263,12 +1213,9 @@ module.exports = {
 						tooltip: 'Name of the video input you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: async (action) => {
-					var videoInputIndex
-					this.system.emit('variable_parse', String(action.options.videoInputIndex).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						videoInputIndex = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const videoInputIndex = await context.parseVariablesInString(String(action.options.videoInputIndex).trim())
 
 					const nwCmd = {
 						endpointPath: '/trigger/video_input',
@@ -1276,7 +1223,7 @@ module.exports = {
 							id: {
 								index:
 									videoInputIndex !== 'undefined' && videoInputIndex !== undefined && parseInt(videoInputIndex) > 0
-										? videoInputIndex - 1
+										? Number(videoInputIndex) - 1
 										: null,
 								name:
 									action.options.videoInputName !== undefined && String(action.options.videoInputName).length > 0
@@ -1295,18 +1242,15 @@ module.exports = {
 						type: 'textinput',
 						label: 'New Random Number Between 1 And:',
 						id: 'randomLimit',
-						default: 10,
+						default: '10',
 						tooltip:
 							'Updates the module variable current_random_number with a new random number up to the limit your enter. (Supports variable)',
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: async (action) => {
-					var randomLimit
-					this.system.emit('variable_parse', String(action.options.randomLimit).trim(), function (value) {
-						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
-						randomLimit = value
-					})
+				callback: async (action, context) => {
+					// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
+					const randomLimit = await context.parseVariablesInString(String(action.options.randomLimit).trim())
 
 					this.updateVariable('current_random_number', Math.floor(Math.random() * parseInt(randomLimit)) + 1)
 				},
@@ -1330,7 +1274,7 @@ module.exports = {
 				callback: async (action) => {
 					const nwCmd = {
 						endpointPath: action.options.endpointPath,
-						data: JSON.parse(action.options.jsonData),
+						data: JSON.parse(String(action.options.jsonData)),
 					}
 					await sendNwCommand(nwCmd)
 				},
@@ -1348,14 +1292,15 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					let cmd =
+					let cmd
 					try {
-						cmd = JSON.parse(action.options.customAction)
+						cmd = JSON.parse(String(action.options.customAction))
 					} catch (err) {
 						this.instance.log(
 							'debug',
-							'Failed to convert custom action: ' + customAction + ' to valid JS object: ' + err.message
+							'Failed to convert custom action: ' + action.options.customAction + ' to valid JS object: ' + err.message
 						)
+						return
 					}
 					await sendCommand(cmd)
 				},
