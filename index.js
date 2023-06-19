@@ -4,7 +4,7 @@ const { WebSocket } = require('ws')
 const { InstanceBase, runEntrypoint, combineRgb, InstanceStatus, Regex } = require('@companion-module/base')
 const { GetActions } = require('./actions')
 
-class instance extends InstanceBase {
+class ProPresenterInstance extends InstanceBase {
 	constructor(internal) {
 		super(internal)
 	}
@@ -1465,7 +1465,7 @@ class instance extends InstanceBase {
 
 				// Trigger same slide in follower ProPresenter (If configured and connected)
 				if (this.config.control_follower === 'yes' && this.currentState.internal.wsFollowerConnected) {
-					cmd = {
+					const cmd = {
 						action: 'presentationTriggerIndex',
 						slideIndex: String(slideIndex),
 						// Pro 6 for Windows requires 'presentationPath' to be set.
@@ -1491,7 +1491,7 @@ class instance extends InstanceBase {
 					this.currentState.internal.previousTimeOfLeaderClearMessage != null &&
 					timeOfThisClearMessage.getTime() - this.currentState.internal.previousTimeOfLeaderClearMessage.getTime() < 300
 				) {
-					cmd = {
+					const cmd = {
 						action: 'clearText',
 					}
 					this.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd))
@@ -1508,7 +1508,7 @@ class instance extends InstanceBase {
 			case 'clearAll':
 				// Forward command to follower
 				if (this.config.control_follower === 'yes' && this.currentState.internal.wsFollowerConnected) {
-					cmd = {
+					const cmd = {
 						action: 'clearAll',
 					}
 					this.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd))
@@ -1524,7 +1524,7 @@ class instance extends InstanceBase {
 			case 'clearVideo':
 				// Forward command to follower
 				if (this.config.control_follower === 'yes' && this.currentState.internal.wsFollowerConnected) {
-					cmd = {
+					const cmd = {
 						action: 'clearVideo',
 					}
 					this.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd))
@@ -1540,7 +1540,7 @@ class instance extends InstanceBase {
 			case 'clearAudio':
 				// Forward command to follower
 				if (this.config.control_follower === 'yes' && this.currentState.internal.wsFollowerConnected) {
-					cmd = {
+					const cmd = {
 						action: 'clearAudio',
 					}
 					this.log('debug', 'Forwarding command to Follower: ' + JSON.stringify(cmd))
@@ -1609,7 +1609,7 @@ class instance extends InstanceBase {
 					}
 					if (foundSlide) {
 						// we have finally found the slide, within it's presentation & playlist - send presentationTriggerIndex to trigger it
-						cmd = {
+						const cmd = {
 							action: 'presentationTriggerIndex',
 							slideIndex: String(slideIndex),
 							presentationPath: this.currentState.internal.awaitingSlideByLabelRequest.presentationPath,
@@ -1692,7 +1692,7 @@ class instance extends InstanceBase {
 
 					if (foundSlide) {
 						// we have finally found the slide, within it's presentation & playlist - send presentationTriggerIndex to trigger it
-						cmd = {
+						const cmd = {
 							action: 'presentationTriggerIndex',
 							slideIndex: String(slideIndex),
 							presentationPath: this.currentState.internal.awaitingGroupSlideRequest.presentationPath,
@@ -2385,7 +2385,7 @@ class instance extends InstanceBase {
 					this.currentState.internal.awaitingSlideByLabelRequest.presentationPath =
 						matchingPlaylistItem.playlistItemLocation
 					// send presentationRequest
-					cmd = {
+					const cmd = {
 						action: 'presentationRequest',
 						presentationPath: this.currentState.internal.awaitingSlideByLabelRequest.presentationPath,
 						presentationSlideQuality: 0,
@@ -2417,4 +2417,4 @@ class instance extends InstanceBase {
 		return new RegExp('^' + rule.split('*').map(escapeRegex).join('.*') + '$').test(str)
 	}
 }
-runEntrypoint(instance, [])
+runEntrypoint(ProPresenterInstance, [])
