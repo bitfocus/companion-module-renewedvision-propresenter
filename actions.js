@@ -47,64 +47,63 @@ const ActionId = {
 	nwCustom: 'nwCustom',
 }
 
-const sendCommand = async (cmd, nwCmd) => {
-	if (nwCmd) {
-		nwCmd.data.connection = { rejectUnauthorized: false } // Add this header now, in case of a change to https with invalid certs in future.
-		this.instance.log(
-			'debug',
-			`Sending: http://${this.config.host}:${this.config.port}${nwCmd.endpointPath} ${JSON.stringify(nwCmd.data)}`
-		)
-		// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
-		const res = await fetch(
-			`http://${this.config.host}:${this.config.port}${nwCmd.endpointPath}`,
-			JSON.stringify(nwCmd.data)
-		)
-		if (res.ok) {
-			const data = await res.json()
-			this.instance.log('debug', JSON.stringify(data))
-		}
+const sendNwCommand = async (nwCmd) => {
+	nwCmd.data.connection = { rejectUnauthorized: false } // Add this header now, in case of a change to https with invalid certs in future.
+	this.instance.log(
+		'debug',
+		`Sending: http://${this.config.host}:${this.config.port}${nwCmd.endpointPath} ${JSON.stringify(nwCmd.data)}`
+	)
+	// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
+	const res = await fetch(
+		`http://${this.config.host}:${this.config.port}${nwCmd.endpointPath}`,
+		JSON.stringify(nwCmd.data)
+	)
+	if (res.ok) {
+		const data = await res.json()
+		this.instance.log('debug', JSON.stringify(data))
+	}
 
-		// // fetch()
-		// this.system.emit(
-		// 	'rest',
-		// 	'http://' + this.config.host + ':' + this.config.port + nwCmd.endpointPath,
-		// 	JSON.stringify(nwCmd.data),
-		// 	function (err, result) {
-		// 		this.instance.log('debug', 'nwCMD.path: ' + nwCmd.endpointPath + ' nwCmd.data: ' + JSON.stringify(nwCmd.data))
-		// 	},
-		// 	{},
-		// 	{ connection: { rejectUnauthorized: false } } // Add this header now, in case of a change to https with invalid certs in future.
-		// )
-	} else {
-		// Perform actions that use the current ProRemote API (Websocket)
-		if (this.instance.currentStatus !== InstanceStatus.UnknownError) {
-			// Is this the correct check?
-			try {
-				const cmdJSON = JSON.stringify(cmd)
-				this.instance.log('debug', 'Sending JSON: ' + cmdJSON)
-				this.instance.socket.send(cmdJSON)
-			} catch (e) {
-				this.instance.log('debug', 'NETWORK ' + e)
-				this.instance.updateStatus(InstanceStatus.UnknownError, e.message)
-			}
-		} else {
-			this.instance.log('debug', 'Socket not connected :(')
-			this.instance.updateStatus(InstanceStatus.ConnectionFailure, 'not connected')
+	// // fetch()
+	// this.system.emit(
+	// 	'rest',
+	// 	'http://' + this.config.host + ':' + this.config.port + nwCmd.endpointPath,
+	// 	JSON.stringify(nwCmd.data),
+	// 	function (err, result) {
+	// 		this.instance.log('debug', 'nwCMD.path: ' + nwCmd.endpointPath + ' nwCmd.data: ' + JSON.stringify(nwCmd.data))
+	// 	},
+	// 	{},
+	// 	{ connection: { rejectUnauthorized: false } } // Add this header now, in case of a change to https with invalid certs in future.
+	// )
+}
+
+const sendCommand = async (cmd) => {
+	// Perform actions that use the current ProRemote API (Websocket)
+	if (this.instance.currentStatus !== InstanceStatus.UnknownError) {
+		// Is this the correct check?
+		try {
+			const cmdJSON = JSON.stringify(cmd)
+			this.instance.log('debug', 'Sending JSON: ' + cmdJSON)
+			this.instance.socket.send(cmdJSON)
+		} catch (e) {
+			this.instance.log('debug', 'NETWORK ' + e)
+			this.instance.updateStatus(InstanceStatus.UnknownError, e.message)
 		}
+	} else {
+		this.instance.log('debug', 'Socket not connected :(')
+		this.instance.updateStatus(InstanceStatus.ConnectionFailure, 'not connected')
 	}
 }
 
 module.exports = {
 	GetActions: (instance) => {
 		this.instance = instance
-		let cmd = null
 
 		const actions = {
 			[ActionId.next]: {
 				name: 'Next Slide',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'presentationTriggerNext',
 						presentationDestination: '0', // Pro7.4.2 seems to need this now!
 					}
@@ -115,7 +114,7 @@ module.exports = {
 				name: 'Previous Slide',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'presentationTriggerPrevious',
 						presentationDestination: '0', // Pro7.4.2 seems to need this now!
 					}
@@ -191,7 +190,7 @@ module.exports = {
 						presentationPath = optPath
 					}
 
-					cmd = {
+					const cmd = {
 						action: 'presentationTriggerIndex',
 						slideIndex: String(index),
 						// Pro 6 for Windows requires 'presentationPath' to be set.
@@ -251,7 +250,8 @@ module.exports = {
 					newSlideByLabelRequest.presentationName = presentationName
 					newSlideByLabelRequest.slideLabel = slideLabel
 					this.instance.currentState.internal.awaitingSlideByLabelRequest = newSlideByLabelRequest
-					cmd = {
+
+					const cmd = {
 						action: 'playlistRequestAll',
 					}
 					await sendCommand(cmd)
@@ -317,7 +317,8 @@ module.exports = {
 						newGroupSlideRequest.slideNumber = slideNumber
 						newGroupSlideRequest.presentationPath = presentationPath
 						this.instance.currentState.internal.awaitingGroupSlideRequest = newGroupSlideRequest
-						cmd = {
+
+						const cmd = {
 							action: 'presentationRequest',
 							presentationPath: presentationPath,
 							presentationSlideQuality: 0,
@@ -330,7 +331,7 @@ module.exports = {
 				name: 'Clear All',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearAll',
 					}
 					await sendCommand(cmd)
@@ -340,7 +341,7 @@ module.exports = {
 				name: 'Clear Slide',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearText',
 					}
 					await sendCommand(cmd)
@@ -350,7 +351,7 @@ module.exports = {
 				name: 'Clear Props',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearProps',
 					}
 					await sendCommand(cmd)
@@ -360,7 +361,7 @@ module.exports = {
 				name: 'Clear Audio',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearAudio',
 					}
 					await sendCommand(cmd)
@@ -370,7 +371,7 @@ module.exports = {
 				name: 'Clear Background',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearVideo',
 					}
 					await sendCommand(cmd)
@@ -380,7 +381,7 @@ module.exports = {
 				name: 'Clear Telestrator',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearTelestrator',
 					}
 					await sendCommand(cmd)
@@ -390,7 +391,7 @@ module.exports = {
 				name: 'Clear to Logo',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearToLogo',
 					}
 					await sendCommand(cmd)
@@ -400,7 +401,7 @@ module.exports = {
 				name: 'Clear Announcements',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearAnnouncements',
 					}
 					await sendCommand(cmd)
@@ -410,7 +411,7 @@ module.exports = {
 				name: 'Clear Messages',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'clearMessages',
 					}
 					await sendCommand(cmd)
@@ -428,7 +429,7 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					cmd = {
+					const cmd = {
 						action: 'stageDisplaySetIndex',
 						stageDisplayIndex: String(action.options.index),
 					}
@@ -457,7 +458,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					// If either option is null, then default to using first items from each list kept in internal state.
-					cmd = {
+					const cmd = {
 						action: 'stageDisplayChangeLayout',
 						stageScreenUUID: action.options.pro7StageScreenUUID
 							? action.options.pro7StageScreenUUID
@@ -483,7 +484,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					// If selected Look is null, then default to using first Look from list kept in internal state
-					cmd = {
+					const cmd = {
 						action: 'looksTrigger',
 						lookID: action.options.pro7LookUUID
 							? action.options.pro7LookUUID
@@ -506,7 +507,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					// If selected Macro is null, then default to using first Macro from list kept in internal state
-					cmd = {
+					const cmd = {
 						action: 'macrosTrigger',
 						macroID: action.options.pro7MacroUUID
 							? action.options.pro7MacroUUID
@@ -528,7 +529,7 @@ module.exports = {
 				callback: async (action) => {
 					//var message = JSON.stringify(action.options.message);
 					//cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
-					cmd = {
+					const cmd = {
 						action: 'stageDisplaySendMessage',
 						stageDisplayMessage: action.options.message,
 					}
@@ -539,7 +540,7 @@ module.exports = {
 				name: 'Stage Display Hide Message',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'stageDisplayHideMessage',
 					}
 					await sendCommand(cmd)
@@ -559,7 +560,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
-					cmd = {
+					const cmd = {
 						action: 'clockStart',
 						clockIndex: clockIndex,
 					}
@@ -580,7 +581,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
-					cmd = {
+					const cmd = {
 						action: 'clockStop',
 						clockIndex: clockIndex,
 					}
@@ -601,7 +602,7 @@ module.exports = {
 				],
 				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
-					cmd = {
+					const cmd = {
 						action: 'clockReset',
 						clockIndex: clockIndex,
 					}
@@ -738,7 +739,7 @@ module.exports = {
 						}
 					}
 
-					cmd = {
+					const cmd = {
 						action: 'clockUpdate',
 						clockIndex: clockIndex,
 						clockTime: newClockTime,
@@ -797,7 +798,7 @@ module.exports = {
 					// The below "replace...split dance" for messageKeys and MessageValues produces the required array of items from the comma-separated list of values entered by the user. It also allows double commas (,,) to be treated as an escape method for the user to include a literal comma in the values if desired.
 					// It works by first replacing any double commas with a character 29 (ascii group seperator char), and then replacing any single commas with a character 28 (ascii file seperator char).  Then it can safely replace character 29 with a comma and finally split using character 28 as the separator.
 					// Note that character 28 and 29 are not "normally typed characters" and therefore considered (somewhat) safe to insert into the string as special markers during processing. Also note that CharCode(29) is matched by regex /\u001D/
-					cmd = {
+					const cmd = {
 						action: 'messageSend',
 						messageIndex:
 							messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >= 0
@@ -846,7 +847,7 @@ module.exports = {
 						messageIndex = value
 					})
 
-					cmd = {
+					const cmd = {
 						action: 'messageHide',
 						messageIndex:
 							messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) >= 0
@@ -869,7 +870,7 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					cmd = {
+					const cmd = {
 						action: 'audioStartCue',
 						audioChildPath: action.options.audioChildPath,
 					}
@@ -880,7 +881,7 @@ module.exports = {
 				name: 'Audio Play/Pause',
 				options: [],
 				callback: async () => {
-					cmd = {
+					const cmd = {
 						action: 'audioPlayPause',
 					}
 					await sendCommand(cmd)
@@ -899,7 +900,7 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					cmd = {
+					const cmd = {
 						action: 'timelinePlayPause',
 						presentationPath: action.options.presentationPath,
 					}
@@ -919,7 +920,7 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					cmd = {
+					const cmd = {
 						action: 'timelineRewind',
 						presentationPath: action.options.presentationPath,
 					}
@@ -943,8 +944,6 @@ module.exports = {
 				callback: async (action) => {
 					this.config.control_follower = action.options.enableFollowerControl
 					this.checkFeedbacks('propresenter_follower_connected')
-					cmd = undefined // No need to send any command to Pro7 - this is an internal only action
-					await sendCommand(cmd)
 				},
 			},
 			[ActionId.nwSpecificSlide]: {
@@ -986,7 +985,7 @@ module.exports = {
 						slideIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/trigger/playlist',
 						data: {
 							path: [
@@ -1006,7 +1005,7 @@ module.exports = {
 							],
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwPropTrigger]: {
@@ -1034,7 +1033,7 @@ module.exports = {
 						propIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/prop/trigger',
 						data: {
 							id: {
@@ -1049,7 +1048,7 @@ module.exports = {
 							},
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwPropClear]: {
@@ -1077,7 +1076,7 @@ module.exports = {
 						propIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/prop/clear',
 						data: {
 							id: {
@@ -1092,7 +1091,7 @@ module.exports = {
 							},
 						},
 					}
-					await sendCommand(cmd)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwMessageClear]: {
@@ -1120,7 +1119,7 @@ module.exports = {
 						messageIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/message/clear',
 						data: {
 							id: {
@@ -1135,7 +1134,7 @@ module.exports = {
 							},
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwTriggerMedia]: {
@@ -1169,7 +1168,7 @@ module.exports = {
 						mediaIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/trigger/media',
 						data: {
 							path: [
@@ -1189,7 +1188,7 @@ module.exports = {
 							],
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwTriggerAudio]: {
@@ -1223,7 +1222,7 @@ module.exports = {
 						audioIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/trigger/audio',
 						data: {
 							path: [
@@ -1243,7 +1242,7 @@ module.exports = {
 							],
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.nwVideoInput]: {
@@ -1271,7 +1270,7 @@ module.exports = {
 						videoInputIndex = value
 					})
 
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: '/trigger/video_input',
 						data: {
 							id: {
@@ -1286,7 +1285,7 @@ module.exports = {
 							},
 						},
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.newRandomNumber]: {
@@ -1329,11 +1328,11 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
-					nwCmd = {
+					const nwCmd = {
 						endpointPath: action.options.endpointPath,
 						data: JSON.parse(action.options.jsonData),
 					}
-					await sendCommand(cmd, true)
+					await sendNwCommand(nwCmd)
 				},
 			},
 			[ActionId.customAction]: {
@@ -1349,6 +1348,7 @@ module.exports = {
 					},
 				],
 				callback: async (action) => {
+					let cmd =
 					try {
 						cmd = JSON.parse(action.options.customAction)
 					} catch (err) {
