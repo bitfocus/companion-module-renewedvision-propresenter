@@ -1,5 +1,7 @@
+// @ts-check
+
 const { WebSocket } = require('ws')
-const { InstanceBase, runEntrypoint, combineRgb, InstanceStatus } = require('@companion-module/base')
+const { InstanceBase, runEntrypoint, combineRgb, InstanceStatus, Regex } = require('@companion-module/base')
 const { GetActions } = require('./actions')
 
 class instance extends InstanceBase {
@@ -98,7 +100,7 @@ class instance extends InstanceBase {
 				label: 'ProPresenter Port',
 				width: 6,
 				default: '20652',
-				regex: this.REGEX_PORT,
+				regex: Regex.PORT,
 			},
 			{
 				type: 'textinput',
@@ -174,7 +176,7 @@ class instance extends InstanceBase {
 					'Index of clock to watch.  Dynamic variable "watched_clock_current_time" will be updated with current value once every second.',
 				default: '0',
 				width: 4,
-				regex: this.REGEX_NUMBER,
+				regex: Regex.NUMBER,
 			},
 			{
 				type: 'dropdown',
@@ -292,7 +294,7 @@ class instance extends InstanceBase {
 				label: 'Follower-ProPresenter IP',
 				width: 6,
 				default: '',
-				regex: this.REGEX_IP,
+				regex: Regex.IP,
 			},
 			{
 				type: 'textinput',
@@ -300,7 +302,7 @@ class instance extends InstanceBase {
 				label: 'Follower-ProPresenter Port',
 				width: 6,
 				default: '20652',
-				regex: this.REGEX_PORT,
+				regex: Regex.PORT,
 			},
 			{
 				type: 'textinput',
@@ -1126,9 +1128,13 @@ class instance extends InstanceBase {
 	}
 
 	init_feedbacks = () => {
+		/**
+		 * @type{import('@companion-module/base').CompanionFeedbackDefinitions
+		 */
 		var feedbacks = {}
 		feedbacks['stagedisplay_active'] = {
-			label: 'Change colors based on active stage display',
+			type: 'advanced',
+			name: 'Change colors based on active stage display',
 			description: 'If the specified stage display is active, change colors of the bank',
 			options: [
 				{
@@ -1147,14 +1153,22 @@ class instance extends InstanceBase {
 					type: 'textinput',
 					label: 'Stage Display Index',
 					id: 'index',
-					default: 0,
-					regex: this.REGEX_NUMBER,
+					default: '0',
+					regex: Regex.NUMBER,
 				},
 			],
+			callback: (feedback) => {
+				if (this.currentState.internal.stageDisplayIndex == feedback.options.index) {
+					return { color: Number(feedback.options.fg), bgcolor: Number(feedback.options.bg) }
+				} else {
+					return {}
+				}
+			},
 		}
 
 		feedbacks['pro7_stagelayout_active'] = {
-			label: "Change colors based on the active layout for one of Pro7's stage screens",
+			type: 'advanced',
+			name: "Change colors based on the active layout for one of Pro7's stage screens",
 			description: 'If the specified stage layout is active on the specified stage screen, change colors of the bank',
 			options: [
 				{
@@ -1175,6 +1189,7 @@ class instance extends InstanceBase {
 					id: 'pro7StageScreenUUID',
 					tooltip: 'Choose which stage display screen you want to monitor',
 					choices: this.currentState.internal.pro7StageScreens,
+					default: this.currentState.internal.pro7StageScreens?.[0]?.id,
 				},
 				{
 					type: 'dropdown',
@@ -1182,12 +1197,43 @@ class instance extends InstanceBase {
 					id: 'pro7StageLayoutUUID',
 					tooltip: 'Choose the stage display layout to trigger above color change',
 					choices: this.currentState.internal.pro7StageLayouts,
+					default: this.currentState.internal.pro7StageLayouts?.[0]?.id,
 				},
 			],
+			callback: (feedback) => {
+				// Get screen (includes current layout)
+				var stageScreen = this.currentState.internal.pro7StageScreens.find(
+					(pro7StageScreen) =>
+						pro7StageScreen.id ===
+						(feedback.options.pro7StageScreenUUID
+							? feedback.options.pro7StageScreenUUID
+							: this.currentState.internal.pro7StageScreens[0].id)
+				)
+
+				this.log('debug', 'feedback for ' + feedback.options.pro7StageScreenUUID)
+
+				// Exit if we could not find matching screen
+				if (stageScreen === undefined) {
+					return {}
+				}
+
+				// Check stage layout for screeen and return feedback color if matched
+				if (
+					stageScreen.layoutUUID ===
+					(feedback.options.pro7StageLayoutUUID
+						? feedback.options.pro7StageLayoutUUID
+						: this.currentState.internal.pro7StageLayouts[0].id)
+				) {
+					return { color: Number(feedback.options.fg), bgcolor: Number(feedback.options.bg) }
+				} else {
+					return {}
+				}
+			},
 		}
 
 		feedbacks['active_look'] = {
-			label: 'Change colors based on active look',
+			type: 'advanced',
+			name: 'Change colors based on active look',
 			description: 'If the specified look display is active, change colors of the bank',
 			options: [
 				{
@@ -1208,12 +1254,21 @@ class instance extends InstanceBase {
 					id: 'look',
 					tooltip: 'Choose the Look to trigger above color change',
 					choices: this.currentState.internal.pro7Looks,
+					default: this.currentState.internal.pro7Looks?.[0]?.id,
 				},
 			],
+			callback: (feedback) => {
+				if (this.currentState.internal.current_pro7_look_id == feedback.options.look) {
+					return { color: Number(feedback.options.fg), bgcolor: Number(feedback.options.bg) }
+				} else {
+					return {}
+				}
+			},
 		}
 
 		feedbacks['propresenter_module_connected'] = {
-			label: 'Change colors based on Propresenter module being connected',
+			type: 'advanced',
+			name: 'Change colors based on Propresenter module being connected',
 			description: 'Propresenter module being connected, change colors of the bank',
 			options: [
 				{
@@ -1241,10 +1296,18 @@ class instance extends InstanceBase {
 					default: combineRgb(204, 0, 0),
 				},
 			],
+			callback: (feedback) => {
+				if (this.currentState.internal.wsConnected) {
+					return { color: Number(feedback.options.cfg), bgcolor: Number(feedback.options.cbg) }
+				} else {
+					return { color: Number(feedback.options.dfg), bgcolor: Number(feedback.options.dbg) }
+				}
+			},
 		}
 
 		feedbacks['propresenter_follower_connected'] = {
-			label: 'Change colors based on Propresenter follower being connected',
+			type: 'advanced',
+			name: 'Change colors based on Propresenter follower being connected',
 			description: 'Propresenter follower being connected, change colors of the bank',
 			options: [
 				{
@@ -1284,73 +1347,20 @@ class instance extends InstanceBase {
 					default: combineRgb(204, 0, 0),
 				},
 			],
+			callback: (feedback) => {
+				if (this.currentState.internal.wsFollowerConnected) {
+					if (this.config.control_follower === 'yes') {
+						return { color: Number(feedback.options.fcfg), bgcolor: Number(feedback.options.fcbg) }
+					} else {
+						return { color: Number(feedback.options.fcdfg), bgcolor: Number(feedback.options.fcdbg) }
+					}
+				} else {
+					return { color: Number(feedback.options.fdfg), bgcolor: Number(feedback.options.fdbg) }
+				}
+			},
 		}
 
 		this.setFeedbackDefinitions(feedbacks)
-	}
-
-	feedback = (feedback, bank) => {
-		this.log('debug', 'feedback type: ' + feedback.type)
-
-		if (feedback.type == 'stagedisplay_active') {
-			if (this.currentState.internal.stageDisplayIndex == feedback.options.index) {
-				return { color: feedback.options.fg, bgcolor: feedback.options.bg }
-			}
-		}
-
-		if (feedback.type == 'propresenter_module_connected') {
-			if (this.currentState.internal.wsConnected) {
-				return { color: feedback.options.cfg, bgcolor: feedback.options.cbg }
-			} else {
-				return { color: feedback.options.dfg, bgcolor: feedback.options.dbg }
-			}
-		}
-
-		if (feedback.type == 'propresenter_follower_connected') {
-			if (this.currentState.internal.wsFollowerConnected) {
-				if (this.config.control_follower === 'yes') {
-					return { color: feedback.options.fcfg, bgcolor: feedback.options.fcbg }
-				} else {
-					return { color: feedback.options.fcdfg, bgcolor: feedback.options.fcdbg }
-				}
-			} else {
-				return { color: feedback.options.fdfg, bgcolor: feedback.options.fdbg }
-			}
-		}
-
-		if (feedback.type == 'pro7_stagelayout_active') {
-			// Get screen (includes current layout)
-			var stageScreen = this.currentState.internal.pro7StageScreens.find(
-				(pro7StageScreen) =>
-					pro7StageScreen.id ===
-					(feedback.options.pro7StageScreenUUID
-						? feedback.options.pro7StageScreenUUID
-						: this.currentState.internal.pro7StageScreens[0].id)
-			)
-
-			this.log('debug', 'feedback for ' + feedback.options.pro7StageScreenUUID)
-
-			// Exit if we could not find matching screen
-			if (stageScreen === undefined) {
-				return
-			}
-
-			// Check stage layout for screeen and return feedback color if matched
-			if (
-				stageScreen.layoutUUID ===
-				(feedback.options.pro7StageLayoutUUID
-					? feedback.options.pro7StageLayoutUUID
-					: this.currentState.internal.pro7StageLayouts[0].id)
-			) {
-				return { color: feedback.options.fg, bgcolor: feedback.options.bg }
-			}
-		}
-
-		if (feedback.type == 'active_look') {
-			if (this.currentState.internal.current_pro7_look_id == feedback.options.look) {
-				return { color: feedback.options.fg, bgcolor: feedback.options.bg }
-			}
-		}
 	}
 
 	/**
