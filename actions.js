@@ -103,23 +103,23 @@ module.exports = {
 			[ActionId.next]: {
 				name: 'Next Slide',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'presentationTriggerNext',
 						presentationDestination: '0', // Pro7.4.2 seems to need this now!
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.last]: {
 				name: 'Previous Slide',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'presentationTriggerPrevious',
 						presentationDestination: '0', // Pro7.4.2 seems to need this now!
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.slideNumber]: {
@@ -144,7 +144,7 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var index = this.instance.currentState.internal.slideIndex // Start with current slide (allows relative jumps using+-)
 
 					// Allow parsing of optional variable in the slide textfield as int
@@ -197,7 +197,7 @@ module.exports = {
 						// Pro 6 for Windows requires 'presentationPath' to be set.
 						presentationPath: presentationPath,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.slideLabel]: {
@@ -227,7 +227,7 @@ module.exports = {
 						id: 'slideLabel',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					// Allow parsing of optional variables in all input fields for this action
 					var playlistName
 					this.system.emit('variable_parse', String(action.options.playlistName).trim(), function (value) {
@@ -254,7 +254,7 @@ module.exports = {
 					cmd = {
 						action: 'playlistRequestAll',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.groupSlide]: {
@@ -287,7 +287,7 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					// Allow parsing of optional variables in all input fields for this action
 					var groupName
 					this.system.emit('variable_parse', String(action.options.groupName).trim(), function (value) {
@@ -323,97 +323,97 @@ module.exports = {
 							presentationSlideQuality: 0,
 						}
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearall]: {
 				name: 'Clear All',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearAll',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearslide]: {
 				name: 'Clear Slide',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearText',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearprops]: {
 				name: 'Clear Props',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearProps',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearaudio]: {
 				name: 'Clear Audio',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearAudio',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearbackground]: {
 				name: 'Clear Background',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearVideo',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.cleartelestrator]: {
 				name: 'Clear Telestrator',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearTelestrator',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.cleartologo]: {
 				name: 'Clear to Logo',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearToLogo',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearAnnouncements]: {
 				name: 'Clear Announcements',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearAnnouncements',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clearMessages]: {
 				name: 'Clear Messages',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'clearMessages',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.stageDisplayLayout]: {
@@ -427,12 +427,12 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					cmd = {
 						action: 'stageDisplaySetIndex',
 						stageDisplayIndex: String(action.options.index),
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.pro7StageDisplayLayout]: {
@@ -455,7 +455,7 @@ module.exports = {
 						choices: this.instance.currentState.internal.pro7StageLayouts,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					// If either option is null, then default to using first items from each list kept in internal state.
 					cmd = {
 						action: 'stageDisplayChangeLayout',
@@ -466,7 +466,7 @@ module.exports = {
 							? action.options.pro7StageLayoutUUID
 							: this.instance.currentState.internal.pro7StageLayouts[0].id,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.pro7SetLook]: {
@@ -481,13 +481,15 @@ module.exports = {
 						choices: this.instance.currentState.internal.pro7Looks,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					// If selected Look is null, then default to using first Look from list kept in internal state
 					cmd = {
 						action: 'looksTrigger',
-						lookID: action.options.pro7LookUUID ? action.options.pro7LookUUID : this.instance.currentState.internal.pro7Looks[0].id,
+						lookID: action.options.pro7LookUUID
+							? action.options.pro7LookUUID
+							: this.instance.currentState.internal.pro7Looks[0].id,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.pro7TriggerMacro]: {
@@ -502,13 +504,15 @@ module.exports = {
 						choices: this.instance.currentState.internal.pro7Macros,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					// If selected Macro is null, then default to using first Macro from list kept in internal state
 					cmd = {
 						action: 'macrosTrigger',
-						macroID: action.options.pro7MacroUUID ? action.options.pro7MacroUUID : this.instance.currentState.internal.pro7Macros[0].id,
+						macroID: action.options.pro7MacroUUID
+							? action.options.pro7MacroUUID
+							: this.instance.currentState.internal.pro7Macros[0].id,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.stageDisplayMessage]: {
@@ -521,24 +525,24 @@ module.exports = {
 						default: '',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					//var message = JSON.stringify(action.options.message);
 					//cmd = '{"action":"stageDisplaySendMessage","stageDisplayMessage":'+message+'}';
 					cmd = {
 						action: 'stageDisplaySendMessage',
 						stageDisplayMessage: action.options.message,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.stageDisplayHideMessage]: {
 				name: 'Stage Display Hide Message',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'stageDisplayHideMessage',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clockStart]: {
@@ -553,13 +557,13 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockStart',
 						clockIndex: clockIndex,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clockStop]: {
@@ -574,13 +578,13 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockStop',
 						clockIndex: clockIndex,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clockReset]: {
@@ -595,13 +599,13 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
 					cmd = {
 						action: 'clockReset',
 						clockIndex: clockIndex,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.clockUpdate]: {
@@ -676,7 +680,7 @@ module.exports = {
 						regex: '/^[-|+]?\\d*:?\\d*:?\\d*$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var clockIndex = String(action.options.clockIndex)
 
 					// Protect against option values which may be missing if this action is called from buttons that were previously saved before these options were added to the clockUpdate action!
@@ -740,7 +744,8 @@ module.exports = {
 						clockTime: newClockTime,
 						clockOverrun: action.options.clockOverRun,
 						clockType: action.options.clockType,
-						clockIsPM: String(action.options.clockTimePeriodFormat) < 2 ? String(action.options.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
+						clockIsPM:
+							String(action.options.clockTimePeriodFormat) < 2 ? String(action.options.clockTimePeriodFormat) : '2', // Pro6 just wants a 1 (PM) or 0 (AM)
 						clockTimePeriodFormat: String(action.options.clockTimePeriodFormat),
 						clockElapsedTime:
 							action.options.clockType === '1' && this.instance.currentState.internal.proMajorVersion === 7
@@ -748,7 +753,7 @@ module.exports = {
 								: newclockElapsedTime, // When doing countdown to time (clockType==='1'), Pro7 uses clockElapsed value for the "countdown-to-time", so we grab this from clocktime above where the user has entered it (Pro6 uses clocktime for countdown-to-time value)
 						clockName: action.options.clockName,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.messageSend]: {
@@ -782,7 +787,7 @@ module.exports = {
 							'Comma separated, list of values for each message token above. Use double commas (,,) to insert an actual comma in a token value. You can optionally use a single variable. (Supports variable. WARNING! - A simple typo here could crash and burn ProPresenter)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var messageIndex
 					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -817,7 +822,7 @@ module.exports = {
 							cmd.messageValues[0] = String(value)
 						})
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.messageHide]: {
@@ -834,7 +839,7 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var messageIndex
 					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -848,7 +853,7 @@ module.exports = {
 								? String(messageIndex)
 								: '0',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.audioStartCue]: {
@@ -863,22 +868,22 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					cmd = {
 						action: 'audioStartCue',
 						audioChildPath: action.options.audioChildPath,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.audioPlayPause]: {
 				name: 'Audio Play/Pause',
 				options: [],
-				callback: () => {
+				callback: async () => {
 					cmd = {
 						action: 'audioPlayPause',
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.timelinePlayPause]: {
@@ -893,12 +898,12 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					cmd = {
 						action: 'timelinePlayPause',
 						presentationPath: action.options.presentationPath,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.timelineRewind]: {
@@ -913,12 +918,12 @@ module.exports = {
 						regex: '/^$|^\\d+$|^\\d+(\\.\\d+)*:\\d+$/',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					cmd = {
 						action: 'timelineRewind',
 						presentationPath: action.options.presentationPath,
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.enableFollowerControl]: {
@@ -935,11 +940,11 @@ module.exports = {
 						],
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					this.config.control_follower = action.options.enableFollowerControl
 					this.checkFeedbacks('propresenter_follower_connected')
 					cmd = undefined // No need to send any command to Pro7 - this is an internal only action
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.nwSpecificSlide]: {
@@ -974,7 +979,7 @@ module.exports = {
                 tooltip: 'Name of the slide you want to trigger',
             }, */
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var slideIndex
 					this.system.emit('variable_parse', String(action.options.slideIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1001,7 +1006,7 @@ module.exports = {
 							],
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.nwPropTrigger]: {
@@ -1022,7 +1027,7 @@ module.exports = {
 						tooltip: 'Name of the Prop you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var propIndex
 					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1037,11 +1042,14 @@ module.exports = {
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
 										? propIndex - 1
 										: null,
-								name: action.options.propName !== undefined && String(action.options.propName).length > 0 ? action.options.propName : null,
+								name:
+									action.options.propName !== undefined && String(action.options.propName).length > 0
+										? action.options.propName
+										: null,
 							},
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.nwPropClear]: {
@@ -1062,7 +1070,7 @@ module.exports = {
 						tooltip: 'Name of the Prop you want to clear (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var propIndex
 					this.system.emit('variable_parse', String(action.options.propIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1077,11 +1085,14 @@ module.exports = {
 									propIndex !== 'undefined' && propIndex !== undefined && parseInt(propIndex) > 0
 										? propIndex - 1
 										: null,
-								name: action.options.propName !== undefined && String(action.options.propName).length > 0 ? action.options.propName : null,
+								name:
+									action.options.propName !== undefined && String(action.options.propName).length > 0
+										? action.options.propName
+										: null,
 							},
 						},
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 			[ActionId.nwMessageClear]: {
@@ -1102,7 +1113,7 @@ module.exports = {
 						tooltip: 'Name of the Message you want to clear (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var messageIndex
 					this.system.emit('variable_parse', String(action.options.messageIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1117,11 +1128,14 @@ module.exports = {
 									messageIndex !== 'undefined' && messageIndex !== undefined && parseInt(messageIndex) > 0
 										? messageIndex - 1
 										: null,
-								name: action.options.messageName !== undefined && String(action.options.messageName).length > 0 ? action.options.messageName : null,
+								name:
+									action.options.messageName !== undefined && String(action.options.messageName).length > 0
+										? action.options.messageName
+										: null,
 							},
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.nwTriggerMedia]: {
@@ -1148,7 +1162,7 @@ module.exports = {
 						tooltip: 'Name of the media file you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var mediaIndex
 					this.system.emit('variable_parse', String(action.options.mediaIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1167,12 +1181,15 @@ module.exports = {
 										mediaIndex !== 'undefined' && mediaIndex !== undefined && parseInt(mediaIndex) > 0
 											? mediaIndex - 1
 											: null,
-									name: action.options.mediaName !== undefined && String(action.options.mediaName).length > 0 ? action.options.mediaName : null,
+									name:
+										action.options.mediaName !== undefined && String(action.options.mediaName).length > 0
+											? action.options.mediaName
+											: null,
 								},
 							],
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.nwTriggerAudio]: {
@@ -1199,7 +1216,7 @@ module.exports = {
 						tooltip: 'Name of the audio file you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var audioIndex
 					this.system.emit('variable_parse', String(action.options.audioIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1218,12 +1235,15 @@ module.exports = {
 										audioIndex !== 'undefined' && audioIndex !== undefined && parseInt(audioIndex) > 0
 											? audioIndex - 1
 											: null,
-									name: action.options.audioName !== undefined && String(action.options.audioName).length > 0 ? action.options.audioName : null,
+									name:
+										action.options.audioName !== undefined && String(action.options.audioName).length > 0
+											? action.options.audioName
+											: null,
 								},
 							],
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.nwVideoInput]: {
@@ -1244,7 +1264,7 @@ module.exports = {
 						tooltip: 'Name of the video input you want to trigger (Case Sensitive)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var videoInputIndex
 					this.system.emit('variable_parse', String(action.options.videoInputIndex).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1260,11 +1280,13 @@ module.exports = {
 										? videoInputIndex - 1
 										: null,
 								name:
-									action.options.videoInputName !== undefined && String(action.options.videoInputName).length > 0 ? action.options.videoInputName : null,
+									action.options.videoInputName !== undefined && String(action.options.videoInputName).length > 0
+										? action.options.videoInputName
+										: null,
 							},
 						},
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.newRandomNumber]: {
@@ -1280,7 +1302,7 @@ module.exports = {
 						regex: Regex.NUMBER,
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					var randomLimit
 					this.system.emit('variable_parse', String(action.options.randomLimit).trim(), function (value) {
 						// Picking a var from the dropdown seems to add a space on end (use trim() to ensure field is a just a clean variable)
@@ -1306,12 +1328,12 @@ module.exports = {
 						tooltip: 'JSON Data (no single quotes, no trailing commas)',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					nwCmd = {
 						endpointPath: action.options.endpointPath,
 						data: JSON.parse(action.options.jsonData),
 					}
-					sendCommand(cmd, true)
+					await sendCommand(cmd, true)
 				},
 			},
 			[ActionId.customAction]: {
@@ -1326,7 +1348,7 @@ module.exports = {
 							'Advanced use only. Must be a valid JSON action message that ProPresenter understands. An invalid message or even one little mistake can lead to crashes and data loss.',
 					},
 				],
-				callback: (action) => {
+				callback: async (action) => {
 					try {
 						cmd = JSON.parse(action.options.customAction)
 					} catch (err) {
@@ -1335,7 +1357,7 @@ module.exports = {
 							'Failed to convert custom action: ' + customAction + ' to valid JS object: ' + err.message
 						)
 					}
-					sendCommand(cmd)
+					await sendCommand(cmd)
 				},
 			},
 		}
