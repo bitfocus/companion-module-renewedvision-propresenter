@@ -282,7 +282,7 @@ module.exports = {
 
 					// If presentationPath was blank then auto set to current presentation.
 					if (presentationPath.length == 0) {
-						presentationPath = this.currentState.dynamicVariables['current_presentation_path']
+						presentationPath = this.instance.currentState.dynamicVariables['current_presentation_path']
 					}
 
 					if (presentationPath !== undefined && presentationPath !== 'undefined' && presentationPath.length > 0) {
@@ -678,15 +678,15 @@ module.exports = {
 					// Allow +- prefix to update increment/decrement clockTime
 					var newClockTime = action.options.clockTime
 					if (newClockTime.charAt(0) == '-' || newClockTime.charAt(0) == '+') {
-						var deltaSeconds = this.convertToTotalSeconds(newClockTime)
+						var deltaSeconds = this.instance.convertToTotalSeconds(newClockTime)
 						newClockTime =
 							'00:00:' +
 							String(
-								parseInt(this.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
+								parseInt(this.instance.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
 									parseInt(deltaSeconds)
 							)
 						var newSeconds =
-							parseInt(this.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
+							parseInt(this.instance.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
 							parseInt(deltaSeconds)
 						if (newSeconds < 0) {
 							newClockTime = '-00:00:' + String(newSeconds)
@@ -698,15 +698,15 @@ module.exports = {
 					// Allow +- prefix to update increment/decrement clockElapsedTime
 					var newclockElapsedTime = action.options.clockElapsedTime
 					if (newclockElapsedTime.charAt(0) == '-' || newclockElapsedTime.charAt(0) == '+') {
-						var deltaSeconds = this.convertToTotalSeconds(newclockElapsedTime)
+						var deltaSeconds = this.instance.convertToTotalSeconds(newclockElapsedTime)
 						newclockElapsedTime =
 							'00:00:' +
 							String(
-								parseInt(this.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
+								parseInt(this.instance.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
 									parseInt(deltaSeconds)
 							)
 						var newSeconds =
-							parseInt(this.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
+							parseInt(this.instance.currentState.dynamicVariables['pro7_clock_' + clockIndex + '_totalseconds']) +
 							parseInt(deltaSeconds)
 						if (newSeconds < 0) {
 							newclockElapsedTime = '-00:00:' + String(newSeconds)
