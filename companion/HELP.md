@@ -39,9 +39,15 @@ If you chose to also enable the stage display app option in ProPresenter prefere
 
 > N.B. At the time of writing this module, there is a bug in ProPresenter 6 where if you choose to enter a Port number for the stage display app - it will actually ignore it and use the "main" network port you recorded in step 8 above.
 
-_**⚠️ Pro7/Windows users ⚠️**  
-Currently there is a noticeable performance impact on Pro7/Windows when companion sends messages to Pro7 to track info about the current presentation. To work around this, there is now a new option called "Send Presentation Info Requests To ProPresenter" in the module configuration where you can optionally turn that off. Doing so will remove the performance impact (random lag when changing slides) but will stop updating the dynamic variables: remaining_slides, total_slides or presentation_name. You will no longer be able to display them on buttons.<br>
-However, there is also another option to configure the **type** of the presentation request. Pro7 users on Windows may find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
+_⚠️⚠️⚠️⚠️ Alert For Pro7 Users ⚠️⚠️⚠️⚠️  
+**Newer versions of Pro7** will quickly become unstable and drop the remote control connection when this module tries to make too many requests for presentation infomation.<br>
+You need to turn this off if you are running newer versions of Pro7.<br>
+The setting is called "Send Presentation Info Requests To ProPresenter" in the module configuration.<br>
+Also, for Pro7.9.2 and above, you need to enable "Timer Polling" to get dynamic vars that track the current values of all timers.<br> 
+![image](https://github.com/bitfocus/companion-module-renewedvision-propresenter/assets/1886513/3991fcd6-0c56-4f2b-af99-e4e9c431559e)<br>
+Pro6 and older Pro7 versions can ignore these work-around setttings.<br>
+Note that turning off "Send Presentation Info Requests To ProPresenter" will stop updating the dynamic variables: remaining_slides, total_slides and presentation_name.<br>
+However, there is also another option to configure the **type** of the presentation request. Pro7 users on Windows may trial these on their system and find using the "Manual" type works well enough on their system without impacting performance - enabling them to leave the Send Presentation Info Requests To ProPresenter enabled and enjoy the extra dynamic variables it provides._
 
 # Actions (Commands) - What can you do with ProPresenter?
 
