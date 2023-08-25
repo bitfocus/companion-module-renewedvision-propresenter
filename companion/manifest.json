@@ -3,7 +3,7 @@
 	"name": "renewedvision-propresenter",
 	"shortname": "propresenter",
 	"description": "A Companion Module for ProPresenter",
-	"version": "0.0.0",
+	"version": "3.0.2",
 	"license": "MIT",
 	"repository": "git+https://github.com/bitfocus/companion-module-renewedvision-propresenter.git",
 	"bugs": "https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues",
