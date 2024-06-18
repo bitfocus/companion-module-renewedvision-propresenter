@@ -9,7 +9,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"@companion-module/base": "~1.3.0",
-		"ws": "^8.13.0"
+		"ws": "^8.17.1"
 	},
 	"bugs": {
 		"url": "https://github.com/bitfocus/companion-module-renewedvision-propresenter/issues"
