@@ -1,5 +1,9 @@
 # Companion Module for Renewed Vision's [ProPresenter](https://renewedvision.com/propresenter/)
 
+# 🚫 This has now been superseded for latest ProPresenter versions with [companion-module-renewedvision-propresenter-api](https://github.com/bitfocus/companion-module-renewedvision-propresenter-api)
+
+----
+
 See [HELP.md](https://github.com/bitfocus/companion-module-renewedvision-propresenter/blob/master/HELP.md) for instructions
 
 ## ⚠️ Known Issues (v2.5.5):
