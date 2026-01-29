@@ -19,6 +19,6 @@
 		"url": "git+https://github.com/bitfocus/companion-module-renewedvision-propresenter.git"
 	},
 	"devDependencies": {
-		"@companion-module/tools": "^1.2.0"
+		"@companion-module/tools": "^1.5.2"
 	}
 }
