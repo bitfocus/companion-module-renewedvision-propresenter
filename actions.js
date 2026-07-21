@@ -50,13 +50,18 @@ const ActionId = {
 }
 
 const sendNwCommand = async (nwCmd) => {
-	nwCmd.data.connection = { rejectUnauthorized: false } // Add this header now, in case of a change to https with invalid certs in future.
+	const host = String(this.config.host || '')
+	const port = parseInt(this.config.port, 10)
+	if (!/^[a-zA-Z0-9._-]+$/.test(host) || isNaN(port) || port < 1 || port > 65535) {
+		this.instance.log('error', 'Invalid host or port in configuration')
+		return
+	}
 	this.instance.log(
 		'debug',
-		`Sending: http://${this.config.host}:${this.config.port}${nwCmd.endpointPath} ${JSON.stringify(nwCmd.data)}`
+		`Sending: http://${host}:${port}${nwCmd.endpointPath} ${JSON.stringify(nwCmd.data)}`
 	)
 	// Perform actions that use the new NetworkLink API (These actions are considered beta functionality until the new API is finalized by RV)
-	const res = await fetch(`http://${this.config.host}:${this.config.port}${nwCmd.endpointPath}`, {
+	const res = await fetch(`http://${host}:${port}${nwCmd.endpointPath}`, {
 		body: JSON.stringify(nwCmd.data),
 	})
 	if (res.ok) {
